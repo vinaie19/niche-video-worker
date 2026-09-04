@@ -214,7 +214,36 @@ def execute_render(prompt_text, video_id, shot_index):
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "ready"})
+    # Diagnostic Data
+    diag = {}
+    paths_to_check = [
+        "/runpod-volume",
+        "/workspace/models",
+        "/comfyui/models/diffusion_models",
+        "/comfyui/models/vae",
+        "/comfyui/models/text_encoders"
+    ]
+    for p in paths_to_check:
+        if os.path.exists(p):
+            try:
+                # Limit to 10 files to avoid huge response
+                files = os.listdir(p)[:10]
+                diag[p] = {"exists": True, "is_link": os.path.islink(p), "files": files}
+            except:
+                diag[p] = {"exists": True, "error": "List failed"}
+        else:
+            diag[p] = {"exists": False}
+    
+    setup_log = ""
+    if os.path.exists("/workspace/setup.log"):
+        with open("/workspace/setup.log", "r") as f:
+            setup_log = f.read()
+
+    return jsonify({
+        "status": "ready",
+        "diagnostics": diag,
+        "setup_log": setup_log
+    })
 
 @app.route('/prompt', methods=['POST'])
 def handle_prompt():

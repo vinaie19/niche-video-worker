@@ -112,7 +112,18 @@ def execute_batch(comfy_url, test_jobs):
         try:
             res = requests.get(f"{comfy_url}/health", timeout=10)
             if res.status_code == 200:
+                health_data = res.json()
                 print("✅ Worker is online and ready for jobs!")
+                
+                if "setup_log" in health_data:
+                    print("\n📜 --- Worker Setup Log ---")
+                    print(health_data["setup_log"])
+                    print("---------------------------\n")
+                
+                if "diagnostics" in health_data:
+                    print("📂 --- Worker Diagnostics ---")
+                    print(json.dumps(health_data["diagnostics"], indent=2))
+                    print("-----------------------------\n")
                 break
             else:
                 print(f"   [Debug] Received status {res.status_code} from {comfy_url}/health")
@@ -148,8 +159,10 @@ def execute_batch(comfy_url, test_jobs):
                 
                 if "error" in res:
                     print(f"   ❌ Error from Worker: {res['error']}")
-                    if "details" in res:
-                        print(f"   🔍 Details: {json.dumps(res['details'], indent=2)}")
+                    # Print everything useful from the response
+                    for key in ["details", "diagnostics", "setup_log"]:
+                        if key in res:
+                            print(f"   🔍 {key.capitalize()}: {json.dumps(res[key], indent=2)}")
                     continue
                 
                 r2_url = res.get("output_r2_url")
