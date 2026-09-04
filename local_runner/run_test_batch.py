@@ -25,7 +25,8 @@ def launch_pod():
         gpu_type_id=os.getenv("RUNPOD_GPU_TYPE"),
         container_disk_in_gb=20,
         ports="8000/http",
-        network_volume_id="cxgqbfwsvr"
+        network_volume_id="cxgqbfwsvr",
+        data_center_id="EU-RO-1"
     )
     pod_id = pod["id"]
     
@@ -133,10 +134,22 @@ def execute_batch(comfy_url, test_jobs):
         for idx, prompt in enumerate(vid["shots"]):
             print(f"🎬 Rendering {vid_id} - Shot {idx+1}/4...")
             payload = {"prompt": prompt, "video_id": vid_id, "shot_index": idx + 1}
-            res = requests.post(f"{comfy_url}/prompt", json=payload).json()
-            r2_url = res.get("output_r2_url")
-            rendered_urls[vid_id].append(r2_url)
-            print(f"   ✅ R2 URL: {r2_url}")
+            
+            try:
+                response = requests.post(f"{comfy_url}/prompt", json=payload)
+                res = response.json()
+                
+                if "error" in res:
+                    print(f"   ❌ Error from Worker: {res['error']}")
+                    continue
+                
+                r2_url = res.get("output_r2_url")
+                rendered_urls[vid_id].append(r2_url)
+                print(f"   ✅ R2 URL: {r2_url}")
+            except Exception as e:
+                print(f"   ❌ Failed to communicate with worker: {str(e)}")
+                if 'response' in locals():
+                    print(f"   [Debug] Response Text: {response.text[:500]}")
     return rendered_urls
 
 def download_and_stitch(rendered_urls):
