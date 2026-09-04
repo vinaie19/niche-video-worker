@@ -121,14 +121,14 @@ def execute_render(prompt_text, video_id, shot_index):
                 elif "text" in node["inputs"]:
                     node["inputs"]["text"] = prompt_text
                 
-                    # Also auto-inject text encoder if detected
-                    if text_encoder_file and "model_name" in node["inputs"]:
-                        node["inputs"]["model_name"] = text_encoder_file
-                        # Ensure quantization is 'disabled' or 'fp8_e4m3fn' for unscaled models
-                        if "quantization" in node["inputs"]:
-                            node["inputs"]["quantization"] = "disabled" # Let it autodetect from the unscaled file
-                    
-                    if node.get("_meta", {}).get("title") == "Positive Prompt":
+                # Also auto-inject text encoder if detected
+                if text_encoder_file and "model_name" in node["inputs"]:
+                    node["inputs"]["model_name"] = text_encoder_file
+                    # Ensure quantization is 'disabled' or 'fp8_e4m3fn' for unscaled models
+                    if "quantization" in node["inputs"]:
+                        node["inputs"]["quantization"] = "disabled" # Let it autodetect from the unscaled file
+                
+                if node.get("_meta", {}).get("title") == "Positive Prompt":
                     found_prompt = True
             
             # Auto-inject Diffusion Model
