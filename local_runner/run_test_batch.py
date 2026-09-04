@@ -164,7 +164,8 @@ def execute_batch(comfy_url, test_jobs):
                     for key in ["details", "diagnostics", "setup_log"]:
                         if key in res:
                             print(f"   🔍 {key.capitalize()}: {json.dumps(res[key], indent=2)}")
-                    continue
+                    print("   🛑 Stopping the batch after the first render error")
+                    return rendered_urls
                 
                 r2_url = res.get("output_r2_url")
                 rendered_urls[vid_id].append(r2_url)

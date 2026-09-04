@@ -87,9 +87,15 @@ def execute_render(prompt_text, video_id, shot_index):
             diff_path = os.path.join(vol, "diffusion_models")
             if os.path.exists(diff_path):
                 files = os.listdir(diff_path)
-                matches = [f for f in files if "14b_fp8" in f and f.endswith(".safetensors")]
+                matches = [
+                    f for f in files
+                    if "t2v" in f.lower()
+                    and "14b" in f.lower()
+                    and "fp8" in f.lower()
+                    and f.endswith(".safetensors")
+                ]
                 if matches:
-                    diffusion_model_file = matches[0]
+                    diffusion_model_file = sorted(matches)[0]
                     print(f"🎯 Auto-detected diffusion model from {vol}: {diffusion_model_file}")
                     break
 
