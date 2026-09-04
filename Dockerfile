@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ComfyUI Core
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
+RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
 
 # Standard PyTorch install (usually cu121 or cu124 but with better driver fallback)
 RUN pip3 install --no-cache-dir torch torchvision torchaudio
@@ -17,11 +17,11 @@ RUN pip3 install --no-cache-dir torch torchvision torchaudio
 RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
 
 # Install VideoHelperSuite (VHS) for MP4 combining
-RUN git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git /comfyui/custom_nodes/ComfyUI-VideoHelperSuite
+RUN git clone --depth 1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git /comfyui/custom_nodes/ComfyUI-VideoHelperSuite
 RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt
 
 # Install Wan 2.1 Custom Nodes
-RUN git clone https://github.com/kijai/ComfyUI-WanVideo.git /comfyui/custom_nodes/ComfyUI-WanVideo
+RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideo.git /comfyui/custom_nodes/ComfyUI-WanVideo
 RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideo/requirements.txt
 
 # Copy repository config & runner code
