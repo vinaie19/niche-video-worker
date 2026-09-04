@@ -217,6 +217,15 @@ def execute_render(prompt_text, video_id, shot_index):
         print(f"💥 Execution Error: {str(e)}")
         return {"error": str(e)}
 
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({
+        "service": "niche-video-worker",
+        "status": "online",
+        "health_url": "/health"
+    })
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     # Diagnostic Data

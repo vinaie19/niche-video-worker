@@ -182,6 +182,11 @@ def download_and_stitch(rendered_urls):
     os.makedirs("./temp_clips", exist_ok=True)
 
     for vid_id, urls in rendered_urls.items():
+        urls = [url for url in urls if url]
+        if not urls:
+            print(f"⚠️ Skipping {vid_id}: no clips rendered successfully")
+            continue
+
         local_paths = []
         for idx, url in enumerate(urls):
             path = f"./temp_clips/{vid_id}_shot_{idx+1}.mp4"
@@ -216,4 +221,5 @@ if __name__ == "__main__":
         download_and_stitch(urls)
     finally:
         if pod_id:
-            destroy_pod(pod_id)
+            # destroy_pod(pod_id)
+            pass

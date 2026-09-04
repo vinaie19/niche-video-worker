@@ -1,5 +1,56 @@
 import os
 import shutil
+import subprocess
+
+T5_URL = "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/umt5-xxl-enc-fp8_e4m3fn.safetensors"
+T5_EXPECTED_SIZE = 6_731_333_792
+
+
+def ensure_t5_model(log):
+    """Atomically repair a missing or interrupted T5 download on the volume."""
+    volume_root = "/runpod-volume"
+    target = os.path.join(volume_root, "models", "text_encoders", "umt5_xxl_fp8.safetensors")
+    root_copy = os.path.join(volume_root, "umt5_xxl_fp8.safetensors")
+
+    if not os.path.isdir(volume_root):
+        log.write("ℹ️ /runpod-volume is not mounted; skipping T5 repair\n")
+        return
+
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    target_size = os.path.getsize(target) if os.path.isfile(target) else 0
+    if target_size == T5_EXPECTED_SIZE:
+        log.write(f"✅ T5 model is complete ({target_size} bytes)\n")
+        return
+
+    root_size = os.path.getsize(root_copy) if os.path.isfile(root_copy) else 0
+    if root_size == T5_EXPECTED_SIZE:
+        log.write("♻️ Replacing incomplete T5 model with complete volume-root copy\n")
+        os.replace(root_copy, target)
+        return
+
+    temp_path = f"{target}.download"
+    for path in (target, temp_path):
+        if os.path.isfile(path):
+            os.remove(path)
+
+    log.write(
+        f"⬇️ T5 model is incomplete ({target_size} bytes); downloading a clean copy...\n"
+    )
+    log.flush()
+    subprocess.run(
+        ["wget", "--progress=dot:giga", "-O", temp_path, T5_URL],
+        check=True,
+    )
+
+    downloaded_size = os.path.getsize(temp_path)
+    if downloaded_size != T5_EXPECTED_SIZE:
+        os.remove(temp_path)
+        raise RuntimeError(
+            f"T5 download has wrong size: {downloaded_size}; expected {T5_EXPECTED_SIZE}"
+        )
+
+    os.replace(temp_path, target)
+    log.write(f"✅ T5 model repaired atomically ({downloaded_size} bytes)\n")
 
 def setup_model_links():
     """Nuclear Option: Force-link models into ComfyUI internal folders."""
@@ -14,6 +65,7 @@ def setup_model_links():
     log_file = "/workspace/setup.log"
     with open(log_file, "w") as log:
         log.write("🚀 Starting Aggressive Symlink Setup...\n")
+        ensure_t5_model(log)
         
         # Folders that ComfyUI cares about
         folders = ["diffusion_models", "text_encoders", "vae", "upscale_models", "checkpoints"]
