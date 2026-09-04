@@ -33,10 +33,11 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY handler.py /workspace/handler.py
+COPY setup.py /workspace/setup.py
 COPY workflow_api.json /workspace/workflow_api.json
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
 EXPOSE 8000
 
 # Boot internal ComfyUI server, wait 5s for VRAM init, then launch execution Flask worker
-CMD ["bash", "-c", "python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 & sleep 5 && python3 -u /workspace/handler.py"]
+CMD ["bash", "-c", "python3 /workspace/setup.py && python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 & sleep 5 && python3 -u /workspace/handler.py"]
