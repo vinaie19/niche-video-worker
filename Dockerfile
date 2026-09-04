@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y \
 # Install ComfyUI Core
 RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
 
-# Standard PyTorch install (usually cu121 or cu124 but with better driver fallback)
-RUN pip3 install --no-cache-dir torch torchvision torchaudio
+# Force PyTorch to use CUDA 12.1 (matches host driver 12080)
+# This prevents it from pulling +cu130 or other incompatible versions
+RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
 
