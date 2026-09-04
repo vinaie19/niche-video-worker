@@ -55,12 +55,24 @@ def execute_render(prompt_text, video_id, shot_index):
 
         # Poll history endpoint until finished
         output_filename = None
+        start_poll = time.time()
         while not output_filename:
-            time.sleep(3)
+            # Timeout after 10 minutes (generous for video)
+            if time.time() - start_poll > 600:
+                return {"error": "Timeout waiting for generation"}
+
+            time.sleep(5)
             hist_res = requests.get(f"http://127.0.0.1:8188/history/{prompt_id}", headers={"Host": "127.0.0.1"})
             history = hist_res.json()
+            
             if prompt_id in history:
-                outputs = history[prompt_id]["outputs"]
+                # Check for errors in the history
+                if "status" in history[prompt_id] and "messages" in history[prompt_id]["status"]:
+                    for msg in history[prompt_id]["status"]["messages"]:
+                        if msg[0] == "execution_error":
+                            return {"error": f"ComfyUI Execution Error: {msg[1]}"}
+
+                outputs = history[prompt_id].get("outputs", {})
                 for node_id, node_output in outputs.items():
                     if "gifs" in node_output or "videos" in node_output:
                         key = "gifs" if "gifs" in node_output else "videos"
