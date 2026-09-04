@@ -21,8 +21,8 @@ RUN git clone --depth 1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.
 RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt
 
 # Install Wan 2.1 Custom Nodes
-RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideo.git /comfyui/custom_nodes/ComfyUI-WanVideo
-RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideo/requirements.txt
+RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git /comfyui/custom_nodes/ComfyUI-WanVideoWrapper
+RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideoWrapper/requirements.txt
 
 # Copy repository config & runner code
 COPY requirements.txt .
