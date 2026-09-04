@@ -24,14 +24,15 @@
   },
   "3": {
     "inputs": {
-      "positive_prompt": "placeholder prompt",
-      "negative_prompt": "colorless, worst quality, low quality, normal quality, lowres, jpeg artifacts, blurry, missing limbs, extra limbs, distorted, ugly",
       "model_name": "umt5_xxl_fp8.safetensors",
       "precision": "bf16",
+      "positive_prompt": "placeholder prompt",
+      "negative_prompt": "colorless, worst quality, low quality, normal quality, lowres, jpeg artifacts, blurry, missing limbs, extra limbs, distorted, ugly",
       "quantization": "fp8_e4m3fn",
+      "use_disk_cache": false,
       "device": "gpu"
     },
-    "class_type": "WanVideoTextEncode",
+    "class_type": "WanVideoTextEncodeCached",
     "_meta": {
       "title": "Positive Prompt"
     }

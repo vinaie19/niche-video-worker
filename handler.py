@@ -114,17 +114,19 @@ def execute_render(prompt_text, video_id, shot_index):
                     break
 
         for node_id, node in workflow.items():
-            # Inject Prompt
-            if node.get("_meta", {}).get("title") == "Positive Prompt":
+            # Inject Prompt and T5 Model
+            if node.get("_meta", {}).get("title") == "Positive Prompt" or node.get("class_type") in ["WanVideoTextEncode", "WanVideoTextEncodeCached"]:
                 if "positive_prompt" in node["inputs"]:
                     node["inputs"]["positive_prompt"] = prompt_text
-                else:
+                elif "text" in node["inputs"]:
                     node["inputs"]["text"] = prompt_text
                 
                 # Also auto-inject text encoder if detected
                 if text_encoder_file and "model_name" in node["inputs"]:
                     node["inputs"]["model_name"] = text_encoder_file
-                found_prompt = True
+                
+                if node.get("_meta", {}).get("title") == "Positive Prompt":
+                    found_prompt = True
             
             # Auto-inject Diffusion Model
             if node.get("class_type") == "WanVideoModelLoader" and diffusion_model_file:
