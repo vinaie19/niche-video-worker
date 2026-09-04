@@ -3,6 +3,7 @@ import time
 import json
 import requests
 import boto3
+import shutil
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -30,6 +31,38 @@ def wait_for_comfyui():
 
 def execute_render(prompt_text, video_id, shot_index):
     try:
+        # Nuclear Option: Symlink models to ensure ComfyUI sees them
+        vol_paths = ["/runpod-volume", "/workspace/models"]
+        internal_base = "/comfyui/models"
+        
+        for vol in vol_paths:
+            for folder in ["diffusion_models", "text_encoders", "vae"]:
+                src = os.path.join(vol, folder)
+                dst = os.path.join(internal_base, folder)
+                if os.path.exists(src):
+                    print(f"🔗 Attempting to link {src} -> {dst}")
+                    # Remove existing if it's just a placeholder or empty folder
+                    if os.path.islink(dst):
+                        os.unlink(dst)
+                    elif os.path.isdir(dst) and not os.listdir(dst):
+                        os.rmdir(dst)
+                    
+                    if not os.path.exists(dst):
+                        try:
+                            os.symlink(src, dst)
+                            print(f"✅ Successfully linked {folder}")
+                        except Exception as e:
+                            print(f"⚠️ Link failed for {folder}: {str(e)}")
+                            # Fallback: copy small text encoder files if link fails
+                            if folder == "text_encoders":
+                                shutil.copytree(src, dst, dirs_exist_ok=True)
+
+        # Refresh ComfyUI file list via API
+        try:
+            requests.post("http://127.0.0.1:8188/refresh_custom_nodes", headers={"Host": "127.0.0.1"}, timeout=2)
+        except:
+            pass
+
         # Debug: List registered nodes to check custom node loading
         try:
             nodes_res = requests.get("http://127.0.0.1:8188/object_info", headers={"Host": "127.0.0.1"}, timeout=5)
