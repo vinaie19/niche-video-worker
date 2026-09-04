@@ -30,6 +30,18 @@ def wait_for_comfyui():
 
 def execute_render(prompt_text, video_id, shot_index):
     try:
+        # Debug: List registered nodes to check custom node loading
+        try:
+            nodes_res = requests.get("http://127.0.0.1:8188/object_info", headers={"Host": "127.0.0.1"}, timeout=5)
+            if nodes_res.status_code == 200:
+                all_nodes = nodes_res.json().keys()
+                wan_nodes = [n for n in all_nodes if "WanVideo" in n]
+                print(f"🧩 Registered WanVideo nodes: {wan_nodes}")
+                if not wan_nodes:
+                    print("⚠️ WARNING: No WanVideo nodes found! The custom node folder might be empty or failed to load.")
+        except Exception as e:
+            print(f"⚠️ Error checking registered nodes: {str(e)}")
+
         # Debug: List available models to help with filename troubleshooting
         model_dir = "/runpod-volume/diffusion_models"
         if os.path.exists(model_dir):

@@ -1,7 +1,9 @@
 {
   "1": {
     "inputs": {
-      "model_name": "wan2.1_t2v_14b_fp8.safetensors"
+      "model": "wan2.1_t2v_14b_fp8.safetensors",
+      "base_precision": "fp8_e4m3fn",
+      "attention_mode": "sdpa"
     },
     "class_type": "WanVideoModelLoader",
     "_meta": {
@@ -12,17 +14,17 @@
     "inputs": {
       "vae_name": "wan_2.1_vae.safetensors"
     },
-    "class_type": "WanVideoVAE",
+    "class_type": "WanVideoVAELoader",
     "_meta": {
-      "title": "Wan Video VAE"
+      "title": "Wan Video VAE Loader"
     }
   },
   "3": {
     "inputs": {
       "text": "placeholder prompt",
-      "model_name": "umt5_xxl_fp8.safetensors"
+      "t5_model": "umt5_xxl_fp8.safetensors"
     },
-    "class_type": "WanVideoUMT5TextEncoder",
+    "class_type": "WanVideoTextEncode",
     "_meta": {
       "title": "Positive Prompt"
     }
@@ -31,12 +33,11 @@
     "inputs": {
       "width": 832,
       "height": 480,
-      "length": 81,
-      "batch_size": 1
+      "num_frames": 81
     },
-    "class_type": "WanVideoEmptyLatentImage",
+    "class_type": "WanVideoEmptyEmbeds",
     "_meta": {
-      "title": "Wan Video Empty Latent Image"
+      "title": "Wan Video Empty Latent"
     }
   },
   "5": {
@@ -44,9 +45,7 @@
       "seed": 888888,
       "steps": 30,
       "cfg": 6.0,
-      "sampler_name": "uni_pc",
-      "scheduler": "simple",
-      "denoise": 1.0,
+      "sample_method": "uni_pc",
       "model": [
         "1",
         0
@@ -76,9 +75,9 @@
         0
       ]
     },
-    "class_type": "WanVideoVAEDecode",
+    "class_type": "WanVideoDecode",
     "_meta": {
-      "title": "Wan Video VAE Decode"
+      "title": "Wan Video Decode"
     }
   },
   "7": {

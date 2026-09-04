@@ -10,12 +10,6 @@ RUN apt-get update && apt-get install -y \
 
 # Install ComfyUI Core
 RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
-
-# Upgrade to PyTorch 2.7.0+ with CUDA 12.8 support
-# This provides native Blackwell (RTX 5090) support and 
-# fixes the comfy-kitchen infer_schema issue (requires torch >= 2.7)
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-
 RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
 
 # Install VideoHelperSuite (VHS) for MP4 combining
@@ -25,6 +19,13 @@ RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-VideoHelperSuit
 # Install Wan 2.1 Custom Nodes
 RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git /comfyui/custom_nodes/ComfyUI-WanVideoWrapper
 RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideoWrapper/requirements.txt
+
+# Explicitly install Wan 2.1 dependencies that might be missed or need specific versions
+RUN pip3 install --no-cache-dir diffusers accelerate transformers sentencepiece einops tqdm
+
+# FINAL STEP: Force PyTorch 2.7.0+ with CUDA 12.8 support for Blackwell (RTX 5090)
+# This MUST be last to prevent other requirements from downgrading it to cu121/cu124
+RUN pip3 install --no-cache-dir --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
 # Copy repository config & runner code
 COPY requirements.txt .
