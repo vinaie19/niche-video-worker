@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.2-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /workspace
@@ -11,9 +11,10 @@ RUN apt-get update && apt-get install -y \
 # Install ComfyUI Core
 RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
 
-# Force PyTorch to use CUDA 12.1 (matches host driver 12080)
-# This prevents it from pulling +cu130 or other incompatible versions
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Upgrade to PyTorch 2.7.0+ with CUDA 12.8 support
+# This provides native Blackwell (RTX 5090) support and 
+# fixes the comfy-kitchen infer_schema issue (requires torch >= 2.7)
+RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
 RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
 
@@ -28,10 +29,6 @@ RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideoWrapper
 # Copy repository config & runner code
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Final sanity fix: Force comfy-kitchen to 0.2.27 AFTER all other installs
-# to prevent it from being upgraded by other requirement files.
-RUN pip3 install --no-cache-dir comfy-kitchen==0.2.27
 
 COPY handler.py /workspace/handler.py
 COPY workflow_api.json /workspace/workflow_api.json
