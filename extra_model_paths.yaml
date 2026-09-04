@@ -6,6 +6,14 @@ comfyui:
     vae: vae
     upscale_models: upscale_models
 
+comfyui_models:
+    base_path: /runpod-volume/models
+    checkpoints: checkpoints
+    diffusion_models: diffusion_models
+    text_encoders: text_encoders
+    vae: vae
+    upscale_models: upscale_models
+
 workspace:
     base_path: /workspace/models
     checkpoints: checkpoints

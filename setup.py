@@ -3,7 +3,12 @@ import shutil
 
 def setup_model_links():
     """Nuclear Option: Force-link models into ComfyUI internal folders."""
-    vol_paths = ["/runpod-volume", "/workspace/models"]
+    # We check both the root and the 'models' subdirectory
+    vol_paths = [
+        "/runpod-volume", 
+        "/runpod-volume/models",
+        "/workspace/models"
+    ]
     internal_base = "/comfyui/models"
     
     log_file = "/workspace/setup.log"
@@ -44,21 +49,24 @@ def setup_model_links():
                         log.write(f"⚠️ Link failed for {folder}: {str(e)}\n")
             
             if not linked:
-                # If no folder exists, maybe the files are just in the root of the volume?
+                # Fallback: Check if the volume root itself contains the model files
                 for vol in vol_paths:
                     if os.path.exists(vol) and os.path.isdir(vol):
                         files = os.listdir(vol)
                         if any(f.endswith(".safetensors") for f in files):
-                            log.write(f"🧪 Volume root {vol} contains safetensors. Linking {vol} -> {dst}\n")
+                            log.write(f"🧪 Volume {vol} contains safetensors. Linking {vol} -> {dst}\n")
                             if os.path.exists(dst):
                                 if os.path.islink(dst): os.unlink(dst)
                                 elif os.path.isdir(dst): shutil.rmtree(dst)
-                            os.symlink(vol, dst)
-                            linked = True
-                            break
+                            try:
+                                os.symlink(vol, dst)
+                                linked = True
+                                break
+                            except:
+                                pass
                 
                 if not linked:
-                    log.write(f"ℹ️ No valid source found for {folder}\n")
+                    log.write(f"ℹ️ No valid source found for {folder} in any path\n")
 
 if __name__ == "__main__":
     setup_model_links()

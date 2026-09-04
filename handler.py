@@ -81,7 +81,7 @@ def execute_render(prompt_text, video_id, shot_index):
         vae_file = None
 
         # Prefer /runpod-volume, fallback to /workspace/models
-        vols = ["/runpod-volume", "/workspace/models"]
+        vols = ["/runpod-volume", "/runpod-volume/models", "/workspace/models"]
         
         for vol in vols:
             diff_path = os.path.join(vol, "diffusion_models")
