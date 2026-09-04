@@ -142,12 +142,24 @@ def execute_render(prompt_text, video_id, shot_index):
         if res_raw.status_code != 200:
             error_details = res_raw.text
             print(f"❌ ComfyUI Error (Status {res_raw.status_code}): {error_details}")
+            
+            # Diagnostic Data
+            diag = {}
+            for p in ["/runpod-volume", "/workspace/models", "/comfyui/models/diffusion_models"]:
+                if os.path.exists(p):
+                    try:
+                        diag[p] = os.listdir(p)
+                    except:
+                        diag[p] = "Error listing"
+                else:
+                    diag[p] = "Not found"
+
             try:
                 # Try to parse JSON error from ComfyUI for better readability
                 err_json = res_raw.json()
-                return {"error": f"ComfyUI Validation Error", "details": err_json}
+                return {"error": "ComfyUI Validation Error", "details": err_json, "diagnostics": diag}
             except:
-                return {"error": f"ComfyUI returned {res_raw.status_code}", "details": error_details}
+                return {"error": f"ComfyUI returned {res_raw.status_code}", "details": error_details, "diagnostics": diag}
         
         res = res_raw.json()
         prompt_id = res["prompt_id"]
