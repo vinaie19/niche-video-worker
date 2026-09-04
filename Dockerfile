@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.6.2-runtime-ubuntu22.04
+FROM nvidia/cuda:13.3.1-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /workspace
@@ -20,12 +20,13 @@ RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-VideoHelperSuit
 RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git /comfyui/custom_nodes/ComfyUI-WanVideoWrapper
 RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideoWrapper/requirements.txt
 
-# Explicitly install Wan 2.1 dependencies that might be missed or need specific versions
+# Explicitly install Wan 2.1 dependencies
 RUN pip3 install --no-cache-dir diffusers accelerate transformers sentencepiece einops tqdm
 
-# FINAL STEP: Force PyTorch 2.7.0+ with CUDA 12.8 support for Blackwell (RTX 5090)
-# This MUST be last to prevent other requirements from downgrading it to cu121/cu124
-RUN pip3 install --no-cache-dir --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+# FINAL STEP: Force PyTorch 2.14.0+ with CUDA 13.0 support for Blackwell (RTX 5090)
+# We use the nightly index as Blackwell/CUDA 13 support is often first available there
+# Using a single command ensures the resolver matches CUDA versions for all three
+RUN pip3 install --no-cache-dir --pre --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
 
 # Copy repository config & runner code
 COPY requirements.txt .
