@@ -1,107 +1,103 @@
 {
-    "3": {
-        "inputs": {
-            "seed": 156846156,
-            "steps": 20,
-            "cfg": 8,
-            "sampler_name": "euler",
-            "scheduler": "normal",
-            "denoise": 1,
-            "model": [
-                "4",
-                0
-            ],
-            "positive": [
-                "6",
-                0
-            ],
-            "negative": [
-                "7",
-                0
-            ],
-            "latent_image": [
-                "5",
-                0
-            ]
-        },
-        "class_type": "KSampler",
-        "_meta": {
-            "title": "KSampler"
-        }
+  "1": {
+    "inputs": {
+      "model_name": "wan2.1_t2v_14b_fp8.safetensors"
     },
-    "4": {
-        "inputs": {
-            "ckpt_name": "v1-5-pruned-emaonly.ckpt"
-        },
-        "class_type": "CheckpointLoaderSimple",
-        "_meta": {
-            "title": "Load Checkpoint"
-        }
-    },
-    "5": {
-        "inputs": {
-            "width": 512,
-            "height": 512,
-            "batch_size": 1
-        },
-        "class_type": "EmptyLatentImage",
-        "_meta": {
-            "title": "Empty Latent Image"
-        }
-    },
-    "6": {
-        "inputs": {
-            "text": "placeholder prompt",
-            "clip": [
-                "4",
-                1
-            ]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-            "title": "Positive Prompt"
-        }
-    },
-    "7": {
-        "inputs": {
-            "text": "text, watermark",
-            "clip": [
-                "4",
-                1
-            ]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-            "title": "Negative Prompt"
-        }
-    },
-    "8": {
-        "inputs": {
-            "samples": [
-                "3",
-                0
-            ],
-            "vae": [
-                "4",
-                2
-            ]
-        },
-        "class_type": "VAEDecode",
-        "_meta": {
-            "title": "VAE Decode"
-        }
-    },
-    "9": {
-        "inputs": {
-            "filename_prefix": "ComfyUI",
-            "images": [
-                "8",
-                0
-            ]
-        },
-        "class_type": "SaveImage",
-        "_meta": {
-            "title": "Save Image"
-        }
+    "class_type": "WanVideoModelLoader",
+    "_meta": {
+      "title": "Wan Video Model Loader"
     }
+  },
+  "2": {
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    },
+    "class_type": "WanVideoVAE",
+    "_meta": {
+      "title": "Wan Video VAE"
+    }
+  },
+  "3": {
+    "inputs": {
+      "text": "placeholder prompt",
+      "model_name": "umt5_xxl_fp8.safetensors"
+    },
+    "class_type": "WanVideoUMT5TextEncoder",
+    "_meta": {
+      "title": "Positive Prompt"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 480,
+      "length": 81,
+      "batch_size": 1
+    },
+    "class_type": "WanVideoEmptyLatentImage",
+    "_meta": {
+      "title": "Wan Video Empty Latent Image"
+    }
+  },
+  "5": {
+    "inputs": {
+      "seed": 888888,
+      "steps": 30,
+      "cfg": 6.0,
+      "sampler_name": "uni_pc",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "3",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "WanVideoSampler",
+    "_meta": {
+      "title": "Wan Video Sampler"
+    }
+  },
+  "6": {
+    "inputs": {
+      "samples": [
+        "5",
+        0
+      ],
+      "vae": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "WanVideoVAEDecode",
+    "_meta": {
+      "title": "Wan Video VAE Decode"
+    }
+  },
+  "7": {
+    "inputs": {
+      "frame_rate": 16,
+      "loop_count": 0,
+      "filename_prefix": "Wan21_Video",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_output": true,
+      "images": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥"
+    }
+  }
 }
