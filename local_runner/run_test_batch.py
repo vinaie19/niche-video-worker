@@ -19,7 +19,7 @@ s3_client = boto3.client(
 )
 
 def launch_pod():
-    image = "vinaie19/niche-video-worker:latest"
+    image = "vinaie/niche-video-worker:latest"
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
     pod = runpod.create_pod(
         name="test-batch-pod",
