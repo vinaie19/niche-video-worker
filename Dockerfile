@@ -15,6 +15,10 @@ RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
 # This prevents it from pulling +cu130 or other incompatible versions
 RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
+# Fix comfy_kitchen compatibility issue (ValueError: infer_schema with list[int])
+# Pinning to a version before the incompatible PEP-585 annotations were added
+RUN pip3 install --no-cache-dir comfy-kitchen==0.2.27
+
 RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
 
 # Install VideoHelperSuite (VHS) for MP4 combining
