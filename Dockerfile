@@ -1,18 +1,34 @@
-FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /workspace
 
-RUN apt-get update && apt-get install -y git python3 python3-pip ffmpeg && rm -rf /var/lib/apt/lists/*
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    git python3 python3-pip ffmpeg wget curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install ComfyUI
+# Install ComfyUI Core
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
-RUN pip3 install -r /comfyui/requirements.txt
 
+# Explicitly install PyTorch for CUDA 12.4 (Blackwell/RTX 5090 support)
+RUN pip3 install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu124
+
+RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
+
+# Install VideoHelperSuite (VHS) for MP4 combining
+RUN git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git /comfyui/custom_nodes/ComfyUI-VideoHelperSuite
+RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt
+
+# Copy repository config & runner code
 COPY requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY handler.py .
-COPY workflow_api.json .
+COPY handler.py /workspace/handler.py
+COPY workflow_api.json /workspace/workflow_api.json
+COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
-# Start ComfyUI in background, then run the RunPod handler
-CMD ["bash", "-c", "python3 /comfyui/main.py --listen 127.0.0.1 --port 8188 & python3 -u handler.py"]
+EXPOSE 8000
+
+# Boot internal ComfyUI server, wait 5s for VRAM init, then launch execution Flask worker
+CMD ["bash", "-c", "python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 & sleep 5 && python3 -u /workspace/handler.py"]

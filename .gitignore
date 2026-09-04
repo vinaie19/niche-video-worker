@@ -1,0 +1,11 @@
+**/.env
+venv/
+.venv/
+env/
+ENV/
+*.venv
+__pycache__/
+*.pyc
+.DS_Store
+final_videos/
+temp_clips/
