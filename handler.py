@@ -73,28 +73,38 @@ def execute_render(prompt_text, video_id, shot_index):
         text_encoder_file = None
         vae_file = None
 
-        # Auto-detect filenames from /runpod-volume if they exist
-        if os.path.exists("/runpod-volume/diffusion_models"):
-            files = os.listdir("/runpod-volume/diffusion_models")
-            # Prefer 14b_fp8 for Wan 2.1
-            matches = [f for f in files if "14b_fp8" in f and f.endswith(".safetensors")]
-            if matches:
-                diffusion_model_file = matches[0]
-                print(f"🎯 Auto-detected diffusion model: {diffusion_model_file}")
+        # Prefer /runpod-volume, fallback to /workspace/models
+        vols = ["/runpod-volume", "/workspace/models"]
+        
+        for vol in vols:
+            diff_path = os.path.join(vol, "diffusion_models")
+            if os.path.exists(diff_path):
+                files = os.listdir(diff_path)
+                matches = [f for f in files if "14b_fp8" in f and f.endswith(".safetensors")]
+                if matches:
+                    diffusion_model_file = matches[0]
+                    print(f"🎯 Auto-detected diffusion model from {vol}: {diffusion_model_file}")
+                    break
 
-        if os.path.exists("/runpod-volume/text_encoders"):
-            files = os.listdir("/runpod-volume/text_encoders")
-            matches = [f for f in files if "umt5" in f and f.endswith(".safetensors")]
-            if matches:
-                text_encoder_file = matches[0]
-                print(f"🎯 Auto-detected text encoder: {text_encoder_file}")
+        for vol in vols:
+            te_path = os.path.join(vol, "text_encoders")
+            if os.path.exists(te_path):
+                files = os.listdir(te_path)
+                matches = [f for f in files if "umt5" in f and f.endswith(".safetensors")]
+                if matches:
+                    text_encoder_file = matches[0]
+                    print(f"🎯 Auto-detected text encoder from {vol}: {text_encoder_file}")
+                    break
 
-        if os.path.exists("/runpod-volume/vae"):
-            files = os.listdir("/runpod-volume/vae")
-            matches = [f for f in files if "vae" in f and f.endswith(".safetensors")]
-            if matches:
-                vae_file = matches[0]
-                print(f"🎯 Auto-detected VAE: {vae_file}")
+        for vol in vols:
+            vae_path = os.path.join(vol, "vae")
+            if os.path.exists(vae_path):
+                files = os.listdir(vae_path)
+                matches = [f for f in files if "vae" in f and f.endswith(".safetensors")]
+                if matches:
+                    vae_file = matches[0]
+                    print(f"🎯 Auto-detected VAE from {vol}: {vae_file}")
+                    break
 
         for node_id, node in workflow.items():
             # Inject Prompt
