@@ -5,7 +5,7 @@ WORKDIR /workspace
 
 # System dependencies
 RUN apt-get update && apt-get install -y \
-    git python3 python3-pip ffmpeg wget curl \
+    git python3 python3-pip ffmpeg wget curl libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ComfyUI Core
@@ -20,13 +20,13 @@ RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-VideoHelperSuit
 RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git /comfyui/custom_nodes/ComfyUI-WanVideoWrapper
 RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideoWrapper/requirements.txt
 
-# Explicitly install Wan 2.1 dependencies
-RUN pip3 install --no-cache-dir diffusers accelerate transformers sentencepiece einops tqdm
+# Explicitly install Wan 2.1 and VHS dependencies
+# opencv-python-headless is required for VHS to work in a container without X11
+RUN pip3 install --no-cache-dir diffusers accelerate transformers sentencepiece einops tqdm opencv-python-headless
 
 # FINAL STEP: Force PyTorch 2.14.0+ with CUDA 13.0 support for Blackwell (RTX 5090)
-# We use the nightly index as Blackwell/CUDA 13 support is often first available there
-# Using a single command ensures the resolver matches CUDA versions for all three
-RUN pip3 install --no-cache-dir --pre --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
+# We use the nightly cu130 index to ensure torch and torchaudio are perfectly synced on CUDA 13
+RUN pip3 install --no-cache-dir --pre --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu130
 
 # Copy repository config & runner code
 COPY requirements.txt .

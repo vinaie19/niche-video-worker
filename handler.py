@@ -36,9 +36,11 @@ def execute_render(prompt_text, video_id, shot_index):
             if nodes_res.status_code == 200:
                 all_nodes = nodes_res.json().keys()
                 wan_nodes = [n for n in all_nodes if "WanVideo" in n]
+                vhs_nodes = [n for n in all_nodes if "VHS" in n]
                 print(f"🧩 Registered WanVideo nodes: {wan_nodes}")
-                if not wan_nodes:
-                    print("⚠️ WARNING: No WanVideo nodes found! The custom node folder might be empty or failed to load.")
+                print(f"🧩 Registered VHS nodes: {vhs_nodes}")
+                if not wan_nodes or not vhs_nodes:
+                    print(f"⚠️ WARNING: Some custom nodes failed to load! (Wan: {len(wan_nodes)}, VHS: {len(vhs_nodes)})")
         except Exception as e:
             print(f"⚠️ Error checking registered nodes: {str(e)}")
 
