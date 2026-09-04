@@ -2,8 +2,9 @@
   "1": {
     "inputs": {
       "model": "wan2.1_t2v_14b_fp8.safetensors",
-      "base_precision": "fp8_e4m3fn",
-      "attention_mode": "sdpa"
+      "base_precision": "bf16",
+      "quantization": "fp8_e4m3fn",
+      "load_device": "offload_device"
     },
     "class_type": "WanVideoModelLoader",
     "_meta": {
@@ -12,7 +13,7 @@
   },
   "2": {
     "inputs": {
-      "vae_name": "wan_2.1_vae.safetensors"
+      "model_name": "wan_2.1_vae.safetensors"
     },
     "class_type": "WanVideoVAELoader",
     "_meta": {
@@ -21,8 +22,12 @@
   },
   "3": {
     "inputs": {
-      "text": "placeholder prompt",
-      "t5_model": "umt5_xxl_fp8.safetensors"
+      "positive_prompt": "placeholder prompt",
+      "negative_prompt": "colorless, worst quality, low quality, normal quality, lowres, jpeg artifacts, blurry, missing limbs, extra limbs, distorted, ugly",
+      "model_name": "umt5_xxl_fp8.safetensors",
+      "precision": "bf16",
+      "quantization": "fp8_e4m3fn",
+      "device": "gpu"
     },
     "class_type": "WanVideoTextEncode",
     "_meta": {
@@ -47,6 +52,8 @@
       "cfg": 6.0,
       "shift": 5.0,
       "scheduler": "unipc",
+      "force_offload": true,
+      "riflex_freq_index": 0,
       "model": [
         "1",
         0
@@ -74,7 +81,11 @@
       "vae": [
         "2",
         0
-      ]
+      ],
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128
     },
     "class_type": "WanVideoDecode",
     "_meta": {
@@ -90,6 +101,7 @@
       "pix_fmt": "yuv420p",
       "crf": 19,
       "save_output": true,
+      "pingpong": false,
       "images": [
         "6",
         0

@@ -44,24 +44,80 @@ def execute_render(prompt_text, video_id, shot_index):
         except Exception as e:
             print(f"⚠️ Error checking registered nodes: {str(e)}")
 
-        # Debug: List available models to help with filename troubleshooting
-        model_dir = "/runpod-volume/diffusion_models"
-        if os.path.exists(model_dir):
-            models = os.listdir(model_dir)
-            print(f"📂 Available models in {model_dir}: {models}")
+        # Debug: Detailed directory check for models
+        paths_to_check = [
+            "/runpod-volume",
+            "/runpod-volume/diffusion_models",
+            "/runpod-volume/text_encoders",
+            "/runpod-volume/vae",
+            "/comfyui/models/diffusion_models",
+            "/workspace/models"
+        ]
+        for p in paths_to_check:
+            if os.path.exists(p):
+                try:
+                    files = os.listdir(p)
+                    print(f"📂 Contents of {p}: {files}")
+                except Exception as e:
+                    print(f"⚠️ Could not list {p}: {str(e)}")
+            else:
+                print(f"🚫 Path does not exist: {p}")
         
         # Load API workflow
         with open("/workspace/workflow_api.json", "r") as f:
             workflow = json.load(f)
 
-        # Set prompt text on node title "Positive Prompt"
-        found = False
+        # Set prompt text and handle model filename auto-detection
+        found_prompt = False
+        diffusion_model_file = None
+        text_encoder_file = None
+        vae_file = None
+
+        # Auto-detect filenames from /runpod-volume if they exist
+        if os.path.exists("/runpod-volume/diffusion_models"):
+            files = os.listdir("/runpod-volume/diffusion_models")
+            # Prefer 14b_fp8 for Wan 2.1
+            matches = [f for f in files if "14b_fp8" in f and f.endswith(".safetensors")]
+            if matches:
+                diffusion_model_file = matches[0]
+                print(f"🎯 Auto-detected diffusion model: {diffusion_model_file}")
+
+        if os.path.exists("/runpod-volume/text_encoders"):
+            files = os.listdir("/runpod-volume/text_encoders")
+            matches = [f for f in files if "umt5" in f and f.endswith(".safetensors")]
+            if matches:
+                text_encoder_file = matches[0]
+                print(f"🎯 Auto-detected text encoder: {text_encoder_file}")
+
+        if os.path.exists("/runpod-volume/vae"):
+            files = os.listdir("/runpod-volume/vae")
+            matches = [f for f in files if "vae" in f and f.endswith(".safetensors")]
+            if matches:
+                vae_file = matches[0]
+                print(f"🎯 Auto-detected VAE: {vae_file}")
+
         for node_id, node in workflow.items():
+            # Inject Prompt
             if node.get("_meta", {}).get("title") == "Positive Prompt":
-                node["inputs"]["text"] = prompt_text
-                found = True
+                if "positive_prompt" in node["inputs"]:
+                    node["inputs"]["positive_prompt"] = prompt_text
+                else:
+                    node["inputs"]["text"] = prompt_text
+                
+                # Also auto-inject text encoder if detected
+                if text_encoder_file and "model_name" in node["inputs"]:
+                    node["inputs"]["model_name"] = text_encoder_file
+                found_prompt = True
+            
+            # Auto-inject Diffusion Model
+            if node.get("class_type") == "WanVideoModelLoader" and diffusion_model_file:
+                node["inputs"]["model"] = diffusion_model_file
+            
+            # Auto-inject VAE
+            if node.get("class_type") == "WanVideoVAELoader" and vae_file:
+                node["inputs"]["model_name"] = vae_file
         
-        if not found:
+        if not found_prompt:
             print("⚠️ Warning: Could not find node with title 'Positive Prompt'")
 
         # Submit job with explicit Host header
