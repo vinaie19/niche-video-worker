@@ -30,6 +30,12 @@ def wait_for_comfyui():
 
 def execute_render(prompt_text, video_id, shot_index):
     try:
+        # Debug: List available models to help with filename troubleshooting
+        model_dir = "/runpod-volume/diffusion_models"
+        if os.path.exists(model_dir):
+            models = os.listdir(model_dir)
+            print(f"📂 Available models in {model_dir}: {models}")
+        
         # Load API workflow
         with open("/workspace/workflow_api.json", "r") as f:
             workflow = json.load(f)
@@ -47,11 +53,18 @@ def execute_render(prompt_text, video_id, shot_index):
         # Submit job with explicit Host header
         res_raw = requests.post("http://127.0.0.1:8188/prompt", json={"prompt": workflow}, headers={"Host": "127.0.0.1"})
         if res_raw.status_code != 200:
-            print(f"❌ ComfyUI Error: {res_raw.text}")
-            return {"error": f"ComfyUI returned {res_raw.status_code}"}
+            error_details = res_raw.text
+            print(f"❌ ComfyUI Error (Status {res_raw.status_code}): {error_details}")
+            try:
+                # Try to parse JSON error from ComfyUI for better readability
+                err_json = res_raw.json()
+                return {"error": f"ComfyUI Validation Error", "details": err_json}
+            except:
+                return {"error": f"ComfyUI returned {res_raw.status_code}", "details": error_details}
         
         res = res_raw.json()
         prompt_id = res["prompt_id"]
+        print(f"🚀 Job submitted to ComfyUI. Prompt ID: {prompt_id}")
 
         # Poll history endpoint until finished
         output_filename = None
@@ -62,8 +75,12 @@ def execute_render(prompt_text, video_id, shot_index):
                 return {"error": "Timeout waiting for generation"}
 
             time.sleep(5)
-            hist_res = requests.get(f"http://127.0.0.1:8188/history/{prompt_id}", headers={"Host": "127.0.0.1"})
-            history = hist_res.json()
+            try:
+                hist_res = requests.get(f"http://127.0.0.1:8188/history/{prompt_id}", headers={"Host": "127.0.0.1"}, timeout=5)
+                history = hist_res.json()
+            except Exception as e:
+                print(f"⚠️ Error fetching history for {prompt_id}: {str(e)}")
+                continue
             
             if prompt_id in history:
                 # Check for errors in the history

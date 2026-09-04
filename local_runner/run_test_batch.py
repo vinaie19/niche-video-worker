@@ -136,16 +136,26 @@ def execute_batch(comfy_url, test_jobs):
             payload = {"prompt": prompt, "video_id": vid_id, "shot_index": idx + 1}
             
             try:
-                response = requests.post(f"{comfy_url}/prompt", json=payload)
+                response = requests.post(f"{comfy_url}/prompt", json=payload, timeout=600)
+                
+                if response.status_code != 200:
+                    print(f"   ❌ HTTP Error {response.status_code} from worker")
+                    print(f"   [Debug] Response: {response.text[:1000]}")
+                    continue
+
                 res = response.json()
                 
                 if "error" in res:
                     print(f"   ❌ Error from Worker: {res['error']}")
+                    if "details" in res:
+                        print(f"   🔍 Details: {json.dumps(res['details'], indent=2)}")
                     continue
                 
                 r2_url = res.get("output_r2_url")
                 rendered_urls[vid_id].append(r2_url)
                 print(f"   ✅ R2 URL: {r2_url}")
+            except requests.exceptions.Timeout:
+                print(f"   ❌ Timeout: Worker took too long to respond for {vid_id}")
             except Exception as e:
                 print(f"   ❌ Failed to communicate with worker: {str(e)}")
                 if 'response' in locals():
