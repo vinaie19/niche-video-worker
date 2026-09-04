@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /workspace
@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
 # Install ComfyUI Core
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
 
-# Explicitly install PyTorch for CUDA 12.4 (Blackwell/RTX 5090 support)
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu124
+# Standard PyTorch install (usually cu121 or cu124 but with better driver fallback)
+RUN pip3 install --no-cache-dir torch torchvision torchaudio
 
 RUN pip3 install --no-cache-dir -r /comfyui/requirements.txt
 
