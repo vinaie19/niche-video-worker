@@ -58,10 +58,14 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
         for vol in vols:
             diff_path = os.path.join(vol, "diffusion_models")
             if os.path.exists(diff_path):
-                files = os.listdir(diff_path)
-                matches = [f for f in files if "t2v" in f.lower() and "14b" in f.lower() and "fp8" in f.lower() and f.endswith(".safetensors")]
+                files = [f for f in os.listdir(diff_path) if f.endswith(".safetensors")]
+                # Prefer T2V, then any Wan 14B FP8 (supports I2V later)
+                t2v = [f for f in files if "t2v" in f.lower() and "14b" in f.lower() and "fp8" in f.lower()]
+                wan14 = [f for f in files if ("wan2_1" in f.lower() or "wan2.1" in f.lower()) and "14b" in f.lower() and "fp8" in f.lower()]
+                matches = t2v or wan14
                 if matches:
                     diffusion_model_file = sorted(matches)[0]
+                    print(f"🎯 Auto-detected diffusion model from {vol}: {diffusion_model_file}")
                     break
 
         for vol in vols:

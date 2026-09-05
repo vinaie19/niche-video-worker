@@ -142,14 +142,15 @@ def execute_batch(comfy_url, test_jobs):
                         finished = True
                     elif status == "failed":
                         print(f"   ❌ Job Failed: {status_res.get('error')}")
+                        print("   ⏭️ Skipping this shot and continuing the batch...")
                         finished = True
-                        return rendered_urls # Stop on first error
                     else:
                         print(f"   ... still {status} (elapsed: {int(time.time() - status_res['created_at'])}s)")
             
             except Exception as e:
-                print(f"   ❌ Error: {str(e)}")
-                return rendered_urls
+                print(f"   ❌ Error on shot {idx+1}: {str(e)}")
+                print("   ⏭️ Skipping this shot and continuing the batch...")
+                continue
 
     return rendered_urls
 
