@@ -28,7 +28,14 @@ def launch_pod():
         container_disk_in_gb=50,
         ports="8000/http",
         network_volume_id="cxgqbfwsvr",
-        data_center_id="EU-RO-1"
+        data_center_id="EU-RO-1",
+        env={
+            "R2_ACCOUNT_ID": os.getenv("R2_ACCOUNT_ID"),
+            "R2_ACCESS_KEY_ID": os.getenv("R2_ACCESS_KEY_ID"),
+            "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
+            "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
+            "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX")
+        }
     )
     pod_id = pod["id"]
     

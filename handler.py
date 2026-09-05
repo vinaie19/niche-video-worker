@@ -132,16 +132,24 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
 
                     outputs = history[prompt_id].get("outputs", {})
                     for node_id, node_output in outputs.items():
-                        if "gifs" in node_output or "videos" in node_output:
-                            key = "gifs" if "gifs" in node_output else "videos"
-                            output_filename = node_output[key][0]["filename"]
+                        # Support for both GIF and Video output keys
+                        keys = ["gifs", "videos", "images"] # VHS sometimes uses images key for video
+                        for key in keys:
+                            if key in node_output and node_output[key]:
+                                output_filename = node_output[key][0].get("filename")
+                                if output_filename:
+                                    break
+                        if output_filename:
                             break
-            except:
+            except Exception as e:
+                print(f"⚠️ Polling error: {str(e)}")
                 continue
 
         # Upload to R2
         local_file_path = f"/comfyui/output/{output_filename}"
         r2_key = f"renders/{video_id}/shot_{shot_index}.mp4"
+        
+        print(f"☁️ Uploading {output_filename} to Cloudflare R2... (Size: {os.path.getsize(local_file_path)} bytes)")
         s3.upload_file(local_file_path, os.getenv("R2_BUCKET_NAME"), r2_key)
         r2_public_url = f"{os.getenv('R2_PUBLIC_URL_PREFIX')}/{r2_key}"
         
@@ -152,8 +160,11 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
         jobs[job_id]["output_r2_url"] = r2_public_url
 
     except Exception as e:
+        import traceback
+        error_msg = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"💥 Execution Error: {error_msg}")
         jobs[job_id]["status"] = "failed"
-        jobs[job_id]["error"] = str(e)
+        jobs[job_id]["error"] = error_msg
 
 @app.route('/', methods=['GET'])
 def index():
