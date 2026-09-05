@@ -5,7 +5,7 @@
       "base_precision": "bf16",
       "quantization": "fp8_e4m3fn",
       "load_device": "main_device",
-      "attention_mode": "sageattention"
+      "attention_mode": "sageattn"
     },
     "class_type": "WanVideoModelLoader",
     "_meta": {
@@ -51,7 +51,7 @@
   "5": {
     "inputs": {
       "seed": 888888,
-      "steps": 30,
+      "steps": 24,
       "cfg": 6.0,
       "shift": 5.0,
       "scheduler": "unipc",
