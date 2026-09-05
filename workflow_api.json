@@ -4,7 +4,7 @@
       "model": "Wan2_1-T2V-14B_fp8_e4m3fn.safetensors",
       "base_precision": "bf16",
       "quantization": "fp8_e4m3fn",
-      "load_device": "offload_device",
+      "load_device": "auto",
       "attention_mode": "sdpa"
     },
     "class_type": "WanVideoModelLoader",
@@ -55,7 +55,7 @@
       "cfg": 6.0,
       "shift": 5.0,
       "scheduler": "unipc",
-      "force_offload": true,
+      "force_offload": false,
       "riflex_freq_index": 0,
       "model": [
         "1",
