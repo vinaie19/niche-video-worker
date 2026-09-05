@@ -4,7 +4,7 @@
       "model": "Wan2_1-T2V-14B_fp8_e4m3fn.safetensors",
       "base_precision": "bf16",
       "quantization": "fp8_e4m3fn",
-      "load_device": "auto",
+      "load_device": "main_device",
       "attention_mode": "sdpa"
     },
     "class_type": "WanVideoModelLoader",
