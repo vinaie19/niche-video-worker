@@ -115,7 +115,7 @@ def execute_batch(comfy_url, test_jobs):
         vid_id = vid["video_id"]
         rendered_urls[vid_id] = []
         for idx, prompt in enumerate(vid["shots"]):
-            print(f"🎬 Submitting {vid_id} - Shot {idx+1}/4...")
+            print(f"🎬 Submitting {vid_id} - Shot {idx+1}/{len(vid['shots'])}...")
             payload = {"prompt": prompt, "video_id": vid_id, "shot_index": idx + 1}
             
             try:
