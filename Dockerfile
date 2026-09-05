@@ -22,7 +22,10 @@ RUN pip3 install --no-cache-dir -r /comfyui/custom_nodes/ComfyUI-WanVideoWrapper
 
 # Explicitly install Wan 2.1 and VHS dependencies
 # opencv-python-headless is required for VHS to work in a container without X11
-RUN pip3 install --no-cache-dir diffusers accelerate transformers sentencepiece einops tqdm opencv-python-headless
+RUN pip3 install --no-cache-dir diffusers accelerate transformers sentencepiece einops tqdm opencv-python-headless triton
+
+# Install SageAttention for 2x-3x speedup on Blackwell/Ada GPUs
+RUN pip3 install --no-cache-dir sageattention
 
 # FINAL STEP: Force PyTorch 2.14.0+ with CUDA 13.0 support for Blackwell (RTX 5090)
 # We use the nightly cu130 index to ensure torch and torchaudio are perfectly synced on CUDA 13

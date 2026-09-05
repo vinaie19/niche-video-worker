@@ -5,7 +5,7 @@
       "base_precision": "bf16",
       "quantization": "fp8_e4m3fn",
       "load_device": "main_device",
-      "attention_mode": "sdpa"
+      "attention_mode": "sageattention"
     },
     "class_type": "WanVideoModelLoader",
     "_meta": {
