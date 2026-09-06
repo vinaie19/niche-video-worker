@@ -18,25 +18,70 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY')
 )
 
+# Under-$1/hr capable GPUs for Wan 14B FP8 + UltraSharp (EU-RO-1 volume region)
+# Prefer 32GB, then 24GB with worker-side force_offload.
+GPU_FALLBACKS = [
+    ("NVIDIA GeForce RTX 5090", 32),
+    ("NVIDIA RTX PRO 4500 Blackwell", 32),
+    ("NVIDIA GeForce RTX 4090", 24),
+    ("NVIDIA L4", 24),
+    ("NVIDIA RTX PRO 4000 Blackwell", 24),
+]
+
+
 def launch_pod():
     image = "vinaie/niche-video-worker:latest"
+    preferred = os.getenv("RUNPOD_GPU_TYPE", "").strip().strip('"')
+    # Put preferred GPU first if set, then remaining fallbacks (deduped)
+    ordered = []
+    if preferred:
+        match = next((g for g in GPU_FALLBACKS if g[0] == preferred), None)
+        ordered.append(match if match else (preferred, 32))
+    for gpu_id, vram in GPU_FALLBACKS:
+        if not any(g[0] == gpu_id for g in ordered):
+            ordered.append((gpu_id, vram))
+
+    env_vars = {
+        "R2_ACCOUNT_ID": os.getenv("R2_ACCOUNT_ID"),
+        "R2_ACCESS_KEY_ID": os.getenv("R2_ACCESS_KEY_ID"),
+        "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
+        "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
+        "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
+    }
+
+    pod = None
+    gpu_type_id = None
+    gpu_vram = None
+    last_error = None
+
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
-    pod = runpod.create_pod(
-        name="test-batch-pod",
-        image_name=image,
-        gpu_type_id=os.getenv("RUNPOD_GPU_TYPE"),
-        container_disk_in_gb=50,
-        ports="8000/http",
-        network_volume_id="cxgqbfwsvr",
-        data_center_id="EU-RO-1",
-        env={
-            "R2_ACCOUNT_ID": os.getenv("R2_ACCOUNT_ID"),
-            "R2_ACCESS_KEY_ID": os.getenv("R2_ACCESS_KEY_ID"),
-            "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
-            "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
-            "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX")
-        }
-    )
+    for gpu_type_id, gpu_vram in ordered:
+        print(f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB)...")
+        try:
+            pod = runpod.create_pod(
+                name="test-batch-pod",
+                image_name=image,
+                gpu_type_id=gpu_type_id,
+                container_disk_in_gb=50,
+                ports="8000/http",
+                network_volume_id="cxgqbfwsvr",
+                data_center_id="EU-RO-1",
+                env={
+                    **env_vars,
+                    "GPU_VRAM_GB": str(gpu_vram),
+                    "FORCE_OFFLOAD": "true" if gpu_vram <= 24 else "false",
+                }
+            )
+            print(f"   ✅ Acquired {gpu_type_id}")
+            break
+        except Exception as e:
+            last_error = e
+            print(f"   ⚠️ Unavailable: {e}")
+            pod = None
+
+    if not pod:
+        raise Exception(f"No GPU available from fallback list. Last error: {last_error}")
+
     pod_id = pod["id"]
     
     start_time = time.time()

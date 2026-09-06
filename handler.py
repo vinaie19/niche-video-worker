@@ -44,6 +44,35 @@ def nearest_valid_frames(n):
     return min(VALID_FRAME_COUNTS, key=lambda v: abs(v - n))
 
 
+def detect_vram_gb():
+    """Prefer env from launcher; fall back to live CUDA query."""
+    env_vram = os.getenv("GPU_VRAM_GB")
+    if env_vram:
+        try:
+            return float(env_vram)
+        except ValueError:
+            pass
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return torch.cuda.get_device_properties(0).total_memory / (1024 ** 3)
+    except Exception:
+        pass
+    return 32.0  # assume comfortable card
+
+
+def should_force_offload(vram_gb=None):
+    """24GB cards need offload for Wan 14B + UltraSharp; 32GB+ can stay resident."""
+    flag = os.getenv("FORCE_OFFLOAD", "").lower()
+    if flag in ("true", "1", "yes"):
+        return True
+    if flag in ("false", "0", "no"):
+        return False
+    if vram_gb is None:
+        vram_gb = detect_vram_gb()
+    return vram_gb <= 26
+
+
 def wait_for_comfyui():
     """Polls internal ComfyUI instance until active."""
     print("⏳ Waiting for internal ComfyUI engine...")
@@ -110,6 +139,9 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
                     break
 
         use_sage = sageattn_available()
+        vram_gb = detect_vram_gb()
+        force_offload = should_force_offload(vram_gb)
+        print(f"🖥️ VRAM≈{vram_gb:.0f}GB | force_offload={force_offload} | attention={'sageattn' if use_sage else 'sdpa'}")
 
         for node_id, node in workflow.items():
             class_type = node.get("class_type")
@@ -132,7 +164,8 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
                 if diffusion_model_file:
                     node["inputs"]["model"] = diffusion_model_file
                 node["inputs"]["attention_mode"] = "sageattn" if use_sage else "sdpa"
-                node["inputs"]["load_device"] = "main_device"
+                # 24GB: start on offload device; 32GB: keep on main
+                node["inputs"]["load_device"] = "offload_device" if force_offload else "main_device"
 
             # Enforce 4k+1 frame rule for Wan VAE
             if class_type == "WanVideoEmptyEmbeds" and "num_frames" in node["inputs"]:
@@ -142,9 +175,9 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
                     print(f"⚠️ num_frames {requested} invalid for Wan VAE; snapping to {fixed} (4k+1)")
                 node["inputs"]["num_frames"] = fixed
 
-            # Keep sampler pinned in VRAM on 5090
+            # Offload on 24GB cards so UltraSharp 1080p has room after sampling
             if class_type == "WanVideoSampler":
-                node["inputs"]["force_offload"] = False
+                node["inputs"]["force_offload"] = force_offload
 
             if class_type == "WanVideoVAELoader" and vae_file:
                 node["inputs"]["model_name"] = vae_file
@@ -244,7 +277,13 @@ def health_check():
         with open("/workspace/setup.log", "r") as f:
             setup_log = f.read()
 
-    return jsonify({"status": "ready", "diagnostics": diag, "setup_log": setup_log})
+    return jsonify({
+        "status": "ready",
+        "diagnostics": diag,
+        "setup_log": setup_log,
+        "vram_gb": detect_vram_gb(),
+        "force_offload": should_force_offload(),
+    })
 
 @app.route('/prompt', methods=['POST'])
 def handle_prompt():
