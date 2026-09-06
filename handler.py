@@ -109,45 +109,34 @@ def find_model_file(subfolder, predicates, fallback_ext=(".safetensors",)):
 
 
 def detect_models(prefer_i2v=False):
-    """Auto-detect T2V/I2V/T5/VAE/CLIP/UltraSharp filenames on volume/SSD."""
-    if prefer_i2v:
-        diffusion, dvol = find_model_file(
+    """Auto-detect Wan 2.2 MoE high/low + T5/VAE/CLIP/UltraSharp on volume/SSD."""
+    kind = "i2v" if prefer_i2v else "t2v"
+
+    def _find_expert(noise_tag):
+        model, vol = find_model_file(
             "diffusion_models",
             [
-                lambda f: "i2v" in f.lower(),
-                lambda f: "14b" in f.lower(),
-                lambda f: "fp8" in f.lower(),
-                lambda f: "480" in f.lower() or "480p" in f.lower(),
-            ],
-        )
-        if not diffusion:
-            diffusion, dvol = find_model_file(
-                "diffusion_models",
-                [
-                    lambda f: "i2v" in f.lower(),
-                    lambda f: "14b" in f.lower(),
-                    lambda f: "fp8" in f.lower(),
-                ],
-            )
-    else:
-        diffusion, dvol = find_model_file(
-            "diffusion_models",
-            [
-                lambda f: "t2v" in f.lower(),
-                lambda f: "14b" in f.lower(),
+                lambda f: "2.2" in f.lower() or "2_2" in f.lower() or "wan2.2" in f.lower(),
+                lambda f: kind in f.lower(),
+                lambda f: noise_tag in f.lower(),
                 lambda f: "fp8" in f.lower(),
             ],
         )
-        if not diffusion:
-            diffusion, dvol = find_model_file(
-                "diffusion_models",
-                [
-                    lambda f: ("wan2_1" in f.lower() or "wan2.1" in f.lower()),
-                    lambda f: "14b" in f.lower(),
-                    lambda f: "fp8" in f.lower(),
-                    lambda f: "i2v" not in f.lower(),
-                ],
-            )
+        if model:
+            return model, vol
+        # Filename variants: high_noise / HIGH
+        alt = "high" if noise_tag == "high_noise" else "low"
+        return find_model_file(
+            "diffusion_models",
+            [
+                lambda f: kind in f.lower(),
+                lambda f: alt in f.lower() and "noise" in f.lower(),
+                lambda f: "fp8" in f.lower(),
+            ],
+        )
+
+    high, hvol = _find_expert("high_noise")
+    low, lvol = _find_expert("low_noise")
 
     text_encoder, _ = find_model_file(
         "text_encoders",
@@ -166,7 +155,7 @@ def detect_models(prefer_i2v=False):
             "clip_vision",
             [
                 lambda f: "clip_vision" in f.lower() or f.lower().startswith("clip_vision"),
-                lambda f: "open-clip" not in f.lower(),  # ComfyUI rejects Kijai open-clip file
+                lambda f: "open-clip" not in f.lower(),
             ],
         )
     upscale, _ = find_model_file(
@@ -175,11 +164,15 @@ def detect_models(prefer_i2v=False):
         fallback_ext=(".pth", ".safetensors"),
     )
 
-    if diffusion and dvol:
-        print(f"🎯 Auto-detected {'I2V' if prefer_i2v else 'T2V'} model from {dvol}: {diffusion}")
+    if high:
+        print(f"🎯 Wan 2.2 {kind.upper()} high-noise from {hvol}: {high}")
+    if low:
+        print(f"🎯 Wan 2.2 {kind.upper()} low-noise from {lvol}: {low}")
 
     return {
-        "diffusion": diffusion,
+        "diffusion_high": high,
+        "diffusion_low": low,
+        "diffusion": high,  # backwards-compat alias
         "text_encoder": text_encoder,
         "vae": vae,
         "clip_vision": clip_vision,
@@ -188,11 +181,12 @@ def detect_models(prefer_i2v=False):
 
 
 def patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload):
-    """Apply prompt / model / VRAM / attention patches shared by T2V and I2V graphs."""
+    """Apply prompt / MoE model / VRAM / attention patches for Wan 2.2 graphs."""
     for node in workflow.values():
         class_type = node.get("class_type")
+        title = (node.get("_meta") or {}).get("title", "")
 
-        if node.get("_meta", {}).get("title") == "Positive Prompt" or class_type in [
+        if title == "Positive Prompt" or class_type in [
             "WanVideoTextEncode",
             "WanVideoTextEncodeCached",
         ]:
@@ -207,8 +201,13 @@ def patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload
             node["inputs"]["use_disk_cache"] = True
 
         if class_type == "WanVideoModelLoader":
-            if models["diffusion"]:
-                node["inputs"]["model"] = models["diffusion"]
+            title_l = title.lower()
+            if "low" in title_l and models.get("diffusion_low"):
+                node["inputs"]["model"] = models["diffusion_low"]
+            elif models.get("diffusion_high"):
+                node["inputs"]["model"] = models["diffusion_high"]
+            # Scaled FP8 Comfy-Org weights
+            node["inputs"]["quantization"] = "fp8_e4m3fn_scaled"
             node["inputs"]["attention_mode"] = "sageattn" if use_sage else "sdpa"
             node["inputs"]["load_device"] = "offload_device" if force_offload else "main_device"
 
@@ -220,7 +219,11 @@ def patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload
             node["inputs"]["num_frames"] = fixed
 
         if class_type == "WanVideoSampler":
-            node["inputs"]["force_offload"] = force_offload
+            # High-noise pass should offload before low-noise loads
+            if "High Noise" in title:
+                node["inputs"]["force_offload"] = True
+            else:
+                node["inputs"]["force_offload"] = force_offload
 
         if class_type == "WanVideoVAELoader" and models["vae"]:
             node["inputs"]["model_name"] = models["vae"]
@@ -386,11 +389,13 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index):
         workflow = json.load(f)
 
     models = detect_models(prefer_i2v=False)
+    if not models.get("diffusion_high") or not models.get("diffusion_low"):
+        raise RuntimeError("Wan 2.2 T2V high/low FP8 experts not found — check setup.py download")
     use_sage = sageattn_available()
     vram_gb = detect_vram_gb()
     force_offload = should_force_offload(vram_gb)
     print(
-        f"🖥️ VRAM≈{vram_gb:.0f}GB | force_offload={force_offload} | "
+        f"🖥️ Wan 2.2 MoE | VRAM≈{vram_gb:.0f}GB | force_offload={force_offload} | "
         f"attention={'sageattn' if use_sage else 'sdpa'}"
     )
 
@@ -435,6 +440,8 @@ def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upsc
             with open("/workspace/workflow_t2v_chunk.json", "r") as f:
                 workflow = json.load(f)
             models = detect_models(prefer_i2v=False)
+            if not models.get("diffusion_high") or not models.get("diffusion_low"):
+                raise RuntimeError("Wan 2.2 T2V high/low FP8 experts not found")
             workflow = patch_common_workflow(
                 workflow, prompt_text, models, use_sage, force_offload
             )
@@ -442,9 +449,10 @@ def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upsc
             with open("/workspace/workflow_i2v_api.json", "r") as f:
                 workflow = json.load(f)
             models = detect_models(prefer_i2v=True)
-            if not models["diffusion"]:
+            if not models.get("diffusion_high") or not models.get("diffusion_low"):
                 raise RuntimeError(
-                    "I2V model not found — setup.py should download Wan2_1-I2V-14B-480P FP8"
+                    "Wan 2.2 I2V high/low not found — resize network volume to ~100GB "
+                    "so setup.py can download the I2V MoE pair"
                 )
             if not models["clip_vision"]:
                 raise RuntimeError(

@@ -5,17 +5,32 @@ import time
 
 T5_URL = "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/umt5-xxl-enc-fp8_e4m3fn.safetensors"
 T5_EXPECTED_SIZE = 6_731_333_792
-T2V_FILENAME = "Wan2_1-T2V-14B_fp8_e4m3fn.safetensors"
-T2V_URL = f"https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/{T2V_FILENAME}"
-T2V_EXPECTED_SIZE = 14_859_762_840
+
+# Wan 2.2 MoE (Comfy-Org FP8 scaled) — replaces Wan 2.1
+COMFY_ORG_22 = "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models"
+T2V_HIGH_FILENAME = "wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors"
+T2V_LOW_FILENAME = "wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors"
+T2V_HIGH_URL = f"{COMFY_ORG_22}/{T2V_HIGH_FILENAME}"
+T2V_LOW_URL = f"{COMFY_ORG_22}/{T2V_LOW_FILENAME}"
+T2V_22_EXPECTED_SIZE = 14_293_923_632
+
+I2V_HIGH_FILENAME = "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors"
+I2V_LOW_FILENAME = "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"
+I2V_HIGH_URL = f"{COMFY_ORG_22}/{I2V_HIGH_FILENAME}"
+I2V_LOW_URL = f"{COMFY_ORG_22}/{I2V_LOW_FILENAME}"
+I2V_22_EXPECTED_SIZE = 14_294_742_832
+
+# Legacy Wan 2.1 files — deleted on boot to free network volume space
+WAN21_LEGACY_FILES = [
+    "Wan2_1-T2V-14B_fp8_e4m3fn.safetensors",
+    "Wan2_1-I2V-14B-480P_fp8_e4m3fn.safetensors",
+    "Wan2_1-I2V-14B-480P_fp8_e5m2.safetensors",
+]
+
 UPSCALE_FILENAME = "4x-UltraSharp.pth"
 UPSCALE_URL = f"https://huggingface.co/Kim2091/UltraSharp/resolve/main/{UPSCALE_FILENAME}"
 # Accept any complete-looking download (>= 50MB); exact HF sizes vary by mirror
 UPSCALE_MIN_SIZE = 50_000_000
-
-I2V_FILENAME = "Wan2_1-I2V-14B-480P_fp8_e4m3fn.safetensors"
-I2V_URL = f"https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/{I2V_FILENAME}"
-I2V_EXPECTED_SIZE = 16_993_877_896
 
 # ComfyUI CLIPVisionLoader requires the Comfy-Org repack, not Kijai's open-clip file
 CLIP_VISION_FILENAME = "clip_vision_h.safetensors"
@@ -75,39 +90,14 @@ def ensure_t5_model(log):
         log.write("✅ T5 already cached on SSD\n")
 
 def ensure_t2v_model(log):
-    """Ensure the 16-channel text-to-video diffusion model is available and cached."""
-    volume_root = "/runpod-volume"
-    target = os.path.join(volume_root, "models", "diffusion_models", T2V_FILENAME)
-
-    if not os.path.isdir(volume_root):
-        log.write("ℹ️ /runpod-volume is not mounted; skipping T2V model setup\n")
-        return
-
-    os.makedirs(os.path.dirname(target), exist_ok=True)
-    target_size = os.path.getsize(target) if os.path.isfile(target) else 0
-    if target_size != T2V_EXPECTED_SIZE:
-        temp_path = f"{target}.download"
-        for path in (target, temp_path):
-            if os.path.isfile(path): os.remove(path)
-        log.write("⬇️ Downloading T2V model to volume...\n")
-        log.flush()
-        subprocess.run(["wget", "--progress=dot:giga", "-O", temp_path, T2V_URL], check=True)
-        os.replace(temp_path, target)
-        log.write(f"✅ T2V model installed on volume\n")
-    else:
-        log.write(f"✅ T2V model is complete on volume\n")
-
-    # SSD CACHE STEP
-    cache_path = os.path.join(CACHE_DIR, "diffusion_models", T2V_FILENAME)
-    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-    if not os.path.exists(cache_path) or os.path.getsize(cache_path) != T2V_EXPECTED_SIZE:
-        log.write(f"🚀 Caching T2V (15GB) to SSD... this takes ~2 mins but saves 20 mins later\n")
-        log.flush()
-        start = time.time()
-        shutil.copy2(target, cache_path)
-        log.write(f"⚡ T2V cached in {int(time.time()-start)}s\n")
-    else:
-        log.write("✅ T2V already cached on SSD\n")
+    """Ensure Wan 2.2 T2V MoE high+low FP8 experts are on volume and SSD-cached."""
+    remove_wan21_legacy(log)
+    _ensure_volume_file(
+        log, "diffusion_models", T2V_HIGH_FILENAME, T2V_HIGH_URL, T2V_22_EXPECTED_SIZE, "Wan 2.2 T2V high-noise FP8"
+    )
+    _ensure_volume_file(
+        log, "diffusion_models", T2V_LOW_FILENAME, T2V_LOW_URL, T2V_22_EXPECTED_SIZE, "Wan 2.2 T2V low-noise FP8"
+    )
 
 
 def ensure_upscale_model(log):
@@ -188,15 +178,72 @@ def _ensure_volume_file(log, rel_dir, filename, url, expected_size, label):
         log.write(f"✅ {label} already cached on SSD\n")
 
 
+def remove_wan21_legacy(log):
+    """Delete Wan 2.1 checkpoints so the 50GB volume can fit Wan 2.2 MoE."""
+    roots = [
+        "/runpod-volume/models/diffusion_models",
+        "/runpod-volume/diffusion_models",
+        os.path.join(CACHE_DIR, "diffusion_models"),
+    ]
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for name in WAN21_LEGACY_FILES:
+            path = os.path.join(root, name)
+            if os.path.isfile(path):
+                try:
+                    os.remove(path)
+                    log.write(f"🧹 Removed Wan 2.1 legacy: {path}\n")
+                except Exception as e:
+                    log.write(f"⚠️ Could not remove {path}: {e}\n")
+
+
 def ensure_i2v_model(log):
-    """Ensure Wan 2.1 I2V 480P FP8 is available for continuous last-frame chaining."""
+    """
+    Optionally install Wan 2.2 I2V MoE for continuous chaining.
+    Skips cleanly if the volume is too small (~29GB pair needs headroom beyond T2V).
+    """
+    volume_root = "/runpod-volume"
+    if not os.path.isdir(volume_root):
+        log.write("ℹ️ /runpod-volume is not mounted; skipping I2V setup\n")
+        return
+
+    # Rough free-space gate: need ~30GB free for the I2V pair
+    try:
+        usage = shutil.disk_usage(volume_root)
+        free_gb = usage.free / (1024**3)
+    except Exception:
+        free_gb = 0
+
+    high = os.path.join(volume_root, "models", "diffusion_models", I2V_HIGH_FILENAME)
+    low = os.path.join(volume_root, "models", "diffusion_models", I2V_LOW_FILENAME)
+    already = (
+        os.path.isfile(high)
+        and os.path.getsize(high) == I2V_22_EXPECTED_SIZE
+        and os.path.isfile(low)
+        and os.path.getsize(low) == I2V_22_EXPECTED_SIZE
+    )
+    if already:
+        _ensure_volume_file(
+            log, "diffusion_models", I2V_HIGH_FILENAME, I2V_HIGH_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V high-noise FP8"
+        )
+        _ensure_volume_file(
+            log, "diffusion_models", I2V_LOW_FILENAME, I2V_LOW_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V low-noise FP8"
+        )
+        return
+
+    if free_gb < 30:
+        log.write(
+            f"⚠️ Skipping Wan 2.2 I2V (~29GB pair); only {free_gb:.1f}GB free. "
+            "Resize volume to ~100GB for continuous I2V. T2V-only still works.\n"
+        )
+        return
+
     _ensure_volume_file(
-        log,
-        "diffusion_models",
-        I2V_FILENAME,
-        I2V_URL,
-        I2V_EXPECTED_SIZE,
-        "I2V 14B 480P FP8",
+        log, "diffusion_models", I2V_HIGH_FILENAME, I2V_HIGH_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V high-noise FP8"
+    )
+    _ensure_volume_file(
+        log, "diffusion_models", I2V_LOW_FILENAME, I2V_LOW_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V low-noise FP8"
     )
 
 
