@@ -198,22 +198,67 @@ def remove_wan21_legacy(log):
                     log.write(f"⚠️ Could not remove {path}: {e}\n")
 
 
+def _volume_model_bytes(rel_dir="diffusion_models"):
+    """Sum bytes used by models on the network volume (quota-aware alternative to disk_usage)."""
+    total = 0
+    for root in (
+        os.path.join("/runpod-volume/models", rel_dir),
+        os.path.join("/runpod-volume", rel_dir),
+    ):
+        if not os.path.isdir(root):
+            continue
+        for name in os.listdir(root):
+            path = os.path.join(root, name)
+            if os.path.isfile(path):
+                total += os.path.getsize(path)
+    return total
+
+
+def _cleanup_incomplete_i2v(log):
+    """Remove orphan I2V downloads that don't form a complete high+low pair."""
+    root = "/runpod-volume/models/diffusion_models"
+    if not os.path.isdir(root):
+        return
+    high = os.path.join(root, I2V_HIGH_FILENAME)
+    low = os.path.join(root, I2V_LOW_FILENAME)
+    high_ok = os.path.isfile(high) and os.path.getsize(high) == I2V_22_EXPECTED_SIZE
+    low_ok = os.path.isfile(low) and os.path.getsize(low) == I2V_22_EXPECTED_SIZE
+    for path in (
+        high if not high_ok else None,
+        low if not low_ok else None,
+        f"{high}.download",
+        f"{low}.download",
+    ):
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+                log.write(f"🧹 Removed incomplete I2V file: {path}\n")
+            except Exception as e:
+                log.write(f"⚠️ Could not remove {path}: {e}\n")
+    # If only one of the pair exists, drop both so we don't waste ~14GB
+    if high_ok ^ low_ok:
+        for path in (high, low):
+            if os.path.isfile(path):
+                try:
+                    os.remove(path)
+                    log.write(f"🧹 Removed orphan I2V expert (pair incomplete): {path}\n")
+                except Exception as e:
+                    log.write(f"⚠️ Could not remove {path}: {e}\n")
+
+
 def ensure_i2v_model(log):
     """
     Optionally install Wan 2.2 I2V MoE for continuous chaining.
-    Skips cleanly if the volume is too small (~29GB pair needs headroom beyond T2V).
+    Default OFF on small volumes — RunPod disk_usage() often reports host free
+    space, not network-volume quota, so we gate on INSTALL_WAN22_I2V=true
+    or a hard used-bytes budget instead.
     """
     volume_root = "/runpod-volume"
     if not os.path.isdir(volume_root):
         log.write("ℹ️ /runpod-volume is not mounted; skipping I2V setup\n")
         return
 
-    # Rough free-space gate: need ~30GB free for the I2V pair
-    try:
-        usage = shutil.disk_usage(volume_root)
-        free_gb = usage.free / (1024**3)
-    except Exception:
-        free_gb = 0
+    _cleanup_incomplete_i2v(log)
 
     high = os.path.join(volume_root, "models", "diffusion_models", I2V_HIGH_FILENAME)
     low = os.path.join(volume_root, "models", "diffusion_models", I2V_LOW_FILENAME)
@@ -224,27 +269,45 @@ def ensure_i2v_model(log):
         and os.path.getsize(low) == I2V_22_EXPECTED_SIZE
     )
     if already:
+        try:
+            _ensure_volume_file(
+                log, "diffusion_models", I2V_HIGH_FILENAME, I2V_HIGH_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V high-noise FP8"
+            )
+            _ensure_volume_file(
+                log, "diffusion_models", I2V_LOW_FILENAME, I2V_LOW_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V low-noise FP8"
+            )
+        except Exception as e:
+            log.write(f"⚠️ I2V cache refresh failed (non-fatal): {e}\n")
+        return
+
+    # Opt-in: 50GB volumes cannot hold T2V MoE (~29GB) + I2V MoE (~29GB) + T5/CLIP
+    install = os.getenv("INSTALL_WAN22_I2V", "").lower() in ("true", "1", "yes")
+    used_gb = _volume_model_bytes() / (1024**3)
+    if not install:
+        log.write(
+            f"ℹ️ Skipping Wan 2.2 I2V (~29GB pair). Diffusion models already use ~{used_gb:.1f}GB. "
+            "Set INSTALL_WAN22_I2V=true after resizing volume to ~100GB. T2V-only still works.\n"
+        )
+        return
+
+    if used_gb > 40:
+        log.write(
+            f"⚠️ Refusing Wan 2.2 I2V — diffusion models already ~{used_gb:.1f}GB "
+            "(need headroom for a ~29GB pair). Resize volume / delete unused weights.\n"
+        )
+        return
+
+    try:
         _ensure_volume_file(
             log, "diffusion_models", I2V_HIGH_FILENAME, I2V_HIGH_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V high-noise FP8"
         )
         _ensure_volume_file(
             log, "diffusion_models", I2V_LOW_FILENAME, I2V_LOW_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V low-noise FP8"
         )
-        return
-
-    if free_gb < 30:
-        log.write(
-            f"⚠️ Skipping Wan 2.2 I2V (~29GB pair); only {free_gb:.1f}GB free. "
-            "Resize volume to ~100GB for continuous I2V. T2V-only still works.\n"
-        )
-        return
-
-    _ensure_volume_file(
-        log, "diffusion_models", I2V_HIGH_FILENAME, I2V_HIGH_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V high-noise FP8"
-    )
-    _ensure_volume_file(
-        log, "diffusion_models", I2V_LOW_FILENAME, I2V_LOW_URL, I2V_22_EXPECTED_SIZE, "Wan 2.2 I2V low-noise FP8"
-    )
+    except Exception as e:
+        log.write(f"⚠️ Wan 2.2 I2V install failed (non-fatal): {e}\n")
+        _cleanup_incomplete_i2v(log)
+        log.write("ℹ️ Continuing with T2V-only. Resize volume for continuous I2V later.\n")
 
 
 def ensure_clip_vision(log):
