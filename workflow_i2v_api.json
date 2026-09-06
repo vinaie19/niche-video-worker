@@ -10,7 +10,7 @@
   },
   "11": {
     "inputs": {
-      "clip_name": "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
+      "clip_name": "clip_vision_h.safetensors"
     },
     "class_type": "CLIPVisionLoader",
     "_meta": {

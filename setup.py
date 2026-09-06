@@ -17,9 +17,15 @@ I2V_FILENAME = "Wan2_1-I2V-14B-480P_fp8_e4m3fn.safetensors"
 I2V_URL = f"https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/{I2V_FILENAME}"
 I2V_EXPECTED_SIZE = 16_993_877_896
 
-CLIP_VISION_FILENAME = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
-CLIP_VISION_URL = f"https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/{CLIP_VISION_FILENAME}"
-CLIP_VISION_EXPECTED_SIZE = 1_264_195_610
+# ComfyUI CLIPVisionLoader requires the Comfy-Org repack, not Kijai's open-clip file
+CLIP_VISION_FILENAME = "clip_vision_h.safetensors"
+CLIP_VISION_URL = (
+    "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/"
+    f"split_files/clip_vision/{CLIP_VISION_FILENAME}"
+)
+CLIP_VISION_EXPECTED_SIZE = 1_264_219_396
+# Old invalid file that breaks CLIPVisionLoader — delete to free volume space
+CLIP_VISION_LEGACY_FILENAME = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
 # NUCLEAR UPGRADE: Local SSD Caching
 # We copy models from the slow Network Volume (/runpod-volume) to the fast local NVMe (/local_models)
@@ -195,14 +201,27 @@ def ensure_i2v_model(log):
 
 
 def ensure_clip_vision(log):
-    """Ensure CLIP vision weights used by Wan I2V conditioning."""
+    """Ensure ComfyUI-compatible CLIP vision weights for Wan I2V conditioning."""
+    # Remove the Kijai open-clip file — CLIPVisionLoader rejects it as invalid
+    legacy_paths = [
+        os.path.join("/runpod-volume/models/clip_vision", CLIP_VISION_LEGACY_FILENAME),
+        os.path.join(CACHE_DIR, "clip_vision", CLIP_VISION_LEGACY_FILENAME),
+    ]
+    for legacy in legacy_paths:
+        if os.path.isfile(legacy):
+            try:
+                os.remove(legacy)
+                log.write(f"🧹 Removed invalid CLIP vision file: {legacy}\n")
+            except Exception as e:
+                log.write(f"⚠️ Could not remove legacy CLIP file {legacy}: {e}\n")
+
     _ensure_volume_file(
         log,
         "clip_vision",
         CLIP_VISION_FILENAME,
         CLIP_VISION_URL,
         CLIP_VISION_EXPECTED_SIZE,
-        "CLIP Vision FP16",
+        "CLIP Vision H (Comfy-Org)",
     )
 
 

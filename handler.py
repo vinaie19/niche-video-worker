@@ -159,8 +159,16 @@ def detect_models(prefer_i2v=False):
     )
     clip_vision, _ = find_model_file(
         "clip_vision",
-        [lambda f: "open-clip" in f.lower() or "clip" in f.lower() or "visual" in f.lower()],
+        [lambda f: f.lower() == "clip_vision_h.safetensors"],
     )
+    if not clip_vision:
+        clip_vision, _ = find_model_file(
+            "clip_vision",
+            [
+                lambda f: "clip_vision" in f.lower() or f.lower().startswith("clip_vision"),
+                lambda f: "open-clip" not in f.lower(),  # ComfyUI rejects Kijai open-clip file
+            ],
+        )
     upscale, _ = find_model_file(
         "upscale_models",
         [lambda f: "ultrasharp" in f.lower() or f.endswith(".pth")],
