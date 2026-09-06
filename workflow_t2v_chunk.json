@@ -81,44 +81,12 @@
       "title": "Wan Video Decode"
     }
   },
-  "8": {
-    "inputs": {
-      "model_name": "4x-UltraSharp.pth"
-    },
-    "class_type": "UpscaleModelLoader",
-    "_meta": {
-      "title": "Upscale Model Loader"
-    }
-  },
-  "9": {
-    "inputs": {
-      "upscale_model": ["8", 0],
-      "image": ["6", 0]
-    },
-    "class_type": "ImageUpscaleWithModel",
-    "_meta": {
-      "title": "Upscale Image with Model"
-    }
-  },
-  "10": {
-    "inputs": {
-      "upscale_method": "lanczos",
-      "width": 1080,
-      "height": 1920,
-      "crop": "center",
-      "image": ["9", 0]
-    },
-    "class_type": "ImageScale",
-    "_meta": {
-      "title": "Scale to YouTube Shorts 1080x1920"
-    }
-  },
   "7": {
     "inputs": {
-      "images": ["10", 0],
+      "images": ["6", 0],
       "frame_rate": 16,
       "loop_count": 0,
-      "filename_prefix": "Wan21_Video_1080p",
+      "filename_prefix": "Wan21_T2V_Chunk",
       "format": "video/h264-mp4",
       "pix_fmt": "yuv420p",
       "crf": 19,

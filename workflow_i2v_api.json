@@ -1,7 +1,40 @@
 {
+  "10": {
+    "inputs": {
+      "image": "start_frame.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Start Frame"
+    }
+  },
+  "11": {
+    "inputs": {
+      "clip_name": "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "CLIP Vision Loader"
+    }
+  },
+  "12": {
+    "inputs": {
+      "clip_vision": ["11", 0],
+      "image_1": ["10", 0],
+      "strength_1": 1.0,
+      "strength_2": 1.0,
+      "crop": "center",
+      "combine_embeds": "average",
+      "force_offload": true
+    },
+    "class_type": "WanVideoClipVisionEncode",
+    "_meta": {
+      "title": "CLIP Vision Encode"
+    }
+  },
   "1": {
     "inputs": {
-      "model": "Wan2_1-T2V-14B_fp8_e4m3fn.safetensors",
+      "model": "Wan2_1-I2V-14B-480P_fp8_e4m3fn.safetensors",
       "base_precision": "bf16",
       "quantization": "fp8_e4m3fn",
       "load_device": "main_device",
@@ -9,7 +42,7 @@
     },
     "class_type": "WanVideoModelLoader",
     "_meta": {
-      "title": "Wan Video Model Loader"
+      "title": "Wan I2V Model Loader"
     }
   },
   "2": {
@@ -41,11 +74,20 @@
     "inputs": {
       "width": 480,
       "height": 832,
-      "num_frames": 81
+      "num_frames": 81,
+      "noise_aug_strength": 0.0,
+      "start_latent_strength": 1.0,
+      "end_latent_strength": 1.0,
+      "force_offload": true,
+      "fun_or_fl2v_model": false,
+      "tiled_vae": true,
+      "vae": ["2", 0],
+      "clip_embeds": ["12", 0],
+      "start_image": ["10", 0]
     },
-    "class_type": "WanVideoEmptyEmbeds",
+    "class_type": "WanVideoImageToVideoEncode",
     "_meta": {
-      "title": "Wan Video Empty Latent"
+      "title": "I2V Encode from Last Frame"
     }
   },
   "5": {
@@ -81,44 +123,12 @@
       "title": "Wan Video Decode"
     }
   },
-  "8": {
-    "inputs": {
-      "model_name": "4x-UltraSharp.pth"
-    },
-    "class_type": "UpscaleModelLoader",
-    "_meta": {
-      "title": "Upscale Model Loader"
-    }
-  },
-  "9": {
-    "inputs": {
-      "upscale_model": ["8", 0],
-      "image": ["6", 0]
-    },
-    "class_type": "ImageUpscaleWithModel",
-    "_meta": {
-      "title": "Upscale Image with Model"
-    }
-  },
-  "10": {
-    "inputs": {
-      "upscale_method": "lanczos",
-      "width": 1080,
-      "height": 1920,
-      "crop": "center",
-      "image": ["9", 0]
-    },
-    "class_type": "ImageScale",
-    "_meta": {
-      "title": "Scale to YouTube Shorts 1080x1920"
-    }
-  },
   "7": {
     "inputs": {
-      "images": ["10", 0],
+      "images": ["6", 0],
       "frame_rate": 16,
       "loop_count": 0,
-      "filename_prefix": "Wan21_Video_1080p",
+      "filename_prefix": "Wan21_I2V_Chunk",
       "format": "video/h264-mp4",
       "pix_fmt": "yuv420p",
       "crf": 19,

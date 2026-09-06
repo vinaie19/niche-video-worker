@@ -38,6 +38,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY handler.py /workspace/handler.py
 COPY setup.py /workspace/setup.py
 COPY workflow_api.json /workspace/workflow_api.json
+COPY workflow_t2v_chunk.json /workspace/workflow_t2v_chunk.json
+COPY workflow_i2v_api.json /workspace/workflow_i2v_api.json
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
 EXPOSE 8000

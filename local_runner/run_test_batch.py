@@ -138,7 +138,7 @@ def execute_batch(comfy_url, test_jobs):
     print(f"⏳ Waiting for Worker API at {comfy_url} to become reachable...")
     time.sleep(30)
     
-    max_retries = 100
+    max_retries = 240  # first boot may download I2V (~17GB) + CLIP vision
     for i in range(max_retries):
         try:
             res = requests.get(f"{comfy_url}/health", timeout=10)
@@ -159,27 +159,44 @@ def execute_batch(comfy_url, test_jobs):
     for vid in test_jobs:
         vid_id = vid["video_id"]
         rendered_urls[vid_id] = []
-        for idx, prompt in enumerate(vid["shots"]):
-            print(f"🎬 Submitting {vid_id} - Shot {idx+1}/{len(vid['shots'])}...")
-            payload = {"prompt": prompt, "video_id": vid_id, "shot_index": idx + 1}
-            
+        shot_mode = vid.get("shot_mode", "multi_cut")
+        chunks = vid.get("chunks", 2)
+        upscale = vid.get("upscale", True)
+
+        # Continuous mode: one job with N chained chunks → one R2 URL
+        prompts = vid["shots"] if shot_mode == "multi_cut" else [vid["shots"][0]]
+
+        for idx, prompt in enumerate(prompts):
+            label = (
+                f"{vid_id} continuous ({chunks} chunks)"
+                if shot_mode != "multi_cut"
+                else f"{vid_id} - Shot {idx+1}/{len(prompts)}"
+            )
+            print(f"🎬 Submitting {label}...")
+            payload = {
+                "prompt": prompt,
+                "video_id": vid_id,
+                "shot_index": idx + 1,
+                "shot_mode": shot_mode,
+                "chunks": chunks,
+                "upscale": upscale,
+            }
+
             try:
-                # Step 1: Submit job and get job_id
                 res = requests.post(f"{comfy_url}/prompt", json=payload, timeout=30).json()
                 job_id = res.get("job_id")
                 if not job_id:
                     print(f"   ❌ Failed to get job_id: {res}")
                     continue
-                
-                print(f"   🕒 Job {job_id} queued. Polling for status...")
 
-                # Step 2: Poll status endpoint
+                print(f"   🕒 Job {job_id} queued ({shot_mode}). Polling for status...")
+
                 finished = False
                 while not finished:
                     time.sleep(10)
                     status_res = requests.get(f"{comfy_url}/status/{job_id}", timeout=10).json()
                     status = status_res.get("status")
-                    
+
                     if status == "completed":
                         r2_url = status_res.get("output_r2_url")
                         rendered_urls[vid_id].append(r2_url)
@@ -190,8 +207,10 @@ def execute_batch(comfy_url, test_jobs):
                         print("   ⏭️ Skipping this shot and continuing the batch...")
                         finished = True
                     else:
-                        print(f"   ... still {status} (elapsed: {int(time.time() - status_res['created_at'])}s)")
-            
+                        progress = status_res.get("progress", status)
+                        elapsed = int(time.time() - status_res.get("created_at", time.time()))
+                        print(f"   ... {progress} (elapsed: {elapsed}s)")
+
             except Exception as e:
                 print(f"   ❌ Error on shot {idx+1}: {str(e)}")
                 print("   ⏭️ Skipping this shot and continuing the batch...")
@@ -199,19 +218,33 @@ def execute_batch(comfy_url, test_jobs):
 
     return rendered_urls
 
-def download_and_stitch(rendered_urls):
+
+def download_and_stitch(rendered_urls, test_jobs):
     os.makedirs("./final_videos", exist_ok=True)
     os.makedirs("./temp_clips", exist_ok=True)
 
+    mode_by_id = {v["video_id"]: v.get("shot_mode", "multi_cut") for v in test_jobs}
+
     for vid_id, urls in rendered_urls.items():
         urls = [url for url in urls if url]
-        if not urls: continue
+        if not urls:
+            continue
+
+        # Continuous already returns one final clip
+        if mode_by_id.get(vid_id) in ("continuous", "single_shot", "singleshot"):
+            path = f"./final_videos/{vid_id}_complete.mp4"
+            r = requests.get(urls[0], stream=True)
+            with open(path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print(f"🎉 Continuous Video Downloaded: {path}")
+            continue
 
         local_paths = []
         for idx, url in enumerate(urls):
             path = f"./temp_clips/{vid_id}_shot_{idx+1}.mp4"
             r = requests.get(url, stream=True)
-            with open(path, 'wb') as f:
+            with open(path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
             local_paths.append(path)
@@ -222,20 +255,27 @@ def download_and_stitch(rendered_urls):
                 f.write(f"file '{os.path.abspath(p)}'\n")
 
         output_video = f"./final_videos/{vid_id}_complete.mp4"
-        subprocess.run(f"ffmpeg -y -f concat -safe 0 -i {list_file} -c copy {output_video}", shell=True, check=True)
+        subprocess.run(
+            f"ffmpeg -y -f concat -safe 0 -i {list_file} -c copy {output_video}",
+            shell=True,
+            check=True,
+        )
         print(f"🎉 Complete Video Created: {output_video}")
+
 
 def destroy_pod(pod_id):
     print(f"🔥 Auto-terminating Pod {pod_id}...")
     runpod.terminate_pod(pod_id)
 
+
 if __name__ == "__main__":
     from test_prompts import test_jobs
+
     pod_id = None
     try:
         pod_id, comfy_url = launch_pod()
         urls = execute_batch(comfy_url, test_jobs)
-        download_and_stitch(urls)
+        download_and_stitch(urls, test_jobs)
     except Exception as e:
         print(f"❌ Batch Execution Failed: {e}")
         raise

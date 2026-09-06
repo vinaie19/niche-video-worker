@@ -5,6 +5,7 @@ comfyui:
     text_encoders: text_encoders
     vae: vae
     upscale_models: upscale_models
+    clip_vision: clip_vision
 
 comfyui_models:
     base_path: /runpod-volume/models
@@ -13,6 +14,7 @@ comfyui_models:
     text_encoders: text_encoders
     vae: vae
     upscale_models: upscale_models
+    clip_vision: clip_vision
 
 workspace:
     base_path: /workspace/models
@@ -21,3 +23,4 @@ workspace:
     text_encoders: text_encoders
     vae: vae
     upscale_models: upscale_models
+    clip_vision: clip_vision
