@@ -180,6 +180,10 @@ def download_and_stitch(rendered_urls):
         subprocess.run(f"ffmpeg -y -f concat -safe 0 -i {list_file} -c copy {output_video}", shell=True, check=True)
         print(f"🎉 Complete Video Created: {output_video}")
 
+def destroy_pod(pod_id):
+    print(f"🔥 Auto-terminating Pod {pod_id}...")
+    runpod.terminate_pod(pod_id)
+
 if __name__ == "__main__":
     from test_prompts import test_jobs
     pod_id = None
@@ -187,7 +191,9 @@ if __name__ == "__main__":
         pod_id, comfy_url = launch_pod()
         urls = execute_batch(comfy_url, test_jobs)
         download_and_stitch(urls)
+    except Exception as e:
+        print(f"❌ Batch Execution Failed: {e}")
+        raise
     finally:
         if pod_id:
-            # runpod.terminate_pod(pod_id)
-            pass
+            destroy_pod(pod_id)

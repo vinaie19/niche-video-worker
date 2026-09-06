@@ -21,6 +21,29 @@ s3 = boto3.client(
 # Global job tracker
 jobs = {}
 
+# Wan VAE requires temporal length 4k+1 (e.g. 17, 33, 49, 65, 81)
+VALID_FRAME_COUNTS = {17, 33, 49, 65, 81, 97, 113, 129}
+
+
+def sageattn_available():
+    """Only enable sageattn when the package imports cleanly on this runtime."""
+    try:
+        import sageattention  # noqa: F401
+        print("✅ SageAttention import OK — will use attention_mode=sageattn")
+        return True
+    except Exception as e:
+        print(f"ℹ️ SageAttention unavailable ({e}); defaulting to sdpa")
+        return False
+
+
+def nearest_valid_frames(n):
+    """Clamp/snap frame counts to Wan's 4k+1 rule."""
+    if n in VALID_FRAME_COUNTS:
+        return n
+    # Snap to nearest valid count
+    return min(VALID_FRAME_COUNTS, key=lambda v: abs(v - n))
+
+
 def wait_for_comfyui():
     """Polls internal ComfyUI instance until active."""
     print("⏳ Waiting for internal ComfyUI engine...")
@@ -86,23 +109,56 @@ def execute_render_async(job_id, prompt_text, video_id, shot_index):
                     vae_file = matches[0]
                     break
 
+        use_sage = sageattn_available()
+
         for node_id, node in workflow.items():
-            if node.get("_meta", {}).get("title") == "Positive Prompt" or node.get("class_type") in ["WanVideoTextEncode", "WanVideoTextEncodeCached"]:
+            class_type = node.get("class_type")
+
+            # Text encoder + disk cache (speeds shots 2+ on same pod)
+            if node.get("_meta", {}).get("title") == "Positive Prompt" or class_type in ["WanVideoTextEncode", "WanVideoTextEncodeCached"]:
                 if "positive_prompt" in node["inputs"]:
                     node["inputs"]["positive_prompt"] = prompt_text
                 elif "text" in node["inputs"]:
                     node["inputs"]["text"] = prompt_text
-                
+
                 if text_encoder_file and "model_name" in node["inputs"]:
                     node["inputs"]["model_name"] = text_encoder_file
-                    if "quantization" in node["inputs"]:
-                        node["inputs"]["quantization"] = "disabled"
-            
-            if node.get("class_type") == "WanVideoModelLoader" and diffusion_model_file:
-                node["inputs"]["model"] = diffusion_model_file
-            
-            if node.get("class_type") == "WanVideoVAELoader" and vae_file:
+                if "quantization" in node["inputs"]:
+                    node["inputs"]["quantization"] = "disabled"
+                node["inputs"]["use_disk_cache"] = True
+
+            # Diffusion model + safe attention default
+            if class_type == "WanVideoModelLoader":
+                if diffusion_model_file:
+                    node["inputs"]["model"] = diffusion_model_file
+                node["inputs"]["attention_mode"] = "sageattn" if use_sage else "sdpa"
+                node["inputs"]["load_device"] = "main_device"
+
+            # Enforce 4k+1 frame rule for Wan VAE
+            if class_type == "WanVideoEmptyEmbeds" and "num_frames" in node["inputs"]:
+                requested = int(node["inputs"]["num_frames"])
+                fixed = nearest_valid_frames(requested)
+                if fixed != requested:
+                    print(f"⚠️ num_frames {requested} invalid for Wan VAE; snapping to {fixed} (4k+1)")
+                node["inputs"]["num_frames"] = fixed
+
+            # Keep sampler pinned in VRAM on 5090
+            if class_type == "WanVideoSampler":
+                node["inputs"]["force_offload"] = False
+
+            if class_type == "WanVideoVAELoader" and vae_file:
                 node["inputs"]["model_name"] = vae_file
+
+            # Prefer auto-detected UltraSharp if present
+            if class_type == "UpscaleModelLoader":
+                for vol in vols:
+                    up_path = os.path.join(vol, "upscale_models")
+                    if os.path.exists(up_path):
+                        files = os.listdir(up_path)
+                        matches = [f for f in files if "ultrasharp" in f.lower() or f.endswith(".pth")]
+                        if matches:
+                            node["inputs"]["model_name"] = sorted(matches)[0]
+                            break
 
         # Submit job to ComfyUI
         res_raw = requests.post("http://127.0.0.1:8188/prompt", json={"prompt": workflow}, headers={"Host": "127.0.0.1"})
@@ -177,7 +233,7 @@ def index():
 @app.route('/health', methods=['GET'])
 def health_check():
     diag = {}
-    for p in ["/local_models", "/runpod-volume", "/workspace/models", "/comfyui/models/diffusion_models"]:
+    for p in ["/local_models", "/runpod-volume", "/workspace/models", "/comfyui/models/diffusion_models", "/comfyui/models/upscale_models"]:
         if os.path.exists(p):
             diag[p] = {"exists": True, "files": os.listdir(p)[:5]}
         else:
