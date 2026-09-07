@@ -229,8 +229,13 @@ def patch_common_workflow(
                 node["inputs"]["text"] = prompt_text
             if models["text_encoder"] and "model_name" in node["inputs"]:
                 node["inputs"]["model_name"] = models["text_encoder"]
+            # 32GB MoE: keep UMT5 off GPU; fp8 matches umt5_xxl_fp8 weights.
             if "quantization" in node["inputs"]:
-                node["inputs"]["quantization"] = "disabled"
+                node["inputs"]["quantization"] = (
+                    "fp8_e4m3fn" if force_offload else "disabled"
+                )
+            if "device" in node["inputs"]:
+                node["inputs"]["device"] = "cpu" if force_offload else "gpu"
             node["inputs"]["use_disk_cache"] = True
 
         if class_type == "WanVideoModelLoader":
@@ -278,12 +283,28 @@ def patch_common_workflow(
     return workflow
 
 
+def free_comfy_memory():
+    """Unload models and free GPU memory so one OOM does not poison the next job."""
+    try:
+        requests.post(
+            f"{COMFY_URL}/free",
+            json={"unload_models": True, "free_memory": True},
+            headers=COMFY_HEADERS,
+            timeout=30,
+        )
+        print("🧹 ComfyUI /free — unloaded models + freed memory")
+    except Exception as e:
+        print(f"⚠️ ComfyUI /free failed: {e}")
+
+
 def submit_and_wait(workflow, timeout_s=1200):
     """Queue a ComfyUI prompt and return the first output video filename."""
     try:
         requests.post(f"{COMFY_URL}/refresh_custom_nodes", headers=COMFY_HEADERS, timeout=2)
     except Exception:
         pass
+
+    free_comfy_memory()
 
     res_raw = requests.post(
         f"{COMFY_URL}/prompt",
@@ -296,37 +317,40 @@ def submit_and_wait(workflow, timeout_s=1200):
 
     prompt_id = res_raw.json()["prompt_id"]
     start_poll = time.time()
-    while True:
-        if time.time() - start_poll > timeout_s:
-            raise TimeoutError(f"Generation timed out after {timeout_s}s")
+    try:
+        while True:
+            if time.time() - start_poll > timeout_s:
+                raise TimeoutError(f"Generation timed out after {timeout_s}s")
 
-        time.sleep(5)
-        try:
-            hist_res = requests.get(
-                f"{COMFY_URL}/history/{prompt_id}",
-                headers=COMFY_HEADERS,
-                timeout=5,
-            )
-            history = hist_res.json()
-            if prompt_id not in history:
-                continue
+            time.sleep(5)
+            try:
+                hist_res = requests.get(
+                    f"{COMFY_URL}/history/{prompt_id}",
+                    headers=COMFY_HEADERS,
+                    timeout=5,
+                )
+                history = hist_res.json()
+                if prompt_id not in history:
+                    continue
 
-            status = history[prompt_id].get("status", {})
-            for msg in status.get("messages", []):
-                if msg[0] == "execution_error":
-                    raise RuntimeError(f"ComfyUI Execution Error: {msg[1]}")
+                status = history[prompt_id].get("status", {})
+                for msg in status.get("messages", []):
+                    if msg[0] == "execution_error":
+                        raise RuntimeError(f"ComfyUI Execution Error: {msg[1]}")
 
-            outputs = history[prompt_id].get("outputs", {})
-            for node_output in outputs.values():
-                for key in ("gifs", "videos", "images"):
-                    if key in node_output and node_output[key]:
-                        filename = node_output[key][0].get("filename")
-                        if filename and filename.lower().endswith((".mp4", ".webm", ".gif")):
-                            return filename
-        except (TimeoutError, RuntimeError):
-            raise
-        except Exception as e:
-            print(f"⚠️ Polling error: {e}")
+                outputs = history[prompt_id].get("outputs", {})
+                for node_output in outputs.values():
+                    for key in ("gifs", "videos", "images"):
+                        if key in node_output and node_output[key]:
+                            filename = node_output[key][0].get("filename")
+                            if filename and filename.lower().endswith((".mp4", ".webm", ".gif")):
+                                return filename
+            except (TimeoutError, RuntimeError):
+                raise
+            except Exception as e:
+                print(f"⚠️ Polling error: {e}")
+    finally:
+        free_comfy_memory()
 
 
 def extract_last_frame(video_path, png_path):

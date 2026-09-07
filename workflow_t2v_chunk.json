@@ -41,9 +41,9 @@
       "precision": "bf16",
       "positive_prompt": "placeholder prompt",
       "negative_prompt": "deformed hands, extra fingers, mutated legs, twisted ankles, bad anatomy, broken limbs, colorless, worst quality, low quality, lowres, jpeg artifacts, blurry, missing limbs, extra limbs, distorted, ugly",
-      "quantization": "disabled",
+      "quantization": "fp8_e4m3fn",
       "use_disk_cache": true,
-      "device": "gpu"
+      "device": "cpu"
     },
     "class_type": "WanVideoTextEncodeCached",
     "_meta": {
