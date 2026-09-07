@@ -18,15 +18,29 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY')
 )
 
-# Under-$1/hr capable GPUs for Wan 14B FP8 + UltraSharp (EU-RO-1 volume region)
-# Prefer 32GB; MoE + 81 frames needs force_offload even on 32GB to avoid OOM.
+# Prefer 96GB RTX PRO 6000 for Wan 2.2 MoE + 81 frames (no offload).
+# Fall back to 32/24GB with FORCE_OFFLOAD=true if 6000 unavailable in EU-RO-1.
 GPU_FALLBACKS = [
+    ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
+    ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
     ("NVIDIA GeForce RTX 5090", 32),
     ("NVIDIA RTX PRO 4500 Blackwell", 32),
     ("NVIDIA GeForce RTX 4090", 24),
     ("NVIDIA L4", 24),
     ("NVIDIA RTX PRO 4000 Blackwell", 24),
 ]
+
+
+def _guess_vram_gb(gpu_type_id):
+    """Best-effort VRAM when RUNPOD_GPU_TYPE is a custom / unmatched string."""
+    name = (gpu_type_id or "").lower()
+    if "6000" in name and "blackwell" in name:
+        return 96
+    if "5090" in name or "4500" in name:
+        return 32
+    if "4090" in name or "4000" in name or " l4" in f" {name}":
+        return 24
+    return 32
 
 
 def launch_pod():
@@ -36,7 +50,7 @@ def launch_pod():
     ordered = []
     if preferred:
         match = next((g for g in GPU_FALLBACKS if g[0] == preferred), None)
-        ordered.append(match if match else (preferred, 32))
+        ordered.append(match if match else (preferred, _guess_vram_gb(preferred)))
     for gpu_id, vram in GPU_FALLBACKS:
         if not any(g[0] == gpu_id for g in ordered):
             ordered.append((gpu_id, vram))
@@ -49,8 +63,6 @@ def launch_pod():
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
         "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
-        # Required for Wan 2.2 MoE + 81 frames on 32GB (was OOM at ~99% VRAM)
-        "FORCE_OFFLOAD": os.getenv("FORCE_OFFLOAD", "true"),
     }
 
     pod = None
@@ -60,7 +72,14 @@ def launch_pod():
 
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
     for gpu_type_id, gpu_vram in ordered:
-        print(f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB)...")
+        # 96GB: keep weights resident. 32/24GB: offload required for 81-frame MoE.
+        force_offload = os.getenv("FORCE_OFFLOAD")
+        if force_offload is None or force_offload.strip() == "":
+            force_offload = "false" if gpu_vram >= 64 else "true"
+        else:
+            force_offload = force_offload.strip().lower()
+
+        print(f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload})...")
         try:
             pod = runpod.create_pod(
                 name="test-batch-pod",
@@ -73,6 +92,7 @@ def launch_pod():
                 env={
                     **env_vars,
                     "GPU_VRAM_GB": str(gpu_vram),
+                    "FORCE_OFFLOAD": force_offload,
                 }
             )
             print(f"   ✅ Acquired {gpu_type_id}")

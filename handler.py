@@ -68,14 +68,15 @@ def detect_vram_gb():
 
 
 def should_force_offload(vram_gb=None):
-    """Offload for Wan 2.2 MoE + 81 frames — needed even on 32GB to avoid OOM."""
+    """96GB (RTX PRO 6000): keep resident. 32GB: offload required for 81-frame MoE."""
     flag = os.getenv("FORCE_OFFLOAD", "").lower()
     if flag in ("true", "1", "yes"):
         return True
     if flag in ("false", "0", "no"):
         return False
-    # Default on: 32GB MoE hit ~99% VRAM / OOM on low-noise pass without offload
-    return True
+    if vram_gb is None:
+        vram_gb = detect_vram_gb()
+    return vram_gb < 64
 
 
 def wait_for_comfyui():
