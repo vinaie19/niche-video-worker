@@ -68,15 +68,14 @@ def detect_vram_gb():
 
 
 def should_force_offload(vram_gb=None):
-    """24GB cards need offload for Wan 14B + UltraSharp; 32GB+ can stay resident."""
+    """Offload for Wan 2.2 MoE + 81 frames — needed even on 32GB to avoid OOM."""
     flag = os.getenv("FORCE_OFFLOAD", "").lower()
     if flag in ("true", "1", "yes"):
         return True
     if flag in ("false", "0", "no"):
         return False
-    if vram_gb is None:
-        vram_gb = detect_vram_gb()
-    return vram_gb <= 26
+    # Default on: 32GB MoE hit ~99% VRAM / OOM on low-noise pass without offload
+    return True
 
 
 def wait_for_comfyui():
@@ -415,7 +414,7 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index):
 def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upscale=True):
     """
     Generate a continuous take by chaining T2V -> I2V(last frame) chunks.
-    Default chunks=2 ≈ ~6s at 16fps (49 frames each, minus 1-frame overlap).
+    Default chunks=2 ≈ ~10s at 16fps (81 frames each, minus 1-frame overlap).
     """
     chunks = max(1, int(chunks))
     work_dir = os.path.join(WORK_DIR, job_id)

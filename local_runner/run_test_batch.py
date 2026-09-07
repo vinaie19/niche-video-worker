@@ -19,7 +19,7 @@ s3_client = boto3.client(
 )
 
 # Under-$1/hr capable GPUs for Wan 14B FP8 + UltraSharp (EU-RO-1 volume region)
-# Prefer 32GB, then 24GB with worker-side force_offload.
+# Prefer 32GB; MoE + 81 frames needs force_offload even on 32GB to avoid OOM.
 GPU_FALLBACKS = [
     ("NVIDIA GeForce RTX 5090", 32),
     ("NVIDIA RTX PRO 4500 Blackwell", 32),
@@ -49,6 +49,8 @@ def launch_pod():
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
         "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
+        # Required for Wan 2.2 MoE + 81 frames on 32GB (was OOM at ~99% VRAM)
+        "FORCE_OFFLOAD": os.getenv("FORCE_OFFLOAD", "true"),
     }
 
     pod = None
@@ -71,7 +73,6 @@ def launch_pod():
                 env={
                     **env_vars,
                     "GPU_VRAM_GB": str(gpu_vram),
-                    "FORCE_OFFLOAD": "true" if gpu_vram <= 24 else "false",
                 }
             )
             print(f"   ✅ Acquired {gpu_type_id}")

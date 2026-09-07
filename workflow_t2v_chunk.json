@@ -54,7 +54,7 @@
     "inputs": {
       "width": 480,
       "height": 832,
-      "num_frames": 49
+      "num_frames": 81
     },
     "class_type": "WanVideoEmptyEmbeds",
     "_meta": {
@@ -89,7 +89,7 @@
       "cfg": 6.0,
       "shift": 5.0,
       "scheduler": "unipc",
-      "force_offload": false,
+      "force_offload": true,
       "riflex_freq_index": 0,
       "start_step": 14,
       "end_step": -1,
