@@ -284,7 +284,7 @@ def patch_common_workflow(
 
 
 def free_comfy_memory():
-    """Unload models and free GPU memory so one OOM does not poison the next job."""
+    """Unload models and free GPU memory (call on OOM, not every successful shot)."""
     try:
         requests.post(
             f"{COMFY_URL}/free",
@@ -293,65 +293,100 @@ def free_comfy_memory():
             timeout=30,
         )
         print("🧹 ComfyUI /free — unloaded models + freed memory")
+        # Worker applies /free async; brief pause so VRAM can settle before retry.
+        time.sleep(3)
     except Exception as e:
         print(f"⚠️ ComfyUI /free failed: {e}")
 
 
-def submit_and_wait(workflow, timeout_s=1200):
-    """Queue a ComfyUI prompt and return the first output video filename."""
+def _is_oom_error(err) -> bool:
+    text = str(err).lower()
+    return any(
+        needle in text
+        for needle in (
+            "outofmemory",
+            "out of memory",
+            "allocation on device",
+            "cuda out of memory",
+            "torch.outofmemoryerror",
+            "cudamalloc",
+        )
+    )
+
+
+def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
+    """
+    Queue a ComfyUI prompt and return the first output video filename.
+
+    Keep models warm between shots. On CUDA OOM: /free immediately and retry once.
+    """
     try:
         requests.post(f"{COMFY_URL}/refresh_custom_nodes", headers=COMFY_HEADERS, timeout=2)
     except Exception:
         pass
 
-    free_comfy_memory()
+    attempts = 1 + max(0, int(oom_retries))
+    last_err = None
 
-    res_raw = requests.post(
-        f"{COMFY_URL}/prompt",
-        json={"prompt": workflow},
-        headers=COMFY_HEADERS,
-        timeout=60,
-    )
-    if res_raw.status_code != 200:
-        raise RuntimeError(f"ComfyUI Validation Error: {res_raw.text}")
+    for attempt in range(1, attempts + 1):
+        res_raw = requests.post(
+            f"{COMFY_URL}/prompt",
+            json={"prompt": workflow},
+            headers=COMFY_HEADERS,
+            timeout=60,
+        )
+        if res_raw.status_code != 200:
+            raise RuntimeError(f"ComfyUI Validation Error: {res_raw.text}")
 
-    prompt_id = res_raw.json()["prompt_id"]
-    start_poll = time.time()
-    try:
-        while True:
-            if time.time() - start_poll > timeout_s:
-                raise TimeoutError(f"Generation timed out after {timeout_s}s")
+        prompt_id = res_raw.json()["prompt_id"]
+        start_poll = time.time()
+        try:
+            while True:
+                if time.time() - start_poll > timeout_s:
+                    raise TimeoutError(f"Generation timed out after {timeout_s}s")
 
-            time.sleep(5)
-            try:
-                hist_res = requests.get(
-                    f"{COMFY_URL}/history/{prompt_id}",
-                    headers=COMFY_HEADERS,
-                    timeout=5,
+                time.sleep(5)
+                try:
+                    hist_res = requests.get(
+                        f"{COMFY_URL}/history/{prompt_id}",
+                        headers=COMFY_HEADERS,
+                        timeout=5,
+                    )
+                    history = hist_res.json()
+                    if prompt_id not in history:
+                        continue
+
+                    status = history[prompt_id].get("status", {})
+                    for msg in status.get("messages", []):
+                        if msg[0] == "execution_error":
+                            raise RuntimeError(f"ComfyUI Execution Error: {msg[1]}")
+
+                    outputs = history[prompt_id].get("outputs", {})
+                    for node_output in outputs.values():
+                        for key in ("gifs", "videos", "images"):
+                            if key in node_output and node_output[key]:
+                                filename = node_output[key][0].get("filename")
+                                if filename and filename.lower().endswith(
+                                    (".mp4", ".webm", ".gif")
+                                ):
+                                    return filename
+                except (TimeoutError, RuntimeError):
+                    raise
+                except Exception as e:
+                    print(f"⚠️ Polling error: {e}")
+        except RuntimeError as e:
+            last_err = e
+            if _is_oom_error(e) and attempt < attempts:
+                print(
+                    f"💥 OOM on attempt {attempt}/{attempts} — freeing VRAM and retrying..."
                 )
-                history = hist_res.json()
-                if prompt_id not in history:
-                    continue
+                free_comfy_memory()
+                continue
+            if _is_oom_error(e):
+                free_comfy_memory()
+            raise
 
-                status = history[prompt_id].get("status", {})
-                for msg in status.get("messages", []):
-                    if msg[0] == "execution_error":
-                        raise RuntimeError(f"ComfyUI Execution Error: {msg[1]}")
-
-                outputs = history[prompt_id].get("outputs", {})
-                for node_output in outputs.values():
-                    for key in ("gifs", "videos", "images"):
-                        if key in node_output and node_output[key]:
-                            filename = node_output[key][0].get("filename")
-                            if filename and filename.lower().endswith((".mp4", ".webm", ".gif")):
-                                return filename
-            except (TimeoutError, RuntimeError):
-                raise
-            except Exception as e:
-                print(f"⚠️ Polling error: {e}")
-    finally:
-        free_comfy_memory()
-
+    raise last_err or RuntimeError("ComfyUI submit failed with no output")
 
 def extract_last_frame(video_path, png_path):
     """Grab the last frame of a chunk for I2V continuation."""
