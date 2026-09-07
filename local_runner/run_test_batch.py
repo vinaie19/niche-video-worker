@@ -18,12 +18,13 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY')
 )
 
-# Prefer 96GB RTX PRO 6000 for Wan 2.2 MoE + 81 frames (no offload).
-# Fall back to 32/24GB with FORCE_OFFLOAD=true if 6000 unavailable in EU-RO-1.
+# Prefer RTX 5090 (49 frames + offload). Fall back to 96GB 6000 if 5090 unavailable.
 GPU_FALLBACKS = [
+    ("NVIDIA GeForce RTX 5090", 32),
+    # UI "RTX PRO 6000" can be any of these three API ids (stock differs per SKU).
     ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
-    ("NVIDIA GeForce RTX 5090", 32),
+    ("NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition", 96),
     ("NVIDIA RTX PRO 4500 Blackwell", 32),
     ("NVIDIA GeForce RTX 4090", 24),
     ("NVIDIA L4", 24),
@@ -63,6 +64,9 @@ def launch_pod():
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
         "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
+        # 5090-safe defaults (override per job in test_prompts if needed)
+        "WAN_NUM_FRAMES": os.getenv("WAN_NUM_FRAMES", "49"),
+        "WAN_STEPS": os.getenv("WAN_STEPS", "16"),
     }
 
     pod = None
@@ -204,6 +208,14 @@ def execute_batch(comfy_url, test_jobs):
                 "chunks": chunks,
                 "upscale": upscale,
             }
+            if "num_frames" in vid:
+                payload["num_frames"] = int(vid["num_frames"])
+            elif os.getenv("WAN_NUM_FRAMES"):
+                payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
+            if "steps" in vid:
+                payload["steps"] = int(vid["steps"])
+            elif os.getenv("WAN_STEPS"):
+                payload["steps"] = int(os.getenv("WAN_STEPS"))
 
             try:
                 res = requests.post(f"{comfy_url}/prompt", json=payload, timeout=30).json()
@@ -311,6 +323,9 @@ def download_and_stitch(rendered_urls, test_jobs):
                 captions_field, job.get("caption_style")
             )
             try:
+                ambient = job.get("ambient", "rain_city")
+                vo_delay_ms = int(job.get("vo_delay_ms", 900))
+                ambient_volume = float(job.get("ambient_volume", 0.38))
                 add_voice_and_captions(
                     silent_path,
                     script,
@@ -319,11 +334,14 @@ def download_and_stitch(rendered_urls, test_jobs):
                     voice=job.get("voice"),
                     burn_captions=captions_on,
                     caption_style=caption_style,
+                    ambient=ambient,
+                    vo_delay_ms=vo_delay_ms,
+                    ambient_volume=ambient_volume,
                 )
                 mode = (
                     f"voice + captions({caption_style})"
                     if captions_on
-                    else "voice only"
+                    else "voice + ambient"
                 )
                 print(f"🎉 Complete Video ({mode}): {output_video}")
             except Exception as e:

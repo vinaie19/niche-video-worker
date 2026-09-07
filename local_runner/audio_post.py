@@ -1,5 +1,5 @@
 """
-Local post-production: Edge-TTS voiceover + Whisper captions + FFmpeg mux.
+Local post-production: Edge-TTS voiceover + ambient bed + Whisper captions + FFmpeg mux.
 
 Runs on the laptop (CPU). GPU worker stays video-only.
 
@@ -8,6 +8,9 @@ Job fields (test_prompts.py):
   voice           — preset key or full Edge-TTS id (see VOICE_PRESETS)
   captions        — False | True | caption style key (see CAPTION_STYLES)
   caption_style   — style key when captions=True (default: minimal)
+  ambient         — False | "rain" | "rain_city" | path to audio file
+  vo_delay_ms     — ms of ambient-only before VO (default 900 for palate-cleanser hook)
+  ambient_volume  — 0.0–1.0 bed level under VO (default 0.38)
 """
 
 from __future__ import annotations
@@ -18,6 +21,12 @@ import subprocess
 from typing import Optional, Union
 
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
+
+# Retention defaults: rain hits before the soft VO ("audio hook")
+DEFAULT_AMBIENT = "rain_city"
+DEFAULT_VO_DELAY_MS = 900
+DEFAULT_AMBIENT_VOLUME = 0.38
+AMBIENT_PRESETS = ("rain", "rain_city")
 
 # Short keys → Edge-TTS neural voice IDs
 VOICE_PRESETS = {
@@ -216,6 +225,162 @@ def _ffmpeg_subtitles_path(path: str) -> str:
     return p.replace(":", "\\:").replace("'", "\\'")
 
 
+def _probe_duration(path: str) -> float:
+    """Return media duration in seconds via ffprobe."""
+    out = subprocess.check_output(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            path,
+        ],
+        text=True,
+    ).strip()
+    return float(out)
+
+
+def parse_ambient_option(ambient: Union[bool, str, None] = DEFAULT_AMBIENT) -> Optional[str]:
+    """
+    Normalize ambient field.
+
+    Returns None (off), a preset name ("rain" / "rain_city"), or an absolute file path.
+    """
+    if ambient is None or ambient is False:
+        return None
+    if ambient is True:
+        return DEFAULT_AMBIENT
+    if isinstance(ambient, str):
+        key = ambient.strip()
+        if key.lower() in ("", "false", "0", "no", "off", "none"):
+            return None
+        if key.lower() in ("true", "1", "yes", "on"):
+            return DEFAULT_AMBIENT
+        low = key.lower()
+        if low in AMBIENT_PRESETS:
+            return low
+        if os.path.isfile(key):
+            return os.path.abspath(key)
+        print(f"⚠️ ambient '{ambient}' not found; using rain_city. Presets: {', '.join(AMBIENT_PRESETS)}")
+        return DEFAULT_AMBIENT
+    return DEFAULT_AMBIENT
+
+
+def generate_ambient_bed(
+    duration_s: float,
+    output_wav: str,
+    preset: str = "rain_city",
+    volume: float = DEFAULT_AMBIENT_VOLUME,
+) -> str:
+    """
+    Synthesize a rain / rain+city bed with FFmpeg lavfi (no external sample packs).
+
+    rain      — pink-noise rain texture (heavy droplets feel)
+    rain_city — rain + low street hum (default palate-cleanser bed)
+    """
+    if duration_s <= 0.2:
+        raise ValueError(f"duration too short for ambient: {duration_s}")
+    os.makedirs(os.path.dirname(os.path.abspath(output_wav)) or ".", exist_ok=True)
+    dur = f"{duration_s:.3f}"
+    vol = max(0.05, min(1.0, float(volume)))
+
+    if preset == "rain":
+        # Broadband rain-ish texture
+        af = (
+            f"highpass=f=180,lowpass=f=10000,volume={vol:.3f},"
+            f"afade=t=in:st=0:d=0.25,afade=t=out:st={max(0.0, duration_s - 0.4):.3f}:d=0.4"
+        )
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"anoisesrc=color=pink:amplitude=0.55:duration={dur}",
+            "-af",
+            af,
+            output_wav,
+        ]
+    else:
+        # rain_city: rain layer + low brown-noise street hum
+        # [0] pink → rain, [1] brown → hum; amix to one bed
+        rain_v = vol
+        hum_v = vol * 0.45
+        fade_out_st = max(0.0, duration_s - 0.4)
+        filter = (
+            f"[0:a]highpass=f=200,lowpass=f=11000,volume={rain_v:.3f}[rain];"
+            f"[1:a]lowpass=f=160,volume={hum_v:.3f}[hum];"
+            f"[rain][hum]amix=inputs=2:duration=longest:dropout_transition=0,"
+            f"afade=t=in:st=0:d=0.25,afade=t=out:st={fade_out_st:.3f}:d=0.4[out]"
+        )
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"anoisesrc=color=pink:amplitude=0.55:duration={dur}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"anoisesrc=color=brown:amplitude=0.4:duration={dur}",
+            "-filter_complex",
+            filter,
+            "-map",
+            "[out]",
+            output_wav,
+        ]
+
+    print(f"🌧️ Ambient bed ({preset}, {duration_s:.1f}s, vol={vol:.2f}) → {output_wav}")
+    subprocess.run(cmd, check=True, capture_output=True)
+    if not os.path.isfile(output_wav) or os.path.getsize(output_wav) < 100:
+        raise RuntimeError(f"Ambient bed empty: {output_wav}")
+    return output_wav
+
+
+def mix_voice_with_ambient(
+    voice_mp3: str,
+    ambient_path: str,
+    output_wav: str,
+    video_duration_s: float,
+    vo_delay_ms: int = DEFAULT_VO_DELAY_MS,
+    voice_volume: float = 1.0,
+) -> str:
+    """
+    Delay VO so ambient alone owns the first ~1s (swipe decision window),
+    then mix under the soft narration. Output length = video duration.
+    """
+    delay = max(0, int(vo_delay_ms))
+    # adelay wants ms per channel for stereo; mono gets one value
+    filter = (
+        f"[1:a]volume={voice_volume:.3f},adelay={delay}|{delay},"
+        f"apad=whole_dur={video_duration_s:.3f}[vo];"
+        f"[0:a][vo]amix=inputs=2:duration=first:dropout_transition=0,"
+        f"alimiter=limit=0.95[out]"
+    )
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        ambient_path,
+        "-i",
+        voice_mp3,
+        "-filter_complex",
+        filter,
+        "-map",
+        "[out]",
+        "-t",
+        f"{video_duration_s:.3f}",
+        output_wav,
+    ]
+    print(f"🎚️ Mix VO + ambient (vo_delay={delay}ms) → {output_wav}")
+    subprocess.run(cmd, check=True, capture_output=True)
+    return output_wav
+
+
 def mux_video_audio_subs(
     video_path: str,
     audio_path: str,
@@ -223,10 +388,13 @@ def mux_video_audio_subs(
     output_path: str,
     burn_captions: bool = False,
     caption_style: Optional[str] = None,
+    match_video_duration: bool = True,
 ) -> str:
     """
-    Mux silent Wan MP4 + TTS audio (+ optional burned-in captions).
-    Uses -shortest so output ends with the shorter of video/audio.
+    Mux silent Wan MP4 + mixed audio (+ optional burned-in captions).
+
+    By default output length follows the video (ambient fills the bed),
+    so a short VO no longer truncates the Short with -shortest.
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True)
     cmd = [
@@ -259,7 +427,16 @@ def mux_video_audio_subs(
         "aac",
         "-b:a",
         "192k",
-        "-shortest",
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0",
+    ]
+    if match_video_duration:
+        cmd += ["-t", f"{_probe_duration(video_path):.3f}"]
+    else:
+        cmd += ["-shortest"]
+    cmd += [
         "-movflags",
         "+faststart",
         output_path,
@@ -277,8 +454,11 @@ def add_voice_and_captions(
     voice: Optional[str] = None,
     burn_captions: bool = False,
     caption_style: Optional[str] = None,
+    ambient: Union[bool, str, None] = DEFAULT_AMBIENT,
+    vo_delay_ms: int = DEFAULT_VO_DELAY_MS,
+    ambient_volume: float = DEFAULT_AMBIENT_VOLUME,
 ) -> str:
-    """Full post pipeline: TTS → optional Whisper SRT → mux into final MP4."""
+    """Full post pipeline: TTS → ambient bed → optional Whisper SRT → mux."""
     if not script or not script.strip():
         raise ValueError("script text is required for voiceover")
     if not os.path.isfile(silent_video_path):
@@ -288,6 +468,7 @@ def add_voice_and_captions(
     os.makedirs(work_dir, exist_ok=True)
     stem = os.path.splitext(os.path.basename(output_path))[0]
     mp3 = os.path.join(work_dir, f"{stem}_voice.mp3")
+    mixed = os.path.join(work_dir, f"{stem}_mix.wav")
     srt = os.path.join(work_dir, f"{stem}_captions.srt")
 
     generate_voiceover(script, mp3, voice=voice)
@@ -297,13 +478,58 @@ def add_voice_and_captions(
         print("📝 Captions off — voice only")
         srt = ""
 
+    video_dur = _probe_duration(silent_video_path)
+    ambient_key = parse_ambient_option(ambient)
+    final_audio = mp3
+
+    if ambient_key:
+        bed = os.path.join(work_dir, f"{stem}_ambient.wav")
+        if ambient_key in AMBIENT_PRESETS:
+            generate_ambient_bed(
+                video_dur,
+                bed,
+                preset=ambient_key,
+                volume=ambient_volume,
+            )
+        else:
+            # Custom file: loop/trim to video length
+            print(f"🌧️ Ambient file → {ambient_key}")
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-stream_loop",
+                    "-1",
+                    "-i",
+                    ambient_key,
+                    "-t",
+                    f"{video_dur:.3f}",
+                    "-af",
+                    f"volume={float(ambient_volume):.3f}",
+                    bed,
+                ],
+                check=True,
+                capture_output=True,
+            )
+        mix_voice_with_ambient(
+            mp3,
+            bed,
+            mixed,
+            video_duration_s=video_dur,
+            vo_delay_ms=vo_delay_ms,
+        )
+        final_audio = mixed
+    else:
+        print("🌧️ Ambient off — VO only (weak Shorts hook)")
+
     return mux_video_audio_subs(
         silent_video_path,
-        mp3,
+        final_audio,
         srt,
         output_path,
         burn_captions=burn_captions and bool(srt),
         caption_style=caption_style,
+        match_video_duration=True,
     )
 
 
@@ -311,7 +537,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Add Edge-TTS + optional Whisper captions to a silent MP4"
+        description="Add Edge-TTS + ambient bed + optional Whisper captions to a silent MP4"
     )
     parser.add_argument("video", help="Silent input MP4")
     parser.add_argument("--script", required=True, help="Narration text")
@@ -327,6 +553,23 @@ if __name__ == "__main__":
         help=f"off | on | style. Styles: {', '.join(CAPTION_STYLES)}",
     )
     parser.add_argument("--caption-style", default=None, help="Used when --captions on")
+    parser.add_argument(
+        "--ambient",
+        default=DEFAULT_AMBIENT,
+        help=f"off | {' | '.join(AMBIENT_PRESETS)} | path/to.wav (default: {DEFAULT_AMBIENT})",
+    )
+    parser.add_argument(
+        "--vo-delay-ms",
+        type=int,
+        default=DEFAULT_VO_DELAY_MS,
+        help=f"Ambient-only ms before VO (default: {DEFAULT_VO_DELAY_MS})",
+    )
+    parser.add_argument(
+        "--ambient-volume",
+        type=float,
+        default=DEFAULT_AMBIENT_VOLUME,
+        help=f"Bed level 0–1 (default: {DEFAULT_AMBIENT_VOLUME})",
+    )
     parser.add_argument("--list", action="store_true", help="Print voices & caption styles")
     args = parser.parse_args()
 
@@ -335,6 +578,7 @@ if __name__ == "__main__":
         for k, v in VOICE_PRESETS.items():
             print(f"  {k:12} → {v}")
         print("Caption styles:", ", ".join(CAPTION_STYLES))
+        print("Ambient presets:", ", ".join(AMBIENT_PRESETS))
         raise SystemExit(0)
 
     enabled, style = parse_captions_option(args.captions, args.caption_style)
@@ -345,5 +589,8 @@ if __name__ == "__main__":
         voice=args.voice,
         burn_captions=enabled,
         caption_style=style,
+        ambient=args.ambient,
+        vo_delay_ms=args.vo_delay_ms,
+        ambient_volume=args.ambient_volume,
     )
     print(f"✅ Done: {args.output}")

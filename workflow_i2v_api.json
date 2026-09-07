@@ -87,7 +87,7 @@
     "inputs": {
       "width": 480,
       "height": 832,
-      "num_frames": 81,
+      "num_frames": 49,
       "noise_aug_strength": 0.0,
       "start_latent_strength": 1.0,
       "end_latent_strength": 1.0,
@@ -106,14 +106,14 @@
   "5": {
     "inputs": {
       "seed": 888888,
-      "steps": 20,
+      "steps": 16,
       "cfg": 6.0,
       "shift": 5.0,
       "scheduler": "unipc",
       "force_offload": true,
       "riflex_freq_index": 0,
       "start_step": 0,
-      "end_step": 10,
+      "end_step": 8,
       "add_noise_to_samples": false,
       "model": ["1", 0],
       "image_embeds": ["4", 0],
@@ -127,13 +127,13 @@
   "5b": {
     "inputs": {
       "seed": 888888,
-      "steps": 20,
+      "steps": 16,
       "cfg": 6.0,
       "shift": 5.0,
       "scheduler": "unipc",
       "force_offload": true,
       "riflex_freq_index": 0,
-      "start_step": 10,
+      "start_step": 8,
       "end_step": -1,
       "add_noise_to_samples": false,
       "model": ["1b", 0],

@@ -68,7 +68,7 @@ def detect_vram_gb():
 
 
 def should_force_offload(vram_gb=None):
-    """96GB (RTX PRO 6000): keep resident. 32GB: offload required for 81-frame MoE."""
+    """96GB (RTX PRO 6000): keep resident. 32GB: offload required for MoE."""
     flag = os.getenv("FORCE_OFFLOAD", "").lower()
     if flag in ("true", "1", "yes"):
         return True
@@ -77,6 +77,22 @@ def should_force_offload(vram_gb=None):
     if vram_gb is None:
         vram_gb = detect_vram_gb()
     return vram_gb < 64
+
+
+def default_num_frames():
+    """5090-safe default: 49 frames ≈ 3.1s @ 16fps (81 OOMs on 32GB)."""
+    try:
+        requested = int(os.getenv("WAN_NUM_FRAMES", "49"))
+    except ValueError:
+        requested = 49
+    return nearest_valid_frames(requested)
+
+
+def default_steps():
+    try:
+        return max(1, int(os.getenv("WAN_STEPS", "16")))
+    except ValueError:
+        return 16
 
 
 def wait_for_comfyui():
@@ -180,8 +196,25 @@ def detect_models(prefer_i2v=False):
     }
 
 
-def patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload):
+def patch_common_workflow(
+    workflow,
+    prompt_text,
+    models,
+    use_sage,
+    force_offload,
+    num_frames=None,
+    steps=None,
+):
     """Apply prompt / MoE model / VRAM / attention patches for Wan 2.2 graphs."""
+    if num_frames is None:
+        num_frames = default_num_frames()
+    else:
+        num_frames = nearest_valid_frames(int(num_frames))
+    if steps is None:
+        steps = default_steps()
+    else:
+        steps = max(1, int(steps))
+
     for node in workflow.values():
         class_type = node.get("class_type")
         title = (node.get("_meta") or {}).get("title", "")
@@ -212,13 +245,20 @@ def patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload
             node["inputs"]["load_device"] = "offload_device" if force_offload else "main_device"
 
         if class_type in ("WanVideoEmptyEmbeds", "WanVideoImageToVideoEncode") and "num_frames" in node["inputs"]:
-            requested = int(node["inputs"]["num_frames"])
-            fixed = nearest_valid_frames(requested)
-            if fixed != requested:
-                print(f"⚠️ num_frames {requested} invalid for Wan VAE; snapping to {fixed} (4k+1)")
-            node["inputs"]["num_frames"] = fixed
+            node["inputs"]["num_frames"] = num_frames
 
         if class_type == "WanVideoSampler":
+            # Scale MoE high/low boundary with step count (preserve graph ratio).
+            old_steps = int(node["inputs"].get("steps") or steps)
+            old_start = int(node["inputs"].get("start_step") or 0)
+            old_end = node["inputs"].get("end_step", -1)
+            node["inputs"]["steps"] = steps
+            if old_steps > 0 and old_start > 0:
+                node["inputs"]["start_step"] = max(0, int(round(old_start * steps / old_steps)))
+            if old_end is not None and int(old_end) != -1 and old_steps > 0:
+                node["inputs"]["end_step"] = max(
+                    1, min(steps - 1, int(round(int(old_end) * steps / old_steps)))
+                )
             # High-noise pass should offload before low-noise loads
             if "High Noise" in title:
                 node["inputs"]["force_offload"] = True
@@ -234,6 +274,7 @@ def patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload
         if class_type == "UpscaleModelLoader" and models["upscale"]:
             node["inputs"]["model_name"] = models["upscale"]
 
+    print(f"🎚️ Workflow patch | frames={num_frames} (~{num_frames / 16:.1f}s) | steps={steps}")
     return workflow
 
 
@@ -383,7 +424,7 @@ def upload_to_r2(local_file_path, r2_key):
     return f"{os.getenv('R2_PUBLIC_URL_PREFIX')}/{r2_key}"
 
 
-def execute_multi_cut(job_id, prompt_text, video_id, shot_index):
+def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None, steps=None):
     """Original single-clip T2V path with UltraSharp 1080p."""
     with open("/workspace/workflow_api.json", "r") as f:
         workflow = json.load(f)
@@ -399,7 +440,15 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index):
         f"attention={'sageattn' if use_sage else 'sdpa'}"
     )
 
-    workflow = patch_common_workflow(workflow, prompt_text, models, use_sage, force_offload)
+    workflow = patch_common_workflow(
+        workflow,
+        prompt_text,
+        models,
+        use_sage,
+        force_offload,
+        num_frames=num_frames,
+        steps=steps,
+    )
     output_filename = submit_and_wait(workflow, timeout_s=1200)
     local_file_path = os.path.join(OUTPUT_DIR, output_filename)
     r2_key = f"renders/{video_id}/shot_{shot_index}.mp4"
@@ -412,12 +461,15 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index):
     jobs[job_id]["shot_mode"] = "multi_cut"
 
 
-def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upscale=True):
+def execute_continuous(
+    job_id, prompt_text, video_id, shot_index, chunks=2, upscale=True, num_frames=None, steps=None
+):
     """
     Generate a continuous take by chaining T2V -> I2V(last frame) chunks.
-    Default chunks=2 ≈ ~10s at 16fps (81 frames each, minus 1-frame overlap).
+    Default chunk length follows WAN_NUM_FRAMES (49 ≈ 3.1s @ 16fps).
     """
     chunks = max(1, int(chunks))
+    frames = nearest_valid_frames(int(num_frames)) if num_frames is not None else default_num_frames()
     work_dir = os.path.join(WORK_DIR, job_id)
     os.makedirs(work_dir, exist_ok=True)
     os.makedirs(INPUT_DIR, exist_ok=True)
@@ -426,7 +478,7 @@ def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upsc
     vram_gb = detect_vram_gb()
     force_offload = should_force_offload(vram_gb)
     print(
-        f"🎬 Continuous mode | chunks={chunks} (~{chunks * 5:.0f}s) | "
+        f"🎬 Continuous mode | chunks={chunks} (~{chunks * frames / 16:.0f}s) | "
         f"VRAM≈{vram_gb:.0f}GB | force_offload={force_offload} | "
         f"attention={'sageattn' if use_sage else 'sdpa'}"
     )
@@ -443,7 +495,13 @@ def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upsc
             if not models.get("diffusion_high") or not models.get("diffusion_low"):
                 raise RuntimeError("Wan 2.2 T2V high/low FP8 experts not found")
             workflow = patch_common_workflow(
-                workflow, prompt_text, models, use_sage, force_offload
+                workflow,
+                prompt_text,
+                models,
+                use_sage,
+                force_offload,
+                num_frames=num_frames,
+                steps=steps,
             )
         else:
             with open("/workspace/workflow_i2v_api.json", "r") as f:
@@ -464,7 +522,13 @@ def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upsc
             extract_last_frame(chunk_paths[-1], start_path)
 
             workflow = patch_common_workflow(
-                workflow, prompt_text, models, use_sage, force_offload
+                workflow,
+                prompt_text,
+                models,
+                use_sage,
+                force_offload,
+                num_frames=num_frames,
+                steps=steps,
             )
             for node in workflow.values():
                 if node.get("class_type") == "LoadImage":
@@ -514,6 +578,8 @@ def execute_render_async(
     shot_mode="multi_cut",
     chunks=2,
     upscale=True,
+    num_frames=None,
+    steps=None,
 ):
     try:
         jobs[job_id]["status"] = "processing"
@@ -526,9 +592,18 @@ def execute_render_async(
                 shot_index,
                 chunks=chunks,
                 upscale=upscale,
+                num_frames=num_frames,
+                steps=steps,
             )
         else:
-            execute_multi_cut(job_id, prompt_text, video_id, shot_index)
+            execute_multi_cut(
+                job_id,
+                prompt_text,
+                video_id,
+                shot_index,
+                num_frames=num_frames,
+                steps=steps,
+            )
     except Exception as e:
         import traceback
 
@@ -571,6 +646,8 @@ def health_check():
             "setup_log": setup_log,
             "vram_gb": detect_vram_gb(),
             "force_offload": should_force_offload(),
+            "wan_num_frames": default_num_frames(),
+            "wan_steps": default_steps(),
             "modes": ["multi_cut", "continuous"],
         }
     )
@@ -583,6 +660,12 @@ def handle_prompt():
     shot_mode = data.get("shot_mode", "multi_cut")
     chunks = int(data.get("chunks", 2))
     upscale = bool(data.get("upscale", True))
+    num_frames = data.get("num_frames")
+    steps = data.get("steps")
+    if num_frames is not None:
+        num_frames = int(num_frames)
+    if steps is not None:
+        steps = int(steps)
 
     jobs[job_id] = {
         "status": "queued",
@@ -590,6 +673,8 @@ def handle_prompt():
         "shot_index": data.get("shot_index"),
         "shot_mode": shot_mode,
         "chunks": chunks,
+        "num_frames": num_frames,
+        "steps": steps,
         "created_at": time.time(),
     }
 
@@ -603,12 +688,21 @@ def handle_prompt():
             shot_mode,
             chunks,
             upscale,
+            num_frames,
+            steps,
         ),
     )
     thread.start()
 
     return jsonify(
-        {"job_id": job_id, "status": "queued", "shot_mode": shot_mode, "chunks": chunks}
+        {
+            "job_id": job_id,
+            "status": "queued",
+            "shot_mode": shot_mode,
+            "chunks": chunks,
+            "num_frames": num_frames,
+            "steps": steps,
+        }
     )
 
 
