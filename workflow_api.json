@@ -54,7 +54,7 @@
     "inputs": {
       "width": 480,
       "height": 832,
-      "num_frames": 81
+      "num_frames": 49
     },
     "class_type": "WanVideoEmptyEmbeds",
     "_meta": {

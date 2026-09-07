@@ -415,7 +415,7 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index):
 def execute_continuous(job_id, prompt_text, video_id, shot_index, chunks=2, upscale=True):
     """
     Generate a continuous take by chaining T2V -> I2V(last frame) chunks.
-    Default chunks=2 ≈ ~10s at 16fps (81 frames each, minus 1-frame overlap).
+    Default chunks=2 ≈ ~6s at 16fps (49 frames each, minus 1-frame overlap).
     """
     chunks = max(1, int(chunks))
     work_dir = os.path.join(WORK_DIR, job_id)
