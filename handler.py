@@ -229,13 +229,13 @@ def patch_common_workflow(
                 node["inputs"]["text"] = prompt_text
             if models["text_encoder"] and "model_name" in node["inputs"]:
                 node["inputs"]["model_name"] = models["text_encoder"]
-            # 32GB MoE: keep UMT5 off GPU; fp8 matches umt5_xxl_fp8 weights.
+            # Encode on GPU (fast). /free between jobs + MoE offload frees VRAM after.
             if "quantization" in node["inputs"]:
                 node["inputs"]["quantization"] = (
                     "fp8_e4m3fn" if force_offload else "disabled"
                 )
             if "device" in node["inputs"]:
-                node["inputs"]["device"] = "cpu" if force_offload else "gpu"
+                node["inputs"]["device"] = "gpu"
             node["inputs"]["use_disk_cache"] = True
 
         if class_type == "WanVideoModelLoader":

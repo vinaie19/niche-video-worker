@@ -76,7 +76,7 @@
       "negative_prompt": "deformed hands, extra fingers, mutated legs, twisted ankles, bad anatomy, broken limbs, colorless, worst quality, low quality, lowres, jpeg artifacts, blurry, missing limbs, extra limbs, distorted, ugly",
       "quantization": "fp8_e4m3fn",
       "use_disk_cache": true,
-      "device": "cpu"
+      "device": "gpu"
     },
     "class_type": "WanVideoTextEncodeCached",
     "_meta": {

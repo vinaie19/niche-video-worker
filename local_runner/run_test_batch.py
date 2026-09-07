@@ -18,17 +18,10 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY')
 )
 
-# Prefer RTX 5090 (49 frames + offload). Fall back to 96GB 6000 if 5090 unavailable.
+# Prefer RTX 5090, then 4500 (same 32GB + offload). No 6000 for now.
 GPU_FALLBACKS = [
     ("NVIDIA GeForce RTX 5090", 32),
-    # UI "RTX PRO 6000" can be any of these three API ids (stock differs per SKU).
-    ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
-    ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
-    ("NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition", 96),
-    ("NVIDIA RTX PRO 4500 Blackwell", 32),
-    ("NVIDIA GeForce RTX 4090", 24),
-    ("NVIDIA L4", 24),
-    ("NVIDIA RTX PRO 4000 Blackwell", 24),
+    ("NVIDIA RTX PRO 4500 Blackwell", 32)
 ]
 
 
