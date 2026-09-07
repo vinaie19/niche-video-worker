@@ -284,7 +284,7 @@ def patch_common_workflow(
 
 
 def free_comfy_memory():
-    """Unload models and free GPU memory (call on OOM, not every successful shot)."""
+    """Unload models and free GPU memory so T5 can load on the next shot."""
     try:
         requests.post(
             f"{COMFY_URL}/free",
@@ -318,7 +318,8 @@ def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
     """
     Queue a ComfyUI prompt and return the first output video filename.
 
-    Keep models warm between shots. On CUDA OOM: /free immediately and retry once.
+    After success, /free so leftover MoE weights do not OOM the next T5 load.
+    On CUDA OOM: /free immediately and retry once.
     """
     try:
         requests.post(f"{COMFY_URL}/refresh_custom_nodes", headers=COMFY_HEADERS, timeout=2)
@@ -369,6 +370,7 @@ def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
                                 if filename and filename.lower().endswith(
                                     (".mp4", ".webm", ".gif")
                                 ):
+                                    free_comfy_memory()
                                     return filename
                 except (TimeoutError, RuntimeError):
                     raise
