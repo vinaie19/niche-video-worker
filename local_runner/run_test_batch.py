@@ -47,6 +47,8 @@ def launch_pod():
         "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
         "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
+        # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
+        "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
     }
 
     pod = None
@@ -62,7 +64,7 @@ def launch_pod():
                 name="test-batch-pod",
                 image_name=image,
                 gpu_type_id=gpu_type_id,
-                container_disk_in_gb=50,
+                container_disk_in_gb=75,  # SSD cache for T2V+I2V MoE pairs
                 ports="8000/http",
                 network_volume_id="cxgqbfwsvr",
                 data_center_id="EU-RO-1",

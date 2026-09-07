@@ -286,14 +286,15 @@ def ensure_i2v_model(log):
     if not install:
         log.write(
             f"ℹ️ Skipping Wan 2.2 I2V (~29GB pair). Diffusion models already use ~{used_gb:.1f}GB. "
-            "Set INSTALL_WAN22_I2V=true after resizing volume to ~100GB. T2V-only still works.\n"
+            "Set INSTALL_WAN22_I2V=true after resizing network volume to ≥75GB. T2V-only still works.\n"
         )
         return
 
-    if used_gb > 40:
+    # Need ~29GB free for the I2V pair after T2V (~29GB) + encoders (~8GB) ≈ 66GB total
+    if used_gb > 45:
         log.write(
             f"⚠️ Refusing Wan 2.2 I2V — diffusion models already ~{used_gb:.1f}GB "
-            "(need headroom for a ~29GB pair). Resize volume / delete unused weights.\n"
+            "(need headroom for a ~29GB pair on a ≥75GB volume). Delete orphans / resize.\n"
         )
         return
 
