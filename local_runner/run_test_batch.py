@@ -243,47 +243,96 @@ def execute_batch(comfy_url, test_jobs):
 
 
 def download_and_stitch(rendered_urls, test_jobs):
+    from audio_post import add_voice_and_captions
+
     os.makedirs("./final_videos", exist_ok=True)
     os.makedirs("./temp_clips", exist_ok=True)
 
-    mode_by_id = {v["video_id"]: v.get("shot_mode", "multi_cut") for v in test_jobs}
+    jobs_by_id = {v["video_id"]: v for v in test_jobs}
+    mode_by_id = {vid: j.get("shot_mode", "multi_cut") for vid, j in jobs_by_id.items()}
 
     for vid_id, urls in rendered_urls.items():
         urls = [url for url in urls if url]
         if not urls:
             continue
 
+        job = jobs_by_id.get(vid_id, {})
+        script = (job.get("script") or "").strip()
+        silent_path = f"./temp_clips/{vid_id}_silent.mp4"
+        output_video = f"./final_videos/{vid_id}_complete.mp4"
+
         # Continuous already returns one final clip
         if mode_by_id.get(vid_id) in ("continuous", "single_shot", "singleshot"):
-            path = f"./final_videos/{vid_id}_complete.mp4"
             r = requests.get(urls[0], stream=True)
-            with open(path, "wb") as f:
+            with open(silent_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-            print(f"🎉 Continuous Video Downloaded: {path}")
-            continue
+            print(f"⬇️ Continuous silent clip: {silent_path}")
+        else:
+            local_paths = []
+            for idx, url in enumerate(urls):
+                path = f"./temp_clips/{vid_id}_shot_{idx+1}.mp4"
+                r = requests.get(url, stream=True)
+                with open(path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                local_paths.append(path)
 
-        local_paths = []
-        for idx, url in enumerate(urls):
-            path = f"./temp_clips/{vid_id}_shot_{idx+1}.mp4"
-            r = requests.get(url, stream=True)
-            with open(path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            local_paths.append(path)
+            list_file = f"./temp_clips/{vid_id}_list.txt"
+            with open(list_file, "w") as f:
+                for p in local_paths:
+                    f.write(f"file '{os.path.abspath(p)}'\n")
 
-        list_file = f"./temp_clips/{vid_id}_list.txt"
-        with open(list_file, "w") as f:
-            for p in local_paths:
-                f.write(f"file '{os.path.abspath(p)}'\n")
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-f",
+                    "concat",
+                    "-safe",
+                    "0",
+                    "-i",
+                    list_file,
+                    "-c",
+                    "copy",
+                    silent_path,
+                ],
+                check=True,
+            )
+            print(f"⬇️ Stitched silent video: {silent_path}")
 
-        output_video = f"./final_videos/{vid_id}_complete.mp4"
-        subprocess.run(
-            f"ffmpeg -y -f concat -safe 0 -i {list_file} -c copy {output_video}",
-            shell=True,
-            check=True,
-        )
-        print(f"🎉 Complete Video Created: {output_video}")
+        if script:
+            from audio_post import parse_captions_option
+
+            # captions: False | True | "minimal"|"clean"|"boxed"|"yellow"|"tiny"
+            # caption_style: optional when captions=True
+            captions_field = job.get("captions", job.get("burn_captions", False))
+            captions_on, caption_style = parse_captions_option(
+                captions_field, job.get("caption_style")
+            )
+            try:
+                add_voice_and_captions(
+                    silent_path,
+                    script,
+                    output_video,
+                    work_dir=f"./temp_clips/{vid_id}_audio",
+                    voice=job.get("voice"),
+                    burn_captions=captions_on,
+                    caption_style=caption_style,
+                )
+                mode = (
+                    f"voice + captions({caption_style})"
+                    if captions_on
+                    else "voice only"
+                )
+                print(f"🎉 Complete Video ({mode}): {output_video}")
+            except Exception as e:
+                print(f"⚠️ Audio post failed ({e}); keeping silent copy as final.")
+                subprocess.run(["cp", "-f", silent_path, output_video], check=True)
+                print(f"🎉 Silent Video Saved: {output_video}")
+        else:
+            subprocess.run(["cp", "-f", silent_path, output_video], check=True)
+            print(f"🎉 Complete Video Created (no script → silent): {output_video}")
 
 
 def destroy_pod(pod_id):
