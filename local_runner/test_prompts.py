@@ -1,15 +1,13 @@
 # Voice presets: christopher | guy | davis | jenny | aria | sara | michelle |
 #                andrew | emma | ryan | sonia | prabhat
 # Captions: False | "minimal" | "clean" | "boxed" | "yellow" | "tiny"
-# Ambient: False | "rain" | "rain_city" | path/to.wav  (rain before VO = Shorts hook)
+# Ambient: False | "rain" | "rain_city" | path/to.wav  (starts at 0:00)
+# Title: optional one-line overlay at 0:00 (not Whisper captions)
 #
-# 5090 profile: 49 frames @ 16fps ≈ 3.1s/shot, 16 steps (see .env WAN_*)
-# ~22s Short ≈ 7 shots. Override per job with num_frames / steps if needed.
-#
-# Retention checklist (palate-cleanser Shorts):
-#   1. Visual hook — shot 1 first frame must be gorgeous (reroll if flat)
-#   2. Audio hook  — ambient rain/city starts immediately; VO delayed ~900ms
-#   3. Pacing      — 7×49f ≈ 22s (still Shorts-safe; avoid 30s+)
+# 5090 profile (Wan): 49 frames @ 16fps ≈ 3.1s/shot, 24 steps (see .env WAN_*)
+# Hunyuan A/B: ENGINE=hunyuan HY_VARIANT=480p_distilled HY_NUM_FRAMES=73 HY_STEPS=20
+#   → 73 frames @ 24fps ≈ 3.0s/shot (matches Wan shot length for retention compare)
+# Retention test: 3 shots ≈ 9s, no VO, rain from 0, one quiet title.
 #
 # Series 1 — Places That Stay Open:
 #   ep01 ramen window | ep02 konbini glow | ep03 vending alley
@@ -17,36 +15,44 @@
 
 test_jobs = [
     {
-        "video_id": "ep03_vending_alley",
+        "video_id": "ep05_capsule_rain",
         "shot_mode": "multi_cut",
         "num_frames": 49,
-        "steps": 16,
-        "script": (
-            "A narrow alley. Machines stand like quiet sentries. "
-            "Coins wait in a forgotten tray. Neon drinks the rain. "
-            "Nothing is sold tonight. Everything still glows. "
-            "The city hums. You walk on."
-        ),
-        "voice": "aria",
-        "captions": "minimal",
-        "ambient": "rain_city",
-        "vo_delay_ms": 900,
-        "ambient_volume": 0.40,
+        "steps": 24,
+        "captions": False,
+        "ambient": "rain_city", 
+        "ambient_volume": 0.45, # Bumped slightly since it's the only audio
+        "title": "2AM.",
         "shots": [
-            # Hook: narrow alley corridor of machines (not facade / not konbini interior)
-            "Cinematic locked shot down a narrow Japanese alley lined with glowing drink vending machines at night, wet brick walls, pink and cyan neon spill, light rain mist, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # Coin slot / panel detail
-            "Cinematic locked extreme close-up of a vending machine coin slot and lit selection buttons, soft neon glow on scratched metal, subtle button light flicker only, shallow depth of field, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # Dispense flap / empty tray still life
-            "Cinematic locked close-up of an open vending machine dispense flap with a forgotten coin resting in the change tray, warm machine light, shallow depth of field, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # Rain on lit glass front + blurred cans (staple aesthetic)
-            "Cinematic locked medium shot of rain beading and sliding down the glossy front of a drink vending machine at night, colorful can rows blurred behind glass, subtle droplet motion only, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # Side profile row of machines
-            "Cinematic locked side-angle shot of a row of brightly lit vending machines along a wet alley wall at night, repeating neon rectangles receding into darkness, soft rain, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # Low angle: wet cobble + machine feet glow
-            "Cinematic locked low-angle shot of wet alley cobblestones reflecting vending-machine neon at night, machine bases glowing above frame edge, subtle puddle ripple only, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # Closing: distant alley mouth, machines as light sources (not puddle clone of ep02)
-            "Cinematic locked wide shot from deep inside a dark alley toward a bright street mouth, silhouetted vending machines glowing on both sides, light rain falling, empty path, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            # Hook — Frame 0 is entirely moving water. Location established via reflection only.
+            "Cinematic locked extreme close-up of heavy rain rapidly sliding down a large glass window at night, full frame water motion, out-of-focus bright warm orange capsule hotel lights reflecting on the wet glass, vibrant cyan city neon outside, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            
+            # Context — Window dominates. The pod is just a framing device in the foreground.
+            "Cinematic locked shot dominated by a large wet window lashed with heavy rain at night, glowing city lights outside, the bright orange fiberglass lip of an open capsule hotel pod in the immediate foreground, constant water motion on the glass, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            
+            # Anchor — The "Ramen Signal" (heat/human trace) with the window still dominating the background.
+            "Cinematic locked close-up of a steaming paper tea cup resting on a wooden ledge, thick steam rising rapidly, a large window covered in heavy moving rain directly behind it, glowing warm orange light filling the space, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+        ],
+    }
+]
+
+# Hunyuan A/B twin (same ep05 prompts). Enable by pointing test_jobs at this list, or:
+#   ENGINE=hunyuan HY_NUM_FRAMES=73 HY_STEPS=20 python local_runner/run_test_batch.py
+# Prefer dropping num_frames/steps here so HY_* / WAN_* env controls duration.
+hunyuan_ab_jobs = [
+    {
+        "video_id": "ep05_capsule_rain_hy",
+        "shot_mode": "multi_cut",
+        "num_frames": 73,
+        "steps": 20,
+        "captions": False,
+        "ambient": "rain_city",
+        "ambient_volume": 0.45,
+        "title": "2AM.",
+        "shots": [
+            "Cinematic locked extreme close-up of heavy rain rapidly sliding down a large glass window at night, full frame water motion, out-of-focus bright warm orange capsule hotel lights reflecting on the wet glass, vibrant cyan city neon outside, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            "Cinematic locked shot dominated by a large wet window lashed with heavy rain at night, glowing city lights outside, the bright orange fiberglass lip of an open capsule hotel pod in the immediate foreground, constant water motion on the glass, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            "Cinematic locked close-up of a steaming paper tea cup resting on a wooden ledge, thick steam rising rapidly, a large window covered in heavy moving rain directly behind it, glowing warm orange light filling the space, photo-realistic, vertical 9:16, no people, no faces, no camera move",
         ],
     }
 ]

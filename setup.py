@@ -3,6 +3,9 @@ import shutil
 import subprocess
 import time
 
+# wan (default) | hunyuan — gated downloads so one ~50–75GB volume fits either stack
+ENGINE = os.getenv("ENGINE", "wan").strip().lower()
+
 T5_URL = "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/umt5-xxl-enc-fp8_e4m3fn.safetensors"
 T5_EXPECTED_SIZE = 6_731_333_792
 
@@ -42,9 +45,37 @@ CLIP_VISION_EXPECTED_SIZE = 1_264_219_396
 # Old invalid file that breaks CLIPVisionLoader — delete to free volume space
 CLIP_VISION_LEGACY_FILENAME = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
+# HunyuanVideo 1.5 (native ComfyUI) — Comfy-Org repack
+HY_ORG = "https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files"
+HY_QWEN_FILENAME = "qwen_2.5_vl_7b_fp8_scaled.safetensors"
+HY_QWEN_URL = f"{HY_ORG}/text_encoders/{HY_QWEN_FILENAME}"
+HY_QWEN_EXPECTED_SIZE = 9_384_670_680
+HY_BYT5_FILENAME = "byt5_small_glyphxl_fp16.safetensors"
+HY_BYT5_URL = f"{HY_ORG}/text_encoders/{HY_BYT5_FILENAME}"
+HY_BYT5_EXPECTED_SIZE = 438_643_184
+HY_VAE_FILENAME = "hunyuanvideo15_vae_fp16.safetensors"
+HY_VAE_URL = f"{HY_ORG}/vae/{HY_VAE_FILENAME}"
+HY_VAE_EXPECTED_SIZE = 2_521_292_758
+# Default A/B: 480p CFG-distilled FP8 (~8.3GB) — fits beside Wan on a resized volume
+HY_T2V_480_FILENAME = "hunyuanvideo1.5_480p_t2v_cfg_distilled_fp8_scaled.safetensors"
+HY_T2V_480_URL = f"{HY_ORG}/diffusion_models/{HY_T2V_480_FILENAME}"
+HY_T2V_480_EXPECTED_SIZE = 8_330_399_746
+# Quality path: 720p FP16 (~16.7GB) — prefer 64GB+ VRAM / larger volume
+HY_T2V_720_FILENAME = "hunyuanvideo1.5_720p_t2v_fp16.safetensors"
+HY_T2V_720_URL = f"{HY_ORG}/diffusion_models/{HY_T2V_720_FILENAME}"
+HY_T2V_720_EXPECTED_SIZE = 16_653_368_128
+
 # NUCLEAR UPGRADE: Local SSD Caching
 # We copy models from the slow Network Volume (/runpod-volume) to the fast local NVMe (/local_models)
 CACHE_DIR = "/local_models"
+
+
+def hy_variant():
+    """480p_distilled (default) | 720p"""
+    v = os.getenv("HY_VARIANT", "480p_distilled").strip().lower()
+    if v in ("720p", "720", "720p_fp16"):
+        return "720p"
+    return "480p_distilled"
 
 def ensure_t5_model(log):
     """Atomically repair a missing or interrupted T5 download on the volume."""
@@ -336,6 +367,49 @@ def ensure_clip_vision(log):
     )
 
 
+def ensure_hunyuan_models(log):
+    """Download HunyuanVideo 1.5 T2V stack (encoders + UNET + VAE)."""
+    variant = hy_variant()
+    used_gb = _volume_model_bytes() / (1024**3)
+    need = "~29GB (720p FP16)" if variant == "720p" else "~21GB (480p FP8 distilled + encoders)"
+    log.write(
+        f"🐉 ENGINE=hunyuan | HY_VARIANT={variant} | need {need} | "
+        f"volume diffusion already ~{used_gb:.1f}GB\n"
+    )
+    if used_gb > 40:
+        log.write(
+            "⚠️ Volume already holds large Wan weights. If downloads fail, resize to ≥100GB "
+            "or delete unused Wan experts before the Hunyuan A/B.\n"
+        )
+    _ensure_volume_file(
+        log, "text_encoders", HY_QWEN_FILENAME, HY_QWEN_URL, HY_QWEN_EXPECTED_SIZE, "Hunyuan Qwen2.5-VL FP8"
+    )
+    _ensure_volume_file(
+        log, "text_encoders", HY_BYT5_FILENAME, HY_BYT5_URL, HY_BYT5_EXPECTED_SIZE, "Hunyuan BYT5"
+    )
+    _ensure_volume_file(
+        log, "vae", HY_VAE_FILENAME, HY_VAE_URL, HY_VAE_EXPECTED_SIZE, "HunyuanVideo 1.5 VAE"
+    )
+    if variant == "720p":
+        _ensure_volume_file(
+            log,
+            "diffusion_models",
+            HY_T2V_720_FILENAME,
+            HY_T2V_720_URL,
+            HY_T2V_720_EXPECTED_SIZE,
+            "Hunyuan 720p T2V FP16",
+        )
+    else:
+        _ensure_volume_file(
+            log,
+            "diffusion_models",
+            HY_T2V_480_FILENAME,
+            HY_T2V_480_URL,
+            HY_T2V_480_EXPECTED_SIZE,
+            "Hunyuan 480p T2V CFG-distilled FP8",
+        )
+
+
 def setup_model_links():
     """Nuclear Option: Force-link models into ComfyUI internal folders."""
     # Priority: 1. Local Cache (SSD), 2. Network Volume
@@ -349,12 +423,20 @@ def setup_model_links():
     
     log_file = "/workspace/setup.log"
     with open(log_file, "w") as log:
-        log.write("🚀 Starting Nuclear Symlink Setup with SSD Caching...\n")
-        ensure_t5_model(log)
-        ensure_t2v_model(log)
-        ensure_i2v_model(log)
-        ensure_clip_vision(log)
-        ensure_upscale_model(log)
+        log.write(f"🚀 Starting Nuclear Symlink Setup with SSD Caching... (ENGINE={ENGINE})\n")
+        if ENGINE in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
+            ensure_hunyuan_models(log)
+            # UltraSharp optional for post; keep for parity with Wan multi_cut path
+            try:
+                ensure_upscale_model(log)
+            except Exception as e:
+                log.write(f"⚠️ Upscale model skipped (non-fatal): {e}\n")
+        else:
+            ensure_t5_model(log)
+            ensure_t2v_model(log)
+            ensure_i2v_model(log)
+            ensure_clip_vision(log)
+            ensure_upscale_model(log)
         
         folders = [
             "diffusion_models",

@@ -55,6 +55,12 @@ def launch_pod():
         "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
         "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
+        # wan (default) | hunyuan — Hunyuan A/B: ENGINE=hunyuan HY_VARIANT=480p_distilled
+        "ENGINE": os.getenv("ENGINE", "wan"),
+        "HY_VARIANT": os.getenv("HY_VARIANT", "480p_distilled"),
+        "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "73"),
+        "HY_STEPS": os.getenv("HY_STEPS", "20"),
+        "HY_FPS": os.getenv("HY_FPS", "24"),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
         "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
         # 5090-safe defaults (override per job in test_prompts if needed)
@@ -68,6 +74,7 @@ def launch_pod():
     last_error = None
 
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
+    print(f"   ENGINE={env_vars.get('ENGINE')} HY_VARIANT={env_vars.get('HY_VARIANT')}")
     for gpu_type_id, gpu_vram in ordered:
         # 96GB: keep weights resident. 32/24GB: offload required for 81-frame MoE.
         force_offload = os.getenv("FORCE_OFFLOAD")
@@ -82,7 +89,7 @@ def launch_pod():
                 name="test-batch-pod",
                 image_name=image,
                 gpu_type_id=gpu_type_id,
-                container_disk_in_gb=75,  # SSD cache for T2V+I2V MoE pairs
+                container_disk_in_gb=100,  # SSD cache for Wan MoE or Hunyuan stack
                 ports="8000/http",
                 network_volume_id="cxgqbfwsvr",
                 data_center_id="EU-RO-1",
@@ -203,12 +210,20 @@ def execute_batch(comfy_url, test_jobs):
             }
             if "num_frames" in vid:
                 payload["num_frames"] = int(vid["num_frames"])
-            elif os.getenv("WAN_NUM_FRAMES"):
-                payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
+            else:
+                engine = os.getenv("ENGINE", "wan").strip().lower()
+                if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_NUM_FRAMES"):
+                    payload["num_frames"] = int(os.getenv("HY_NUM_FRAMES"))
+                elif os.getenv("WAN_NUM_FRAMES"):
+                    payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
             if "steps" in vid:
                 payload["steps"] = int(vid["steps"])
-            elif os.getenv("WAN_STEPS"):
-                payload["steps"] = int(os.getenv("WAN_STEPS"))
+            else:
+                engine = os.getenv("ENGINE", "wan").strip().lower()
+                if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_STEPS"):
+                    payload["steps"] = int(os.getenv("HY_STEPS"))
+                elif os.getenv("WAN_STEPS"):
+                    payload["steps"] = int(os.getenv("WAN_STEPS"))
 
             try:
                 res = requests.post(f"{comfy_url}/prompt", json=payload, timeout=30).json()
@@ -248,7 +263,7 @@ def execute_batch(comfy_url, test_jobs):
 
 
 def download_and_stitch(rendered_urls, test_jobs):
-    from audio_post import add_voice_and_captions
+    from audio_post import add_ambient_and_title, add_voice_and_captions
 
     os.makedirs("./final_videos", exist_ok=True)
     os.makedirs("./temp_clips", exist_ok=True)
@@ -342,8 +357,20 @@ def download_and_stitch(rendered_urls, test_jobs):
                 subprocess.run(["cp", "-f", silent_path, output_video], check=True)
                 print(f"🎉 Silent Video Saved: {output_video}")
         else:
-            subprocess.run(["cp", "-f", silent_path, output_video], check=True)
-            print(f"🎉 Complete Video Created (no script → silent): {output_video}")
+            try:
+                add_ambient_and_title(
+                    silent_path,
+                    output_video,
+                    work_dir=f"./temp_clips/{vid_id}_audio",
+                    ambient=job.get("ambient", "rain_city"),
+                    ambient_volume=float(job.get("ambient_volume", 0.38)),
+                    title=job.get("title"),
+                )
+                print(f"🎉 Complete Video (ambient + title, no VO): {output_video}")
+            except Exception as e:
+                print(f"⚠️ Audio post failed ({e}); keeping silent copy as final.")
+                subprocess.run(["cp", "-f", silent_path, output_video], check=True)
+                print(f"🎉 Silent Video Saved: {output_video}")
 
 
 def destroy_pod(pod_id):
@@ -352,13 +379,21 @@ def destroy_pod(pod_id):
 
 
 if __name__ == "__main__":
-    from test_prompts import test_jobs
+    from test_prompts import test_jobs, hunyuan_ab_jobs
+
+    engine = os.getenv("ENGINE", "wan").strip().lower()
+    jobs = (
+        hunyuan_ab_jobs
+        if engine in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15")
+        else test_jobs
+    )
+    print(f"🧪 Batch engine={engine} | jobs={[j['video_id'] for j in jobs]}")
 
     pod_id = None
     try:
         pod_id, comfy_url = launch_pod()
-        urls = execute_batch(comfy_url, test_jobs)
-        download_and_stitch(urls, test_jobs)
+        urls = execute_batch(comfy_url, jobs)
+        download_and_stitch(urls, jobs)
     except Exception as e:
         print(f"❌ Batch Execution Failed: {e}")
         raise

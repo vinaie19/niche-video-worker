@@ -1,0 +1,161 @@
+{
+  "11": {
+    "inputs": {
+      "clip_name1": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "clip_name2": "byt5_small_glyphxl_fp16.safetensors",
+      "type": "hunyuan_video_15",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "Hunyuan Dual CLIP"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "hunyuanvideo1.5_480p_t2v_cfg_distilled_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Hunyuan UNET"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "hunyuanvideo15_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Hunyuan VAE"
+    }
+  },
+  "44": {
+    "inputs": {
+      "text": "placeholder prompt",
+      "clip": ["11", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt"
+    }
+  },
+  "93": {
+    "inputs": {
+      "text": "blurry, low quality, worst quality, deformed, distorted, ugly, text, watermark, logo, oversaturated",
+      "clip": ["11", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative Prompt"
+    }
+  },
+  "124": {
+    "inputs": {
+      "width": 480,
+      "height": 832,
+      "length": 49,
+      "batch_size": 1
+    },
+    "class_type": "EmptyHunyuanVideo15Latent",
+    "_meta": {
+      "title": "Hunyuan Empty Latent"
+    }
+  },
+  "132": {
+    "inputs": {
+      "shift": 5.0,
+      "model": ["12", 0]
+    },
+    "class_type": "ModelSamplingSD3",
+    "_meta": {
+      "title": "Hunyuan Flow Shift"
+    }
+  },
+  "131": {
+    "inputs": {
+      "cfg": 1.0,
+      "model": ["132", 0],
+      "positive": ["44", 0],
+      "negative": ["93", 0]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "Hunyuan CFG Guider"
+    }
+  },
+  "128": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 20,
+      "denoise": 1.0,
+      "model": ["12", 0]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "Hunyuan Scheduler"
+    }
+  },
+  "130": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Hunyuan Sampler Select"
+    }
+  },
+  "129": {
+    "inputs": {
+      "noise_seed": 888888
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "Hunyuan Noise"
+    }
+  },
+  "127": {
+    "inputs": {
+      "noise": ["129", 0],
+      "guider": ["131", 0],
+      "sampler": ["130", 0],
+      "sigmas": ["128", 0],
+      "latent_image": ["124", 0]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "Hunyuan Sampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": ["127", 0],
+      "vae": ["10", 0],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 4096,
+      "temporal_overlap": 8
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "Hunyuan VAE Decode Tiled"
+    }
+  },
+  "7": {
+    "inputs": {
+      "images": ["8", 0],
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "Hunyuan15_T2V",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_output": true,
+      "pingpong": false
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine"
+    }
+  }
+}

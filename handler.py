@@ -21,13 +21,34 @@ s3 = boto3.client(
 
 jobs = {}
 
-# Wan VAE requires temporal length 4k+1 (e.g. 17, 33, 49, 65, 81)
-VALID_FRAME_COUNTS = {17, 33, 49, 65, 81, 97, 113, 129}
+# Wan / HunyuanVideo 1.5 both use temporal length 4k+1 (e.g. 17, 33, 49, 65, 81)
+VALID_FRAME_COUNTS = {17, 33, 49, 65, 81, 97, 113, 121, 129}
 COMFY_HEADERS = {"Host": "127.0.0.1"}
 COMFY_URL = "http://127.0.0.1:8188"
 OUTPUT_DIR = "/comfyui/output"
 INPUT_DIR = "/comfyui/input"
 WORK_DIR = "/workspace/continuous_work"
+
+HY_T2V_480 = "hunyuanvideo1.5_480p_t2v_cfg_distilled_fp8_scaled.safetensors"
+HY_T2V_720 = "hunyuanvideo1.5_720p_t2v_fp16.safetensors"
+HY_QWEN = "qwen_2.5_vl_7b_fp8_scaled.safetensors"
+HY_BYT5 = "byt5_small_glyphxl_fp16.safetensors"
+HY_VAE = "hunyuanvideo15_vae_fp16.safetensors"
+
+
+def get_engine():
+    """wan (default) | hunyuan — set ENGINE on the pod."""
+    eng = os.getenv("ENGINE", "wan").strip().lower()
+    if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
+        return "hunyuan"
+    return "wan"
+
+
+def hy_variant():
+    v = os.getenv("HY_VARIANT", "480p_distilled").strip().lower()
+    if v in ("720p", "720", "720p_fp16"):
+        return "720p"
+    return "480p_distilled"
 
 
 def sageattn_available():
@@ -43,7 +64,7 @@ def sageattn_available():
 
 
 def nearest_valid_frames(n):
-    """Clamp/snap frame counts to Wan's 4k+1 rule."""
+    """Clamp/snap frame counts to 4k+1 rule (Wan + HunyuanVideo 1.5)."""
     if n in VALID_FRAME_COUNTS:
         return n
     return min(VALID_FRAME_COUNTS, key=lambda v: abs(v - n))
@@ -79,20 +100,35 @@ def should_force_offload(vram_gb=None):
     return vram_gb < 64
 
 
+def default_fps():
+    if get_engine() == "hunyuan":
+        try:
+            return max(1, int(os.getenv("HY_FPS", "24")))
+        except ValueError:
+            return 24
+    return 16
+
+
 def default_num_frames():
-    """5090-safe default: 49 frames ≈ 3.1s @ 16fps (81 OOMs on 32GB)."""
+    """Wan: 49 @ 16fps ≈ 3.1s. Hunyuan: 49 @ 24fps ≈ 2.0s (override with HY_NUM_FRAMES=73)."""
+    engine = get_engine()
+    env_key = "HY_NUM_FRAMES" if engine == "hunyuan" else "WAN_NUM_FRAMES"
+    fallback = "49"
     try:
-        requested = int(os.getenv("WAN_NUM_FRAMES", "49"))
+        requested = int(os.getenv(env_key, fallback))
     except ValueError:
         requested = 49
     return nearest_valid_frames(requested)
 
 
 def default_steps():
+    engine = get_engine()
+    env_key = "HY_STEPS" if engine == "hunyuan" else "WAN_STEPS"
+    fallback = "20" if engine == "hunyuan" else "16"
     try:
-        return max(1, int(os.getenv("WAN_STEPS", "16")))
+        return max(1, int(os.getenv(env_key, fallback)))
     except ValueError:
-        return 16
+        return 20 if engine == "hunyuan" else 16
 
 
 def wait_for_comfyui():
@@ -280,6 +316,124 @@ def patch_common_workflow(
             node["inputs"]["model_name"] = models["upscale"]
 
     print(f"🎚️ Workflow patch | frames={num_frames} (~{num_frames / 16:.1f}s) | steps={steps}")
+    return workflow
+
+
+def detect_hunyuan_models():
+    """Locate HunyuanVideo 1.5 UNET / DualCLIP / VAE on volume or SSD cache."""
+    variant = hy_variant()
+    want_unet = HY_T2V_720 if variant == "720p" else HY_T2V_480
+
+    unet, uvol = find_model_file(
+        "diffusion_models",
+        [lambda f: f == want_unet],
+    )
+    if not unet:
+        # Fall back to any hunyuan t2v match for the variant
+        if variant == "720p":
+            unet, uvol = find_model_file(
+                "diffusion_models",
+                [
+                    lambda f: "hunyuan" in f.lower() and "720" in f and "t2v" in f.lower(),
+                ],
+            )
+        else:
+            unet, uvol = find_model_file(
+                "diffusion_models",
+                [
+                    lambda f: "hunyuan" in f.lower()
+                    and "480" in f
+                    and "t2v" in f.lower()
+                    and "fp8" in f.lower(),
+                ],
+            )
+
+    qwen, _ = find_model_file("text_encoders", [lambda f: f == HY_QWEN or "qwen" in f.lower()])
+    byt5, _ = find_model_file("text_encoders", [lambda f: f == HY_BYT5 or "byt5" in f.lower()])
+    vae, _ = find_model_file(
+        "vae",
+        [lambda f: f == HY_VAE or ("hunyuan" in f.lower() and "vae" in f.lower())],
+    )
+
+    if unet:
+        print(f"🎯 Hunyuan UNET from {uvol}: {unet}")
+    return {
+        "unet": unet,
+        "qwen": qwen,
+        "byt5": byt5,
+        "vae": vae,
+        "variant": variant,
+    }
+
+
+def patch_hunyuan_workflow(workflow, prompt_text, models, num_frames=None, steps=None):
+    """Patch native HunyuanVideo 1.5 T2V graph for vertical Shorts."""
+    if num_frames is None:
+        num_frames = default_num_frames()
+    else:
+        num_frames = nearest_valid_frames(int(num_frames))
+    if steps is None:
+        steps = default_steps()
+    else:
+        steps = max(1, int(steps))
+
+    variant = models.get("variant") or hy_variant()
+    if variant == "720p":
+        width = int(os.getenv("HY_WIDTH", "720"))
+        height = int(os.getenv("HY_HEIGHT", "1280"))
+        cfg = float(os.getenv("HY_CFG", "6"))
+        shift = float(os.getenv("HY_SHIFT", "9"))
+    else:
+        # 480p CFG-distilled defaults (official: cfg=1, shift=5, steps=50; we use 20 for A/B speed)
+        width = int(os.getenv("HY_WIDTH", "480"))
+        height = int(os.getenv("HY_HEIGHT", "832"))
+        cfg = float(os.getenv("HY_CFG", "1"))
+        shift = float(os.getenv("HY_SHIFT", "5"))
+    fps = default_fps()
+
+    for node in workflow.values():
+        class_type = node.get("class_type")
+        title = (node.get("_meta") or {}).get("title", "")
+
+        if class_type == "DualCLIPLoader":
+            if models.get("qwen"):
+                node["inputs"]["clip_name1"] = models["qwen"]
+            if models.get("byt5"):
+                node["inputs"]["clip_name2"] = models["byt5"]
+            node["inputs"]["type"] = "hunyuan_video_15"
+
+        if class_type == "UNETLoader" and models.get("unet"):
+            node["inputs"]["unet_name"] = models["unet"]
+
+        if class_type == "VAELoader" and models.get("vae"):
+            node["inputs"]["vae_name"] = models["vae"]
+
+        if class_type == "CLIPTextEncode" and (
+            title == "Positive Prompt" or "Positive" in title
+        ):
+            node["inputs"]["text"] = prompt_text
+
+        if class_type == "EmptyHunyuanVideo15Latent":
+            node["inputs"]["width"] = width
+            node["inputs"]["height"] = height
+            node["inputs"]["length"] = num_frames
+
+        if class_type == "ModelSamplingSD3":
+            node["inputs"]["shift"] = shift
+
+        if class_type == "CFGGuider":
+            node["inputs"]["cfg"] = cfg
+
+        if class_type == "BasicScheduler":
+            node["inputs"]["steps"] = steps
+
+        if class_type == "VHS_VideoCombine":
+            node["inputs"]["frame_rate"] = fps
+
+    print(
+        f"🎚️ Hunyuan patch | {width}x{height} | frames={num_frames} "
+        f"(~{num_frames / fps:.1f}s @{fps}fps) | steps={steps} | cfg={cfg} | shift={shift}"
+    )
     return workflow
 
 
@@ -485,8 +639,60 @@ def upload_to_r2(local_file_path, r2_key):
     return f"{os.getenv('R2_PUBLIC_URL_PREFIX')}/{r2_key}"
 
 
+def execute_multi_cut_hunyuan(job_id, prompt_text, video_id, shot_index, num_frames=None, steps=None):
+    """HunyuanVideo 1.5 native T2V (vertical Shorts). No UltraSharp in-graph — ffmpeg scale after."""
+    with open("/workspace/workflow_hunyuan_t2v.json", "r") as f:
+        workflow = json.load(f)
+
+    models = detect_hunyuan_models()
+    if not models.get("unet"):
+        raise RuntimeError(
+            "Hunyuan T2V UNET not found — set ENGINE=hunyuan and check setup.py download"
+        )
+    if not models.get("qwen") or not models.get("byt5"):
+        raise RuntimeError("Hunyuan DualCLIP encoders (Qwen + BYT5) not found")
+    if not models.get("vae"):
+        raise RuntimeError("Hunyuan VAE not found")
+
+    vram_gb = detect_vram_gb()
+    print(
+        f"🖥️ HunyuanVideo 1.5 | variant={models['variant']} | VRAM≈{vram_gb:.0f}GB"
+    )
+
+    workflow = patch_hunyuan_workflow(
+        workflow, prompt_text, models, num_frames=num_frames, steps=steps
+    )
+    output_filename = submit_and_wait(workflow, timeout_s=1800)
+    local_file_path = os.path.join(OUTPUT_DIR, output_filename)
+
+    # Match Wan multi_cut delivery: 1080x1920 Shorts
+    scaled_path = os.path.join(OUTPUT_DIR, f"hy_{job_id}_1080p.mp4")
+    try:
+        maybe_scale_to_shorts(local_file_path, scaled_path)
+        upload_path = scaled_path
+    except Exception as e:
+        print(f"⚠️ Hunyuan 1080p scale failed ({e}); uploading native resolution")
+        upload_path = local_file_path
+
+    r2_key = f"renders/{video_id}/shot_{shot_index}.mp4"
+    r2_public_url = upload_to_r2(upload_path, r2_key)
+    for path in (local_file_path, scaled_path):
+        if os.path.exists(path):
+            os.remove(path)
+
+    jobs[job_id]["status"] = "completed"
+    jobs[job_id]["output_r2_url"] = r2_public_url
+    jobs[job_id]["shot_mode"] = "multi_cut"
+    jobs[job_id]["engine"] = "hunyuan"
+
+
 def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None, steps=None):
-    """Original single-clip T2V path with UltraSharp 1080p."""
+    """Single-clip T2V path — Wan 2.2 MoE (default) or HunyuanVideo 1.5."""
+    if get_engine() == "hunyuan":
+        return execute_multi_cut_hunyuan(
+            job_id, prompt_text, video_id, shot_index, num_frames=num_frames, steps=steps
+        )
+
     with open("/workspace/workflow_api.json", "r") as f:
         workflow = json.load(f)
 
@@ -520,6 +726,7 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None
     jobs[job_id]["status"] = "completed"
     jobs[job_id]["output_r2_url"] = r2_public_url
     jobs[job_id]["shot_mode"] = "multi_cut"
+    jobs[job_id]["engine"] = "wan"
 
 
 def execute_continuous(
@@ -528,7 +735,13 @@ def execute_continuous(
     """
     Generate a continuous take by chaining T2V -> I2V(last frame) chunks.
     Default chunk length follows WAN_NUM_FRAMES (49 ≈ 3.1s @ 16fps).
+    Hunyuan continuous/I2V chaining is not wired yet — use multi_cut for A/B.
     """
+    if get_engine() == "hunyuan":
+        raise RuntimeError(
+            "ENGINE=hunyuan does not support continuous mode yet — use shot_mode=multi_cut"
+        )
+
     chunks = max(1, int(chunks))
     frames = nearest_valid_frames(int(num_frames)) if num_frames is not None else default_num_frames()
     work_dir = os.path.join(WORK_DIR, job_id)
@@ -700,16 +913,24 @@ def health_check():
         with open("/workspace/setup.log", "r") as f:
             setup_log = f.read()
 
+    engine = get_engine()
     return jsonify(
         {
             "status": "ready",
+            "engine": engine,
+            "hy_variant": hy_variant() if engine == "hunyuan" else None,
             "diagnostics": diag,
             "setup_log": setup_log,
             "vram_gb": detect_vram_gb(),
             "force_offload": should_force_offload(),
+            "num_frames": default_num_frames(),
+            "steps": default_steps(),
+            "fps": default_fps(),
             "wan_num_frames": default_num_frames(),
             "wan_steps": default_steps(),
-            "modes": ["multi_cut", "continuous"],
+            "modes": ["multi_cut"]
+            if engine == "hunyuan"
+            else ["multi_cut", "continuous"],
         }
     )
 
@@ -759,6 +980,7 @@ def handle_prompt():
         {
             "job_id": job_id,
             "status": "queued",
+            "engine": get_engine(),
             "shot_mode": shot_mode,
             "chunks": chunks,
             "num_frames": num_frames,

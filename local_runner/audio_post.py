@@ -4,11 +4,12 @@ Local post-production: Edge-TTS voiceover + ambient bed + Whisper captions + FFm
 Runs on the laptop (CPU). GPU worker stays video-only.
 
 Job fields (test_prompts.py):
-  script          — narration text (omit for silent)
+  script          — narration text (omit for ambient-only / no VO)
   voice           — preset key or full Edge-TTS id (see VOICE_PRESETS)
   captions        — False | True | caption style key (see CAPTION_STYLES)
   caption_style   — style key when captions=True (default: minimal)
   ambient         — False | "rain" | "rain_city" | path to audio file
+  title           — optional one-line overlay from 0:00 (not Whisper captions)
   vo_delay_ms     — ms of ambient-only before VO (default 900 for palate-cleanser hook)
   ambient_volume  — 0.0–1.0 bed level under VO (default 0.38)
 """
@@ -223,6 +224,16 @@ def _ffmpeg_subtitles_path(path: str) -> str:
     """Escape path for ffmpeg subtitles= filter (colons, backslashes)."""
     p = os.path.abspath(path).replace("\\", "/")
     return p.replace(":", "\\:").replace("'", "\\'")
+
+
+def _escape_drawtext(text: str) -> str:
+    """Escape a short title for ffmpeg drawtext=text=..."""
+    return (
+        text.replace("\\", "\\\\")
+        .replace(":", "\\:")
+        .replace("'", "\\'")
+        .replace("%", "\\%")
+    )
 
 
 def _probe_duration(path: str) -> float:
@@ -531,6 +542,97 @@ def add_voice_and_captions(
         caption_style=caption_style,
         match_video_duration=True,
     )
+
+
+def add_ambient_and_title(
+    silent_video_path: str,
+    output_path: str,
+    work_dir: Optional[str] = None,
+    ambient: Union[bool, str, None] = DEFAULT_AMBIENT,
+    ambient_volume: float = DEFAULT_AMBIENT_VOLUME,
+    title: Optional[str] = None,
+) -> str:
+    """Rain/city bed from 0:00, optional one-line title overlay. No VO."""
+    if not os.path.isfile(silent_video_path):
+        raise FileNotFoundError(silent_video_path)
+
+    work_dir = work_dir or os.path.join(os.path.dirname(output_path) or ".", "audio_work")
+    os.makedirs(work_dir, exist_ok=True)
+    stem = os.path.splitext(os.path.basename(output_path))[0]
+    video_dur = _probe_duration(silent_video_path)
+    ambient_key = parse_ambient_option(ambient)
+    title_text = (title or "").strip()
+
+    audio_path = None
+    if ambient_key:
+        bed = os.path.join(work_dir, f"{stem}_ambient.wav")
+        if ambient_key in AMBIENT_PRESETS:
+            generate_ambient_bed(
+                video_dur,
+                bed,
+                preset=ambient_key,
+                volume=ambient_volume,
+            )
+        else:
+            print(f"🌧️ Ambient file → {ambient_key}")
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-stream_loop",
+                    "-1",
+                    "-i",
+                    ambient_key,
+                    "-t",
+                    f"{video_dur:.3f}",
+                    "-af",
+                    f"volume={float(ambient_volume):.3f}",
+                    bed,
+                ],
+                check=True,
+                capture_output=True,
+            )
+        audio_path = bed
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True)
+    cmd = ["ffmpeg", "-y", "-i", silent_video_path]
+    if audio_path:
+        cmd += ["-i", audio_path]
+
+    vf = None
+    if title_text:
+        vf = (
+            "drawtext=text='{text}':fontsize=36:fontcolor=white@0.92:"
+            "borderw=2:bordercolor=black@0.55:x=(w-text_w)/2:y=h*0.10"
+        ).format(text=_escape_drawtext(title_text))
+        print(f"📝 Title overlay: {title_text}")
+
+    if vf:
+        cmd += ["-vf", vf, "-c:v", "libx264", "-preset", "fast", "-crf", "18"]
+    else:
+        cmd += ["-c:v", "copy"]
+
+    if audio_path:
+        cmd += [
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-map",
+            "0:v:0",
+            "-map",
+            "1:a:0",
+            "-t",
+            f"{video_dur:.3f}",
+        ]
+    else:
+        cmd += ["-an", "-map", "0:v:0"]
+        print("🌧️ Ambient off — silent video")
+
+    cmd += ["-movflags", "+faststart", output_path]
+    print(f"🎬 FFmpeg ambient/title mux → {output_path}")
+    subprocess.run(cmd, check=True)
+    return output_path
 
 
 if __name__ == "__main__":
