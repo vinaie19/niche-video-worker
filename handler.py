@@ -22,7 +22,8 @@ s3 = boto3.client(
 jobs = {}
 
 # Wan / HunyuanVideo 1.5 both use temporal length 4k+1 (e.g. 17, 33, 49, 65, 81)
-VALID_FRAME_COUNTS = {17, 33, 49, 65, 81, 97, 113, 121, 129}
+# 4k+1 temporal lengths (Wan + HunyuanVideo 1.5). Include 73 ≈ 3.0s @ 24fps.
+VALID_FRAME_COUNTS = {17, 33, 49, 65, 73, 81, 97, 113, 121, 129}
 COMFY_HEADERS = {"Host": "127.0.0.1"}
 COMFY_URL = "http://127.0.0.1:8188"
 OUTPUT_DIR = "/comfyui/output"

@@ -58,8 +58,8 @@ def launch_pod():
         # wan (default) | hunyuan — Hunyuan A/B: ENGINE=hunyuan HY_VARIANT=480p_distilled
         "ENGINE": os.getenv("ENGINE", "wan"),
         "HY_VARIANT": os.getenv("HY_VARIANT", "480p_distilled"),
-        "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "73"),
-        "HY_STEPS": os.getenv("HY_STEPS", "20"),
+        "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "49"),
+        "HY_STEPS": os.getenv("HY_STEPS", "30"),
         "HY_FPS": os.getenv("HY_FPS", "24"),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
         "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
@@ -83,13 +83,22 @@ def launch_pod():
         else:
             force_offload = force_offload.strip().lower()
 
-        print(f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload})...")
+        # Hunyuan A/B: 40GB is enough (weights on network volume). Wan MoE cache: 75–100GB.
+        try:
+            container_disk = int(os.getenv("CONTAINER_DISK_GB", "40"))
+        except ValueError:
+            container_disk = 40
+
+        print(
+            f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload}, "
+            f"disk={container_disk}GB)..."
+        )
         try:
             pod = runpod.create_pod(
                 name="test-batch-pod",
                 image_name=image,
                 gpu_type_id=gpu_type_id,
-                container_disk_in_gb=100,  # SSD cache for Wan MoE or Hunyuan stack
+                container_disk_in_gb=container_disk,
                 ports="8000/http",
                 network_volume_id="cxgqbfwsvr",
                 data_center_id="EU-RO-1",
@@ -165,7 +174,11 @@ def execute_batch(comfy_url, test_jobs):
     print(f"⏳ Waiting for Worker API at {comfy_url} to become reachable...")
     time.sleep(30)
     
-    max_retries = 240  # first boot may download I2V (~17GB) + CLIP vision
+    # Hunyuan first boot can take 40–60+ min for HF downloads; Wan cold cache ~20 min.
+    try:
+        max_retries = int(os.getenv("HEALTH_MAX_RETRIES", "720"))  # default ~60 min
+    except ValueError:
+        max_retries = 720
     for i in range(max_retries):
         try:
             res = requests.get(f"{comfy_url}/health", timeout=10)
