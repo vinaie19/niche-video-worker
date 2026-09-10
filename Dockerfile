@@ -50,4 +50,5 @@ ENV ENGINE=wan
 EXPOSE 8000
 
 # Boot internal ComfyUI server, wait 5s for VRAM init, then launch execution Flask worker
-CMD ["bash", "-c", "python3 /workspace/setup.py && python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 --highvram --dont-upcast-attention & sleep 5 && python3 -u /workspace/handler.py"]
+# normalvram (not highvram): LTX FP8 + Gemma cannot both stay resident on 32GB
+CMD ["bash", "-c", "python3 /workspace/setup.py && python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 --normalvram --dont-upcast-attention & sleep 5 && python3 -u /workspace/handler.py"]

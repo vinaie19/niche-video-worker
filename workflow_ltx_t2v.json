@@ -3,7 +3,7 @@
     "inputs": {
       "text_encoder": "gemma_3_12B_it_fp4_mixed.safetensors",
       "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors",
-      "device": "default"
+      "device": "cpu"
     },
     "class_type": "LTXAVTextEncoderLoader",
     "_meta": {
@@ -61,8 +61,8 @@
   },
   "17": {
     "inputs": {
-      "width": 544,
-      "height": 960,
+      "width": 480,
+      "height": 832,
       "length": 97,
       "batch_size": 1
     },

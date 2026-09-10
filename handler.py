@@ -516,8 +516,8 @@ def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=Non
     else:
         steps = max(1, int(steps))
 
-    width = int(os.getenv("LTX_WIDTH", "544"))
-    height = int(os.getenv("LTX_HEIGHT", "960"))
+    width = int(os.getenv("LTX_WIDTH", "480"))
+    height = int(os.getenv("LTX_HEIGHT", "832"))
     cfg = float(os.getenv("LTX_CFG", "1"))
     fps = default_fps()
     sigmas = os.getenv("LTX_SIGMAS", LTX_DISTILLED_SIGMAS).strip()
@@ -533,6 +533,8 @@ def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=Non
                 node["inputs"]["text_encoder"] = gemma
             if ckpt:
                 node["inputs"]["ckpt_name"] = ckpt
+            # Keep Gemma on CPU — with --highvram it otherwise occupies ~11GB and OOMs the 29GB ckpt on 32GB GPUs
+            node["inputs"]["device"] = os.getenv("LTX_TE_DEVICE", "cpu")
 
         if class_type in ("CheckpointLoaderSimple", "LTXVAudioVAELoader") and ckpt:
             node["inputs"]["ckpt_name"] = ckpt
@@ -1167,6 +1169,7 @@ def health_check():
     )
 
 
+@app.route("/render", methods=["POST"])
 @app.route("/prompt", methods=["POST"])
 def handle_prompt():
     data = request.json or {}
@@ -1192,9 +1195,11 @@ def handle_prompt():
         "created_at": time.time(),
     }
 
-    thread = threading.Thread(
-        target=execute_render_async,
-        args=(
+    # Delay worker start so the HTTP response can leave before heavy work begins
+    # (avoids RunPod proxy empty-body when the process is crushed mid-reply).
+    def _start():
+        time.sleep(0.3)
+        execute_render_async(
             job_id,
             data.get("prompt"),
             data.get("video_id"),
@@ -1204,9 +1209,9 @@ def handle_prompt():
             upscale,
             num_frames,
             steps,
-        ),
-    )
-    thread.start()
+        )
+
+    threading.Thread(target=_start, daemon=True).start()
 
     return jsonify(
         {
@@ -1231,4 +1236,5 @@ def get_status(job_id):
 
 if __name__ == "__main__":
     wait_for_comfyui()
-    app.run(host="0.0.0.0", port=8000)
+    # threaded=True so /prompt can return while a job runs (and /status stays responsive)
+    app.run(host="0.0.0.0", port=8000, threaded=True)

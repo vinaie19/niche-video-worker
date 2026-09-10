@@ -68,8 +68,8 @@ def launch_pod():
         "LTX_NUM_FRAMES": os.getenv("LTX_NUM_FRAMES", "97"),
         "LTX_STEPS": os.getenv("LTX_STEPS", "8"),
         "LTX_FPS": os.getenv("LTX_FPS", "24"),
-        "LTX_WIDTH": os.getenv("LTX_WIDTH", "544"),
-        "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "960"),
+        "LTX_WIDTH": os.getenv("LTX_WIDTH", "480"),
+        "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "832"),
         # Hunyuan/LTX: keep weights resident between shots (skip /free). Wan still unloads.
         "KEEP_MODELS_LOADED": os.getenv(
             "KEEP_MODELS_LOADED",
@@ -232,6 +232,12 @@ def execute_batch(comfy_url, test_jobs):
             if res.status_code == 200:
                 health_data = res.json()
                 print("✅ Worker is online and ready for jobs!")
+                print(
+                    f"   engine={health_data.get('engine')} "
+                    f"ltx_variant={health_data.get('ltx_variant')} "
+                    f"frames={health_data.get('num_frames')} "
+                    f"fps={health_data.get('fps')}"
+                )
                 if "setup_log" in health_data:
                     print("\n📜 --- Worker Setup Log ---")
                     print(health_data["setup_log"])
@@ -290,7 +296,63 @@ def execute_batch(comfy_url, test_jobs):
                     payload["steps"] = int(os.getenv("WAN_STEPS"))
 
             try:
-                res = requests.post(f"{comfy_url}/prompt", json=payload, timeout=30).json()
+                # Prefer /render (alias of /prompt). allow_redirects=False so a
+                # proxy 301/302 can't turn POST into an empty GET body.
+                submit_url = f"{comfy_url.rstrip('/')}/render"
+                res = None
+                raw = None
+                for attempt in range(1, 4):
+                    raw = requests.post(
+                        submit_url,
+                        json=payload,
+                        timeout=60,
+                        headers={"Content-Type": "application/json"},
+                        allow_redirects=False,
+                    )
+                    # Fallback to legacy /prompt if /render missing on older images
+                    if raw.status_code == 404:
+                        submit_url = f"{comfy_url.rstrip('/')}/prompt"
+                        raw = requests.post(
+                            submit_url,
+                            json=payload,
+                            timeout=60,
+                            headers={"Content-Type": "application/json"},
+                            allow_redirects=False,
+                        )
+                    if raw.status_code in (301, 302, 303, 307, 308):
+                        print(
+                            f"   ⚠️ Redirect on submit (attempt {attempt}/3): "
+                            f"status={raw.status_code} location={raw.headers.get('Location')!r}"
+                        )
+                    elif raw.status_code == 200 and (raw.text or "").strip():
+                        try:
+                            res = raw.json()
+                            break
+                        except Exception:
+                            print(
+                                f"   ⚠️ Non-JSON body (attempt {attempt}/3): "
+                                f"status={raw.status_code} body={raw.text[:300]!r}"
+                            )
+                    else:
+                        print(
+                            f"   ⚠️ Bad submit response (attempt {attempt}/3): "
+                            f"status={raw.status_code} body={((raw.text or '')[:300])!r}"
+                        )
+                        try:
+                            h = requests.get(f"{comfy_url}/health", timeout=10)
+                            eng = (h.json() or {}).get("engine") if h.ok else "?"
+                            print(f"   🩺 health={h.status_code} engine={eng}")
+                        except Exception as he:
+                            print(f"   🩺 health check failed: {he}")
+                    time.sleep(5 * attempt)
+
+                if res is None:
+                    raise RuntimeError(
+                        f"submit failed after retries: "
+                        f"status={getattr(raw, 'status_code', None)} "
+                        f"body={((getattr(raw, 'text', None) or '')[:300])!r}"
+                    )
+
                 job_id = res.get("job_id")
                 if not job_id:
                     print(f"   ❌ Failed to get job_id: {res}")
@@ -301,7 +363,15 @@ def execute_batch(comfy_url, test_jobs):
                 finished = False
                 while not finished:
                     time.sleep(10)
-                    status_res = requests.get(f"{comfy_url}/status/{job_id}", timeout=10).json()
+                    status_raw = requests.get(f"{comfy_url}/status/{job_id}", timeout=15)
+                    try:
+                        status_res = status_raw.json()
+                    except Exception:
+                        print(
+                            f"   ⚠️ Non-JSON /status: status={status_raw.status_code} "
+                            f"body={status_raw.text[:200]!r}"
+                        )
+                        continue
                     status = status_res.get("status")
 
                     if status == "completed":
