@@ -32,8 +32,11 @@ def _guess_vram_gb(gpu_type_id):
         return 96
     if "5090" in name or "4500" in name:
         return 32
-    if "4090" in name or "4000" in name or " l4" in f" {name}":
+    if "4090" in name or ("4000" in name and "ada" in name) or " l4" in f" {name}":
         return 24
+    # RTX 2000 Ada / A2000 — 16GB (cheap download pod; tight for LTX render)
+    if "2000" in name:
+        return 16
     return 32
 
 
@@ -425,11 +428,11 @@ def download_and_stitch(rendered_urls, test_jobs):
                     silent_path,
                     output_video,
                     work_dir=f"./temp_clips/{vid_id}_audio",
-                    ambient=job.get("ambient", "rain_city"),
+                    ambient=job.get("ambient", False),
                     ambient_volume=float(job.get("ambient_volume", 0.38)),
                     title=job.get("title"),
                 )
-                print(f"🎉 Complete Video (ambient + title, no VO): {output_video}")
+                print(f"🎉 Complete Video (LTX AV / ambient + title, no VO): {output_video}")
             except Exception as e:
                 print(f"⚠️ Audio post failed ({e}); keeping silent copy as final.")
                 subprocess.run(["cp", "-f", silent_path, output_video], check=True)

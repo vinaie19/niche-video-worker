@@ -254,6 +254,29 @@ def _probe_duration(path: str) -> float:
     return float(out)
 
 
+def _probe_has_audio(path: str) -> bool:
+    """True if the file has at least one audio stream."""
+    try:
+        out = subprocess.check_output(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "a",
+                "-show_entries",
+                "stream=index",
+                "-of",
+                "csv=p=0",
+                path,
+            ],
+            text=True,
+        ).strip()
+        return bool(out)
+    except Exception:
+        return False
+
+
 def parse_ambient_option(ambient: Union[bool, str, None] = DEFAULT_AMBIENT) -> Optional[str]:
     """
     Normalize ambient field.
@@ -637,8 +660,25 @@ def add_ambient_and_title(
             f"{video_dur:.3f}",
         ]
     else:
-        cmd += ["-an", "-map", "0:v:0"]
-        print("🌧️ Ambient off — silent video")
+        # Keep source audio when present (LTX native AV); otherwise silent.
+        has_audio = _probe_has_audio(silent_video_path)
+        if has_audio:
+            cmd += [
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-map",
+                "0:v:0",
+                "-map",
+                "0:a:0",
+                "-t",
+                f"{video_dur:.3f}",
+            ]
+            print("🔊 Ambient off — keeping source audio (LTX native AV)")
+        else:
+            cmd += ["-an", "-map", "0:v:0"]
+            print("🌧️ Ambient off — silent video")
 
     cmd += ["-movflags", "+faststart", output_path]
     print(f"🎬 FFmpeg ambient/title mux → {output_path}")

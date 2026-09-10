@@ -61,6 +61,7 @@ hunyuan_ab_jobs = [
 ]
 
 # Used when ENGINE=ltx — ep07 noren closing (motion-first hook for retention).
+# ambient=False: keep LTX native AV (do not replace with rain bed).
 ltx_ab_jobs = [
     {
         "video_id": "ep07_noren_closing_ltx",
@@ -68,17 +69,15 @@ ltx_ab_jobs = [
         "num_frames": 97,
         "steps": 8,
         "captions": False,
-        # LTX generates native AV; keep a soft rain bed under title if needed
-        "ambient": "rain_city",
-        "ambient_volume": 0.28,
+        "ambient": False,
         "title": "Last call.",
         "shots": [
-            # 1 Hook — Full-frame noren sway readable in first second
-            "Cinematic locked extreme close-up of a dark indigo Japanese noren curtain with bold white kanji swaying hard in a night doorway, fabric snapping and settling, warm amber shop light bleeding through the split, rain droplets on the cloth edge, immediate motion, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            # 1 Hook — Full-frame noren sway + fabric/rain sound for LTX AV
+            "Cinematic locked extreme close-up of a dark indigo Japanese noren curtain with bold white kanji swaying hard in a night doorway, fabric snapping and settling, warm amber shop light bleeding through the split, rain droplets on the cloth edge, immediate motion, soft rain and cloth flutter audio, photo-realistic, vertical 9:16, no people, no faces, no camera move",
             # 2 Establish — Empty shop mouth after closing
-            "Cinematic locked medium shot of a narrow Tokyo alley shop entrance at night with indigo noren half-drawn across the doorway, warm interior lamp still on, wet pavement reflecting neon cyan and red, light rain falling, quiet after-hours atmosphere, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            "Cinematic locked medium shot of a narrow Tokyo alley shop entrance at night with indigo noren half-drawn across the doorway, warm interior lamp still on, wet pavement reflecting neon cyan and red, light rain falling, quiet after-hours atmosphere, distant rain and faint street hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move",
             # 3 Anchor — Handwritten closed sign + steam / rain
-            "Cinematic locked close-up of a small handwritten Japanese closed sign hanging beside a swaying noren at night, soft steam from a hidden kitchen vent, rain on dark wood and metal fixtures, warm tungsten spill, melancholic still-open glow, photo-realistic, vertical 9:16, no people, no faces, no camera move",
+            "Cinematic locked close-up of a small handwritten Japanese closed sign hanging beside a swaying noren at night, soft steam from a hidden kitchen vent, rain on dark wood and metal fixtures, warm tungsten spill, melancholic still-open glow, gentle rain and soft wood creak audio, photo-realistic, vertical 9:16, no people, no faces, no camera move",
         ],
     }
 ]
