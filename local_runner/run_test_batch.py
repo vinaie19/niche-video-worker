@@ -55,17 +55,24 @@ def launch_pod():
         "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
         "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
-        # wan (default) | hunyuan — Hunyuan A/B: ENGINE=hunyuan HY_VARIANT=480p_distilled
+        # wan (default) | hunyuan | ltx — LTX A/B: ENGINE=ltx LTX_VARIANT=distilled
         "ENGINE": os.getenv("ENGINE", "wan"),
         "HY_VARIANT": os.getenv("HY_VARIANT", "480p_distilled"),
         "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "81"),
         "HY_STEPS": os.getenv("HY_STEPS", "30"),
         "HY_FPS": os.getenv("HY_FPS", "24"),
-        # Hunyuan: keep UNET/encoders resident between shots (skip /free). Wan still unloads.
+        "LTX_VARIANT": os.getenv("LTX_VARIANT", "distilled"),
+        "LTX_NUM_FRAMES": os.getenv("LTX_NUM_FRAMES", "97"),
+        "LTX_STEPS": os.getenv("LTX_STEPS", "8"),
+        "LTX_FPS": os.getenv("LTX_FPS", "24"),
+        "LTX_WIDTH": os.getenv("LTX_WIDTH", "544"),
+        "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "960"),
+        # Hunyuan/LTX: keep weights resident between shots (skip /free). Wan still unloads.
         "KEEP_MODELS_LOADED": os.getenv(
             "KEEP_MODELS_LOADED",
             "true" if os.getenv("ENGINE", "wan").strip().lower() in (
-                "hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"
+                "hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15",
+                "ltx", "ltx2", "ltx23", "ltxv", "lightricks",
             ) else "",
         ),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
@@ -92,7 +99,10 @@ def launch_pod():
         acquire_sleep = 45
 
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
-    print(f"   ENGINE={env_vars.get('ENGINE')} HY_VARIANT={env_vars.get('HY_VARIANT')}")
+    print(
+        f"   ENGINE={env_vars.get('ENGINE')} HY_VARIANT={env_vars.get('HY_VARIANT')} "
+        f"LTX_VARIANT={env_vars.get('LTX_VARIANT')}"
+    )
     print(
         f"   Acquire loop: retries={'∞' if max_acquire <= 0 else max_acquire} "
         f"| sleep={acquire_sleep}s between passes"
@@ -261,6 +271,8 @@ def execute_batch(comfy_url, test_jobs):
                 engine = os.getenv("ENGINE", "wan").strip().lower()
                 if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_NUM_FRAMES"):
                     payload["num_frames"] = int(os.getenv("HY_NUM_FRAMES"))
+                elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_NUM_FRAMES"):
+                    payload["num_frames"] = int(os.getenv("LTX_NUM_FRAMES"))
                 elif os.getenv("WAN_NUM_FRAMES"):
                     payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
             if "steps" in vid:
@@ -269,6 +281,8 @@ def execute_batch(comfy_url, test_jobs):
                 engine = os.getenv("ENGINE", "wan").strip().lower()
                 if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_STEPS"):
                     payload["steps"] = int(os.getenv("HY_STEPS"))
+                elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_STEPS"):
+                    payload["steps"] = int(os.getenv("LTX_STEPS"))
                 elif os.getenv("WAN_STEPS"):
                     payload["steps"] = int(os.getenv("WAN_STEPS"))
 
@@ -428,14 +442,15 @@ def destroy_pod(pod_id):
 
 
 if __name__ == "__main__":
-    from test_prompts import test_jobs, hunyuan_ab_jobs
+    from test_prompts import test_jobs, hunyuan_ab_jobs, ltx_ab_jobs
 
     engine = os.getenv("ENGINE", "wan").strip().lower()
-    jobs = (
-        hunyuan_ab_jobs
-        if engine in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15")
-        else test_jobs
-    )
+    if engine in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
+        jobs = hunyuan_ab_jobs
+    elif engine in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
+        jobs = ltx_ab_jobs
+    else:
+        jobs = test_jobs
     print(f"🧪 Batch engine={engine} | jobs={[j['video_id'] for j in jobs]}")
 
     pod_id = None

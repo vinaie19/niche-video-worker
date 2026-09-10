@@ -1,0 +1,204 @@
+{
+  "11": {
+    "inputs": {
+      "text_encoder": "gemma_3_12B_it_fp4_mixed.safetensors",
+      "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors",
+      "device": "default"
+    },
+    "class_type": "LTXAVTextEncoderLoader",
+    "_meta": {
+      "title": "LTX Text Encoder"
+    }
+  },
+  "12": {
+    "inputs": {
+      "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "LTX Checkpoint"
+    }
+  },
+  "13": {
+    "inputs": {
+      "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors"
+    },
+    "class_type": "LTXVAudioVAELoader",
+    "_meta": {
+      "title": "LTX Audio VAE"
+    }
+  },
+  "44": {
+    "inputs": {
+      "text": "placeholder prompt",
+      "clip": ["11", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt"
+    }
+  },
+  "93": {
+    "inputs": {
+      "text": "pc game, console game, video game, cartoon, childish, ugly, blurry, low quality, worst quality, deformed, text, watermark, logo, people, faces, humans",
+      "clip": ["11", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative Prompt"
+    }
+  },
+  "16": {
+    "inputs": {
+      "frame_rate": 24,
+      "positive": ["44", 0],
+      "negative": ["93", 0]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTX Conditioning"
+    }
+  },
+  "17": {
+    "inputs": {
+      "width": 544,
+      "height": 960,
+      "length": 97,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "LTX Empty Video Latent"
+    }
+  },
+  "18": {
+    "inputs": {
+      "frames_number": 97,
+      "frame_rate": 24,
+      "batch_size": 1,
+      "audio_vae": ["13", 0]
+    },
+    "class_type": "LTXVEmptyLatentAudio",
+    "_meta": {
+      "title": "LTX Empty Audio Latent"
+    }
+  },
+  "19": {
+    "inputs": {
+      "video_latent": ["17", 0],
+      "audio_latent": ["18", 0]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTX Concat AV Latent"
+    }
+  },
+  "20": {
+    "inputs": {
+      "noise_seed": 888888
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "LTX Noise"
+    }
+  },
+  "21": {
+    "inputs": {
+      "sampler_name": "euler_ancestral_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "LTX Sampler Select"
+    }
+  },
+  "22": {
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "LTX Distilled Sigmas"
+    }
+  },
+  "23": {
+    "inputs": {
+      "cfg": 1.0,
+      "model": ["12", 0],
+      "positive": ["16", 0],
+      "negative": ["16", 1]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "LTX CFG Guider"
+    }
+  },
+  "24": {
+    "inputs": {
+      "noise": ["20", 0],
+      "guider": ["23", 0],
+      "sampler": ["21", 0],
+      "sigmas": ["22", 0],
+      "latent_image": ["19", 0]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "LTX Sampler"
+    }
+  },
+  "25": {
+    "inputs": {
+      "av_latent": ["24", 0]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTX Separate AV"
+    }
+  },
+  "26": {
+    "inputs": {
+      "samples": ["25", 0],
+      "vae": ["12", 2],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 4096,
+      "temporal_overlap": 8
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "LTX Video VAE Decode"
+    }
+  },
+  "27": {
+    "inputs": {
+      "samples": ["25", 1],
+      "audio_vae": ["13", 0]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTX Audio VAE Decode"
+    }
+  },
+  "28": {
+    "inputs": {
+      "images": ["26", 0],
+      "fps": 24,
+      "audio": ["27", 0]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "LTX Create Video"
+    }
+  },
+  "29": {
+    "inputs": {
+      "filename_prefix": "LTX23_T2V",
+      "format": "mp4",
+      "codec": "h264",
+      "video": ["28", 0]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "LTX Save Video"
+    }
+  }
+}

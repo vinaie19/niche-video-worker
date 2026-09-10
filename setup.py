@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import time
 
-# wan (default) | hunyuan — gated downloads so one ~50–75GB volume fits either stack
+# wan (default) | hunyuan | ltx — gated downloads so one ~50–75GB volume fits either stack
 ENGINE = os.getenv("ENGINE", "wan").strip().lower()
 
 T5_URL = "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/umt5-xxl-enc-fp8_e4m3fn.safetensors"
@@ -64,6 +64,20 @@ HY_T2V_480_EXPECTED_SIZE = 8_330_399_746
 HY_T2V_720_FILENAME = "hunyuanvideo1.5_720p_t2v_fp16.safetensors"
 HY_T2V_720_URL = f"{HY_ORG}/diffusion_models/{HY_T2V_720_FILENAME}"
 HY_T2V_720_EXPECTED_SIZE = 16_653_368_128
+
+# LTX-2.3 single-stage distilled AV (native ComfyUI nodes)
+# ~39GB: distilled-fp8 checkpoint + Gemma FP4 text encoder
+LTX_FP8 = "https://huggingface.co/Lightricks/LTX-2.3-fp8/resolve/main"
+LTX_ORG_TE = "https://huggingface.co/Comfy-Org/ltx-2/resolve/main/split_files/text_encoders"
+LTX_CKPT_DISTILLED = "ltx-2.3-22b-distilled-fp8.safetensors"
+LTX_CKPT_DISTILLED_URL = f"{LTX_FP8}/{LTX_CKPT_DISTILLED}"
+LTX_CKPT_DISTILLED_SIZE = 29_531_884_062
+LTX_CKPT_DEV = "ltx-2.3-22b-dev-fp8.safetensors"
+LTX_CKPT_DEV_URL = f"{LTX_FP8}/{LTX_CKPT_DEV}"
+LTX_CKPT_DEV_SIZE = 29_145_431_166
+LTX_GEMMA = "gemma_3_12B_it_fp4_mixed.safetensors"
+LTX_GEMMA_URL = f"{LTX_ORG_TE}/{LTX_GEMMA}"
+LTX_GEMMA_SIZE = 9_447_702_218
 
 # NUCLEAR UPGRADE: Local SSD Caching
 # We copy models from the slow Network Volume (/runpod-volume) to the fast local NVMe (/local_models)
@@ -173,8 +187,8 @@ def ensure_upscale_model(log):
         log.write("✅ Upscale model already cached on SSD\n")
 
 
-def _ensure_volume_file(log, rel_dir, filename, url, expected_size, label):
-    """Download a model onto the network volume and mirror it to SSD cache."""
+def _ensure_volume_file(log, rel_dir, filename, url, expected_size, label, cache_ssd=True):
+    """Download a model onto the network volume and optionally mirror it to SSD cache."""
     volume_root = "/runpod-volume"
     target = os.path.join(volume_root, "models", rel_dir, filename)
 
@@ -197,6 +211,10 @@ def _ensure_volume_file(log, rel_dir, filename, url, expected_size, label):
     else:
         log.write(f"✅ {label} is complete on volume\n")
 
+    if not cache_ssd:
+        log.write(f"ℹ️ Skipping SSD cache for {label} (large file; volume symlink is enough)\n")
+        return
+
     cache_path = os.path.join(CACHE_DIR, rel_dir, filename)
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     if not os.path.exists(cache_path) or os.path.getsize(cache_path) != expected_size:
@@ -207,6 +225,52 @@ def _ensure_volume_file(log, rel_dir, filename, url, expected_size, label):
         log.write(f"⚡ {label} cached in {int(time.time() - start)}s\n")
     else:
         log.write(f"✅ {label} already cached on SSD\n")
+
+
+def ltx_variant():
+    """distilled (default, ~8 ManualSigmas steps) | dev (slower quality path)."""
+    v = os.getenv("LTX_VARIANT", "distilled").strip().lower()
+    if v in ("dev", "dev_fp8", "full"):
+        return "dev"
+    return "distilled"
+
+
+def ensure_ltx_models(log):
+    """Download LTX-2.3 FP8 checkpoint + Gemma text encoder for native AV T2V."""
+    variant = ltx_variant()
+    used_gb = _volume_model_bytes() / (1024**3)
+    log.write(
+        f"⚡ ENGINE=ltx | LTX_VARIANT={variant} | need ~39GB (fp8 ckpt + gemma fp4) | "
+        f"volume models already ~{used_gb:.1f}GB\n"
+    )
+    if used_gb > 40:
+        log.write(
+            "⚠️ Volume already holds large Wan/Hunyuan weights. Prefer a clean ≥80GB volume "
+            "or delete unused stacks before the LTX A/B.\n"
+        )
+    _ensure_volume_file(
+        log, "text_encoders", LTX_GEMMA, LTX_GEMMA_URL, LTX_GEMMA_SIZE, "LTX Gemma 3 12B FP4"
+    )
+    if variant == "dev":
+        _ensure_volume_file(
+            log,
+            "checkpoints",
+            LTX_CKPT_DEV,
+            LTX_CKPT_DEV_URL,
+            LTX_CKPT_DEV_SIZE,
+            "LTX-2.3 Dev FP8 checkpoint",
+            cache_ssd=False,
+        )
+    else:
+        _ensure_volume_file(
+            log,
+            "checkpoints",
+            LTX_CKPT_DISTILLED,
+            LTX_CKPT_DISTILLED_URL,
+            LTX_CKPT_DISTILLED_SIZE,
+            "LTX-2.3 Distilled FP8 checkpoint",
+            cache_ssd=False,
+        )
 
 
 def remove_wan21_legacy(log):
@@ -431,6 +495,8 @@ def setup_model_links():
                 ensure_upscale_model(log)
             except Exception as e:
                 log.write(f"⚠️ Upscale model skipped (non-fatal): {e}\n")
+        elif ENGINE in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
+            ensure_ltx_models(log)
         else:
             ensure_t5_model(log)
             ensure_t2v_model(log)
@@ -445,6 +511,7 @@ def setup_model_links():
             "upscale_models",
             "clip_vision",
             "checkpoints",
+            "loras",
         ]
         
         for folder in folders:

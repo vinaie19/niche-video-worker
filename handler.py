@@ -36,12 +36,20 @@ HY_QWEN = "qwen_2.5_vl_7b_fp8_scaled.safetensors"
 HY_BYT5 = "byt5_small_glyphxl_fp16.safetensors"
 HY_VAE = "hunyuanvideo15_vae_fp16.safetensors"
 
+LTX_CKPT_DISTILLED = "ltx-2.3-22b-distilled-fp8.safetensors"
+LTX_CKPT_DEV = "ltx-2.3-22b-dev-fp8.safetensors"
+LTX_GEMMA = "gemma_3_12B_it_fp4_mixed.safetensors"
+# Official single-stage distilled ManualSigmas (8 steps between endpoints)
+LTX_DISTILLED_SIGMAS = "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+
 
 def get_engine():
-    """wan (default) | hunyuan — set ENGINE on the pod."""
+    """wan (default) | hunyuan | ltx — set ENGINE on the pod."""
     eng = os.getenv("ENGINE", "wan").strip().lower()
     if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
         return "hunyuan"
+    if eng in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
+        return "ltx"
     return "wan"
 
 
@@ -50,6 +58,13 @@ def hy_variant():
     if v in ("720p", "720", "720p_fp16"):
         return "720p"
     return "480p_distilled"
+
+
+def ltx_variant():
+    v = os.getenv("LTX_VARIANT", "distilled").strip().lower()
+    if v in ("dev", "dev_fp8", "full"):
+        return "dev"
+    return "distilled"
 
 
 def sageattn_available():
@@ -102,34 +117,49 @@ def should_force_offload(vram_gb=None):
 
 
 def default_fps():
-    if get_engine() == "hunyuan":
+    engine = get_engine()
+    if engine == "hunyuan":
         try:
             return max(1, int(os.getenv("HY_FPS", "24")))
+        except ValueError:
+            return 24
+    if engine == "ltx":
+        try:
+            return max(1, int(os.getenv("LTX_FPS", "24")))
         except ValueError:
             return 24
     return 16
 
 
 def default_num_frames():
-    """Wan: 49 @ 16fps ≈ 3.1s. Hunyuan: 49 @ 24fps ≈ 2.0s (override with HY_NUM_FRAMES=73)."""
+    """Wan: 49 @ 16fps ≈ 3.1s. Hunyuan/LTX: 97 @ 24fps ≈ 4.0s (override with *_NUM_FRAMES)."""
     engine = get_engine()
-    env_key = "HY_NUM_FRAMES" if engine == "hunyuan" else "WAN_NUM_FRAMES"
-    fallback = "49"
+    if engine == "hunyuan":
+        env_key, fallback = "HY_NUM_FRAMES", "49"
+    elif engine == "ltx":
+        env_key, fallback = "LTX_NUM_FRAMES", "97"
+    else:
+        env_key, fallback = "WAN_NUM_FRAMES", "49"
     try:
         requested = int(os.getenv(env_key, fallback))
     except ValueError:
-        requested = 49
+        requested = int(fallback)
     return nearest_valid_frames(requested)
 
 
 def default_steps():
     engine = get_engine()
-    env_key = "HY_STEPS" if engine == "hunyuan" else "WAN_STEPS"
-    fallback = "30" if engine == "hunyuan" else "16"
+    if engine == "hunyuan":
+        env_key, fallback, soft = "HY_STEPS", "30", 30
+    elif engine == "ltx":
+        # Distilled ManualSigmas schedule is fixed (~8); steps env is informational / future use
+        env_key, fallback, soft = "LTX_STEPS", "8", 8
+    else:
+        env_key, fallback, soft = "WAN_STEPS", "16", 16
     try:
         return max(1, int(os.getenv(env_key, fallback)))
     except ValueError:
-        return 30 if engine == "hunyuan" else 16
+        return soft
 
 
 def wait_for_comfyui():
@@ -438,10 +468,112 @@ def patch_hunyuan_workflow(workflow, prompt_text, models, num_frames=None, steps
     return workflow
 
 
+def detect_ltx_models():
+    """Locate LTX-2.3 FP8 checkpoint + Gemma encoder on volume or SSD cache."""
+    variant = ltx_variant()
+    want_ckpt = LTX_CKPT_DEV if variant == "dev" else LTX_CKPT_DISTILLED
+
+    ckpt, cvol = find_model_file("checkpoints", [lambda f: f == want_ckpt])
+    if not ckpt:
+        ckpt, cvol = find_model_file(
+            "checkpoints",
+            [
+                lambda f: "ltx" in f.lower()
+                and "2.3" in f
+                and "fp8" in f.lower()
+                and (("distill" in f.lower()) if variant == "distilled" else ("dev" in f.lower())),
+            ],
+        )
+
+    gemma, _ = find_model_file(
+        "text_encoders",
+        [lambda f: f == LTX_GEMMA or ("gemma" in f.lower() and "fp4" in f.lower())],
+    )
+    if not gemma:
+        gemma, _ = find_model_file(
+            "text_encoders",
+            [lambda f: "gemma" in f.lower()],
+        )
+
+    if ckpt:
+        print(f"🎯 LTX checkpoint from {cvol}: {ckpt}")
+    return {
+        "ckpt": ckpt,
+        "gemma": gemma,
+        "variant": variant,
+    }
+
+
+def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=None):
+    """Patch native LTX-2.3 single-stage distilled AV T2V for vertical Shorts."""
+    if num_frames is None:
+        num_frames = default_num_frames()
+    else:
+        num_frames = nearest_valid_frames(int(num_frames))
+    # Distilled path uses fixed ManualSigmas; steps kept for logging / future BasicScheduler
+    if steps is None:
+        steps = default_steps()
+    else:
+        steps = max(1, int(steps))
+
+    width = int(os.getenv("LTX_WIDTH", "544"))
+    height = int(os.getenv("LTX_HEIGHT", "960"))
+    cfg = float(os.getenv("LTX_CFG", "1"))
+    fps = default_fps()
+    sigmas = os.getenv("LTX_SIGMAS", LTX_DISTILLED_SIGMAS).strip()
+    ckpt = models.get("ckpt")
+    gemma = models.get("gemma")
+
+    for node in workflow.values():
+        class_type = node.get("class_type")
+        title = (node.get("_meta") or {}).get("title", "")
+
+        if class_type == "LTXAVTextEncoderLoader":
+            if gemma:
+                node["inputs"]["text_encoder"] = gemma
+            if ckpt:
+                node["inputs"]["ckpt_name"] = ckpt
+
+        if class_type in ("CheckpointLoaderSimple", "LTXVAudioVAELoader") and ckpt:
+            node["inputs"]["ckpt_name"] = ckpt
+
+        if class_type == "CLIPTextEncode" and (
+            title == "Positive Prompt" or "Positive" in title
+        ):
+            node["inputs"]["text"] = prompt_text
+
+        if class_type == "EmptyLTXVLatentVideo":
+            node["inputs"]["width"] = width
+            node["inputs"]["height"] = height
+            node["inputs"]["length"] = num_frames
+
+        if class_type == "LTXVEmptyLatentAudio":
+            node["inputs"]["frames_number"] = num_frames
+            node["inputs"]["frame_rate"] = fps
+
+        if class_type == "LTXVConditioning":
+            node["inputs"]["frame_rate"] = fps
+
+        if class_type == "CFGGuider":
+            node["inputs"]["cfg"] = cfg
+
+        if class_type == "ManualSigmas":
+            node["inputs"]["sigmas"] = sigmas
+
+        if class_type == "CreateVideo":
+            node["inputs"]["fps"] = fps
+
+    print(
+        f"🎚️ LTX patch | {width}x{height} | frames={num_frames} "
+        f"(~{num_frames / fps:.1f}s @{fps}fps) | distilled_sigmas | cfg={cfg} | variant={models.get('variant')}"
+    )
+    return workflow
+
+
 def should_unload_models_between_jobs():
     """
     Wan MoE often needs /free between shots (T5 + dual experts).
-    Hunyuan 480p distilled on 32GB+ is happier keeping weights resident —
+    Hunyuan / LTX on 32GB+ are happier keeping weights resident —
     unload+reload costs more than it saves.
     Override with KEEP_MODELS_LOADED=true|false.
     """
@@ -450,8 +582,8 @@ def should_unload_models_between_jobs():
         return False
     if flag in ("false", "0", "no"):
         return True
-    # Default: keep loaded for Hunyuan; unload for Wan
-    return get_engine() != "hunyuan"
+    # Default: keep loaded for Hunyuan + LTX; unload for Wan
+    return get_engine() not in ("hunyuan", "ltx")
 
 
 def free_comfy_memory(force=False):
@@ -542,10 +674,39 @@ def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
                             if key in node_output and node_output[key]:
                                 filename = node_output[key][0].get("filename")
                                 if filename and filename.lower().endswith(
-                                    (".mp4", ".webm", ".gif")
+                                    (".mp4", ".webm", ".gif", ".mkv")
                                 ):
                                     free_comfy_memory(force=False)
                                     return filename
+                        # SaveVideo / PreviewVideo sometimes nests under ui-style keys
+                        for key, val in node_output.items():
+                            if not isinstance(val, list) or not val:
+                                continue
+                            first = val[0]
+                            if isinstance(first, dict):
+                                filename = first.get("filename")
+                                if filename and filename.lower().endswith(
+                                    (".mp4", ".webm", ".mkv")
+                                ):
+                                    free_comfy_memory(force=False)
+                                    return filename
+
+                    # Fallback: newest video written under Comfy output dir for this prompt
+                    if os.path.isdir(OUTPUT_DIR):
+                        candidates = [
+                            f
+                            for f in os.listdir(OUTPUT_DIR)
+                            if f.lower().endswith((".mp4", ".webm", ".mkv"))
+                        ]
+                        if candidates:
+                            newest = max(
+                                candidates,
+                                key=lambda f: os.path.getmtime(os.path.join(OUTPUT_DIR, f)),
+                            )
+                            # Only accept if written after we queued
+                            if os.path.getmtime(os.path.join(OUTPUT_DIR, newest)) >= start_poll - 2:
+                                free_comfy_memory(force=False)
+                                return newest
                 except (TimeoutError, RuntimeError):
                     raise
                 except Exception as e:
@@ -627,27 +788,28 @@ def stitch_continuous_chunks(chunk_paths, output_path, fps=16):
     subprocess.run(cmd, check=True, capture_output=True)
 
 
-def maybe_scale_to_shorts(src_path, dst_path):
+def maybe_scale_to_shorts(src_path, dst_path, copy_audio=False):
     """Fast lanczos upscale to 1080x1920 for continuous smoke tests (no UltraSharp)."""
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-y",
-            "-i",
-            src_path,
-            "-vf",
-            "scale=1080:1920:flags=lanczos",
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-crf",
-            "18",
-            dst_path,
-        ],
-        check=True,
-        capture_output=True,
-    )
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        src_path,
+        "-vf",
+        "scale=1080:1920:flags=lanczos",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-crf",
+        "18",
+    ]
+    if copy_audio:
+        cmd.extend(["-c:a", "aac", "-b:a", "192k", "-map", "0:v:0", "-map", "0:a:0?"])
+    else:
+        cmd.extend(["-an"])
+    cmd.append(dst_path)
+    subprocess.run(cmd, check=True, capture_output=True)
 
 
 def upload_to_r2(local_file_path, r2_key):
@@ -706,10 +868,59 @@ def execute_multi_cut_hunyuan(job_id, prompt_text, video_id, shot_index, num_fra
     jobs[job_id]["engine"] = "hunyuan"
 
 
+def execute_multi_cut_ltx(job_id, prompt_text, video_id, shot_index, num_frames=None, steps=None):
+    """LTX-2.3 native AV T2V (vertical Shorts). Distilled FP8 + ManualSigmas; ffmpeg scale after."""
+    with open("/workspace/workflow_ltx_t2v.json", "r") as f:
+        workflow = json.load(f)
+
+    models = detect_ltx_models()
+    if not models.get("ckpt"):
+        raise RuntimeError(
+            "LTX checkpoint not found — set ENGINE=ltx and check setup.py download"
+        )
+    if not models.get("gemma"):
+        raise RuntimeError("LTX Gemma text encoder not found")
+
+    vram_gb = detect_vram_gb()
+    print(
+        f"🖥️ LTX-2.3 | variant={models['variant']} | VRAM≈{vram_gb:.0f}GB | native AV"
+    )
+
+    workflow = patch_ltx_workflow(
+        workflow, prompt_text, models, num_frames=num_frames, steps=steps
+    )
+    output_filename = submit_and_wait(workflow, timeout_s=1800)
+    local_file_path = os.path.join(OUTPUT_DIR, output_filename)
+
+    scaled_path = os.path.join(OUTPUT_DIR, f"ltx_{job_id}_1080p.mp4")
+    try:
+        maybe_scale_to_shorts(local_file_path, scaled_path, copy_audio=True)
+        upload_path = scaled_path
+    except Exception as e:
+        print(f"⚠️ LTX 1080p scale failed ({e}); uploading native resolution")
+        upload_path = local_file_path
+
+    r2_key = f"renders/{video_id}/shot_{shot_index}.mp4"
+    r2_public_url = upload_to_r2(upload_path, r2_key)
+    for path in (local_file_path, scaled_path):
+        if os.path.exists(path):
+            os.remove(path)
+
+    jobs[job_id]["status"] = "completed"
+    jobs[job_id]["output_r2_url"] = r2_public_url
+    jobs[job_id]["shot_mode"] = "multi_cut"
+    jobs[job_id]["engine"] = "ltx"
+
+
 def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None, steps=None):
-    """Single-clip T2V path — Wan 2.2 MoE (default) or HunyuanVideo 1.5."""
-    if get_engine() == "hunyuan":
+    """Single-clip T2V path — Wan 2.2 MoE (default), HunyuanVideo 1.5, or LTX-2.3."""
+    engine = get_engine()
+    if engine == "hunyuan":
         return execute_multi_cut_hunyuan(
+            job_id, prompt_text, video_id, shot_index, num_frames=num_frames, steps=steps
+        )
+    if engine == "ltx":
+        return execute_multi_cut_ltx(
             job_id, prompt_text, video_id, shot_index, num_frames=num_frames, steps=steps
         )
 
@@ -757,9 +968,9 @@ def execute_continuous(
     Default chunk length follows WAN_NUM_FRAMES (49 ≈ 3.1s @ 16fps).
     Hunyuan continuous/I2V chaining is not wired yet — use multi_cut for A/B.
     """
-    if get_engine() == "hunyuan":
+    if get_engine() in ("hunyuan", "ltx"):
         raise RuntimeError(
-            "ENGINE=hunyuan does not support continuous mode yet — use shot_mode=multi_cut"
+            f"ENGINE={get_engine()} does not support continuous mode yet — use shot_mode=multi_cut"
         )
 
     chunks = max(1, int(chunks))
@@ -939,6 +1150,7 @@ def health_check():
             "status": "ready",
             "engine": engine,
             "hy_variant": hy_variant() if engine == "hunyuan" else None,
+            "ltx_variant": ltx_variant() if engine == "ltx" else None,
             "diagnostics": diag,
             "setup_log": setup_log,
             "vram_gb": detect_vram_gb(),
@@ -949,7 +1161,7 @@ def health_check():
             "wan_num_frames": default_num_frames(),
             "wan_steps": default_steps(),
             "modes": ["multi_cut"]
-            if engine == "hunyuan"
+            if engine in ("hunyuan", "ltx")
             else ["multi_cut", "continuous"],
         }
     )

@@ -41,9 +41,10 @@ COPY workflow_api.json /workspace/workflow_api.json
 COPY workflow_t2v_chunk.json /workspace/workflow_t2v_chunk.json
 COPY workflow_i2v_api.json /workspace/workflow_i2v_api.json
 COPY workflow_hunyuan_t2v.json /workspace/workflow_hunyuan_t2v.json
+COPY workflow_ltx_t2v.json /workspace/workflow_ltx_t2v.json
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
-# ENGINE=wan (default) | hunyuan — set on the RunPod env to pick model stack
+# ENGINE=wan (default) | hunyuan | ltx — set on the RunPod env to pick model stack
 ENV ENGINE=wan
 
 EXPOSE 8000

@@ -6,6 +6,7 @@ comfyui:
     vae: vae
     upscale_models: upscale_models
     clip_vision: clip_vision
+    loras: loras
 
 comfyui_models:
     base_path: /runpod-volume/models
@@ -15,6 +16,7 @@ comfyui_models:
     vae: vae
     upscale_models: upscale_models
     clip_vision: clip_vision
+    loras: loras
 
 workspace:
     base_path: /workspace/models
@@ -24,3 +26,4 @@ workspace:
     vae: vae
     upscale_models: upscale_models
     clip_vision: clip_vision
+    loras: loras
