@@ -58,9 +58,16 @@ def launch_pod():
         # wan (default) | hunyuan — Hunyuan A/B: ENGINE=hunyuan HY_VARIANT=480p_distilled
         "ENGINE": os.getenv("ENGINE", "wan"),
         "HY_VARIANT": os.getenv("HY_VARIANT", "480p_distilled"),
-        "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "49"),
+        "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "81"),
         "HY_STEPS": os.getenv("HY_STEPS", "30"),
         "HY_FPS": os.getenv("HY_FPS", "24"),
+        # Hunyuan: keep UNET/encoders resident between shots (skip /free). Wan still unloads.
+        "KEEP_MODELS_LOADED": os.getenv(
+            "KEEP_MODELS_LOADED",
+            "true" if os.getenv("ENGINE", "wan").strip().lower() in (
+                "hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"
+            ) else "",
+        ),
         # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
         "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
         # 5090-safe defaults (override per job in test_prompts if needed)
@@ -73,47 +80,74 @@ def launch_pod():
     gpu_vram = None
     last_error = None
 
+    # Keep polling until a GPU is free (stock flickers on RunPod).
+    # POD_ACQUIRE_RETRIES=0 means forever. Sleep between full passes over the GPU list.
+    try:
+        max_acquire = int(os.getenv("POD_ACQUIRE_RETRIES", "0"))
+    except ValueError:
+        max_acquire = 0
+    try:
+        acquire_sleep = int(os.getenv("POD_ACQUIRE_SLEEP_S", "45"))
+    except ValueError:
+        acquire_sleep = 45
+
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
     print(f"   ENGINE={env_vars.get('ENGINE')} HY_VARIANT={env_vars.get('HY_VARIANT')}")
-    for gpu_type_id, gpu_vram in ordered:
-        # 96GB: keep weights resident. 32/24GB: offload required for 81-frame MoE.
-        force_offload = os.getenv("FORCE_OFFLOAD")
-        if force_offload is None or force_offload.strip() == "":
-            force_offload = "false" if gpu_vram >= 64 else "true"
-        else:
-            force_offload = force_offload.strip().lower()
+    print(
+        f"   Acquire loop: retries={'∞' if max_acquire <= 0 else max_acquire} "
+        f"| sleep={acquire_sleep}s between passes"
+    )
 
-        # Hunyuan A/B: 40GB is enough (weights on network volume). Wan MoE cache: 75–100GB.
-        try:
-            container_disk = int(os.getenv("CONTAINER_DISK_GB", "40"))
-        except ValueError:
-            container_disk = 40
-
-        print(
-            f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload}, "
-            f"disk={container_disk}GB)..."
-        )
-        try:
-            pod = runpod.create_pod(
-                name="test-batch-pod",
-                image_name=image,
-                gpu_type_id=gpu_type_id,
-                container_disk_in_gb=container_disk,
-                ports="8000/http",
-                network_volume_id="cxgqbfwsvr",
-                data_center_id="EU-RO-1",
-                env={
-                    **env_vars,
-                    "GPU_VRAM_GB": str(gpu_vram),
-                    "FORCE_OFFLOAD": force_offload,
-                }
-            )
-            print(f"   ✅ Acquired {gpu_type_id}")
+    attempt = 0
+    while pod is None:
+        attempt += 1
+        if max_acquire > 0 and attempt > max_acquire:
             break
-        except Exception as e:
-            last_error = e
-            print(f"   ⚠️ Unavailable: {e}")
-            pod = None
+        print(f"🔁 Acquire pass {attempt}" + (f"/{max_acquire}" if max_acquire > 0 else "") + "...")
+
+        for gpu_type_id, gpu_vram in ordered:
+            # 96GB: keep weights resident. 32/24GB: offload required for 81-frame MoE.
+            force_offload = os.getenv("FORCE_OFFLOAD")
+            if force_offload is None or force_offload.strip() == "":
+                force_offload = "false" if gpu_vram >= 64 else "true"
+            else:
+                force_offload = force_offload.strip().lower()
+
+            # Hunyuan A/B: 40GB is enough (weights on network volume). Wan MoE cache: 75–100GB.
+            try:
+                container_disk = int(os.getenv("CONTAINER_DISK_GB", "40"))
+            except ValueError:
+                container_disk = 40
+
+            print(
+                f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload}, "
+                f"disk={container_disk}GB)..."
+            )
+            try:
+                pod = runpod.create_pod(
+                    name="test-batch-pod",
+                    image_name=image,
+                    gpu_type_id=gpu_type_id,
+                    container_disk_in_gb=container_disk,
+                    ports="8000/http",
+                    network_volume_id="cxgqbfwsvr",
+                    data_center_id="EU-RO-1",
+                    env={
+                        **env_vars,
+                        "GPU_VRAM_GB": str(gpu_vram),
+                        "FORCE_OFFLOAD": force_offload,
+                    }
+                )
+                print(f"   ✅ Acquired {gpu_type_id}")
+                break
+            except Exception as e:
+                last_error = e
+                print(f"   ⚠️ Unavailable: {e}")
+                pod = None
+
+        if pod is None:
+            print(f"⏳ No GPU this pass — sleeping {acquire_sleep}s then retrying (Ctrl+C to stop)...")
+            time.sleep(acquire_sleep)
 
     if not pod:
         raise Exception(f"No GPU available from fallback list. Last error: {last_error}")
@@ -347,6 +381,7 @@ def download_and_stitch(rendered_urls, test_jobs):
                 ambient = job.get("ambient", "rain_city")
                 vo_delay_ms = int(job.get("vo_delay_ms", 900))
                 ambient_volume = float(job.get("ambient_volume", 0.38))
+                voice_volume = float(job.get("voice_volume", 1.0))
                 add_voice_and_captions(
                     silent_path,
                     script,
@@ -358,6 +393,7 @@ def download_and_stitch(rendered_urls, test_jobs):
                     ambient=ambient,
                     vo_delay_ms=vo_delay_ms,
                     ambient_volume=ambient_volume,
+                    voice_volume=voice_volume,
                 )
                 mode = (
                     f"voice + captions({caption_style})"

@@ -1,0 +1,6 @@
+Ambient bed built from Mixkit free SFX (Mixkit License — free for commercial use with attribution):
+- rain_1253.mp3 — Mixkit rain preview asset 1253
+- app_119.mp3 — Mixkit appliances preview asset 119
+- hum_1919.mp3 — Mixkit hum preview asset 1919
+Mixed locally into laundry_rain_bed.wav for Places That Stay Open / ep06.
+https://mixkit.co/license/#sfxFree

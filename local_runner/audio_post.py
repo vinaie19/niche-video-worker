@@ -273,8 +273,15 @@ def parse_ambient_option(ambient: Union[bool, str, None] = DEFAULT_AMBIENT) -> O
         low = key.lower()
         if low in AMBIENT_PRESETS:
             return low
-        if os.path.isfile(key):
-            return os.path.abspath(key)
+        candidates = [
+            key,
+            os.path.abspath(key),
+            os.path.join(os.path.dirname(__file__), key),
+            os.path.join(os.path.dirname(__file__), "ambient", os.path.basename(key)),
+        ]
+        for path in candidates:
+            if os.path.isfile(path):
+                return os.path.abspath(path)
         print(f"⚠️ ambient '{ambient}' not found; using rain_city. Presets: {', '.join(AMBIENT_PRESETS)}")
         return DEFAULT_AMBIENT
     return DEFAULT_AMBIENT
@@ -365,11 +372,13 @@ def mix_voice_with_ambient(
     then mix under the soft narration. Output length = video duration.
     """
     delay = max(0, int(vo_delay_ms))
-    # adelay wants ms per channel for stereo; mono gets one value
+    vo_vol = max(0.1, min(1.5, float(voice_volume)))
+    # normalize=0 keeps ambient loud after VO ends (default amix halves levels
+    # while the padded silent VO track is still "present").
     filter = (
-        f"[1:a]volume={voice_volume:.3f},adelay={delay}|{delay},"
+        f"[1:a]volume={vo_vol:.3f},adelay={delay}|{delay},"
         f"apad=whole_dur={video_duration_s:.3f}[vo];"
-        f"[0:a][vo]amix=inputs=2:duration=first:dropout_transition=0,"
+        f"[0:a][vo]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,"
         f"alimiter=limit=0.95[out]"
     )
     cmd = [
@@ -468,6 +477,7 @@ def add_voice_and_captions(
     ambient: Union[bool, str, None] = DEFAULT_AMBIENT,
     vo_delay_ms: int = DEFAULT_VO_DELAY_MS,
     ambient_volume: float = DEFAULT_AMBIENT_VOLUME,
+    voice_volume: float = 1.0,
 ) -> str:
     """Full post pipeline: TTS → ambient bed → optional Whisper SRT → mux."""
     if not script or not script.strip():
@@ -528,6 +538,7 @@ def add_voice_and_captions(
             mixed,
             video_duration_s=video_dur,
             vo_delay_ms=vo_delay_ms,
+            voice_volume=voice_volume,
         )
         final_audio = mixed
     else:

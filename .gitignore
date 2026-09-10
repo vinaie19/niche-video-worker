@@ -9,3 +9,7 @@ __pycache__/
 .DS_Store
 final_videos/
 temp_clips/
+local_runner/ambient/*.mp3
+!local_runner/ambient/SOURCES.txt
+!local_runner/ambient/laundry_rain_bed.wav
+

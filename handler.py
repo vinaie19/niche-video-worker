@@ -125,11 +125,11 @@ def default_num_frames():
 def default_steps():
     engine = get_engine()
     env_key = "HY_STEPS" if engine == "hunyuan" else "WAN_STEPS"
-    fallback = "20" if engine == "hunyuan" else "16"
+    fallback = "30" if engine == "hunyuan" else "16"
     try:
         return max(1, int(os.getenv(env_key, fallback)))
     except ValueError:
-        return 20 if engine == "hunyuan" else 16
+        return 30 if engine == "hunyuan" else 16
 
 
 def wait_for_comfyui():
@@ -438,8 +438,27 @@ def patch_hunyuan_workflow(workflow, prompt_text, models, num_frames=None, steps
     return workflow
 
 
-def free_comfy_memory():
-    """Unload models and free GPU memory so T5 can load on the next shot."""
+def should_unload_models_between_jobs():
+    """
+    Wan MoE often needs /free between shots (T5 + dual experts).
+    Hunyuan 480p distilled on 32GB+ is happier keeping weights resident —
+    unload+reload costs more than it saves.
+    Override with KEEP_MODELS_LOADED=true|false.
+    """
+    flag = os.getenv("KEEP_MODELS_LOADED", "").strip().lower()
+    if flag in ("true", "1", "yes"):
+        return False
+    if flag in ("false", "0", "no"):
+        return True
+    # Default: keep loaded for Hunyuan; unload for Wan
+    return get_engine() != "hunyuan"
+
+
+def free_comfy_memory(force=False):
+    """Unload models / free GPU memory. Skip between Hunyuan shots unless force (OOM)."""
+    if not force and not should_unload_models_between_jobs():
+        print("🧠 Keeping models loaded (skip /free between shots)")
+        return
     try:
         requests.post(
             f"{COMFY_URL}/free",
@@ -473,8 +492,8 @@ def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
     """
     Queue a ComfyUI prompt and return the first output video filename.
 
-    After success, /free so leftover MoE weights do not OOM the next T5 load.
-    On CUDA OOM: /free immediately and retry once.
+    After success: optionally /free (Wan default; Hunyuan keeps models loaded).
+    On CUDA OOM: always /free and retry once.
     """
     try:
         requests.post(f"{COMFY_URL}/refresh_custom_nodes", headers=COMFY_HEADERS, timeout=2)
@@ -525,7 +544,7 @@ def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
                                 if filename and filename.lower().endswith(
                                     (".mp4", ".webm", ".gif")
                                 ):
-                                    free_comfy_memory()
+                                    free_comfy_memory(force=False)
                                     return filename
                 except (TimeoutError, RuntimeError):
                     raise
@@ -537,10 +556,10 @@ def submit_and_wait(workflow, timeout_s=1200, oom_retries=1):
                 print(
                     f"💥 OOM on attempt {attempt}/{attempts} — freeing VRAM and retrying..."
                 )
-                free_comfy_memory()
+                free_comfy_memory(force=True)
                 continue
             if _is_oom_error(e):
-                free_comfy_memory()
+                free_comfy_memory(force=True)
             raise
 
     raise last_err or RuntimeError("ComfyUI submit failed with no output")

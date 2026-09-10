@@ -5,12 +5,17 @@
 # Title: optional one-line overlay at 0:00 (not Whisper captions)
 #
 # Wan: 49 frames @ 16fps ≈ 3.1s/shot
-# Hunyuan: prefer 5×49 @ 24fps ≈ 10.2s total (retention cuts), or 3×73 ≈ 9.1s
-# Framing: medium/wide so the location is readable — avoid extreme close-ups as the only view
+# Hunyuan: 3×81 @ 24fps ≈ 3.4s/shot ≈ 10s total (3s target; 81 is 4k+1-safe on current image)
+#          steps=30. Soft VO + real laundry/rain bed (not pink-noise hiss).
 #
 # Series 1 — Places That Stay Open:
 #   ep01 ramen window | ep02 konbini glow | ep03 vending alley
 #   ep04 midnight platform | ep05 capsule hall | ep06 coin laundry | ep07 noren closing
+
+import os
+
+_AMBIENT_DIR = os.path.join(os.path.dirname(__file__), "ambient")
+LAUNDRY_RAIN_BED = os.path.join(_AMBIENT_DIR, "laundry_rain_bed.wav")
 
 test_jobs = [
     {
@@ -30,28 +35,26 @@ test_jobs = [
     }
 ]
 
-# Used when ENGINE=hunyuan. Preference: 5 shots × 49 @ 24fps ≈ 10s, steps=30, wider readable frames.
+# Used when ENGINE=hunyuan.
 hunyuan_ab_jobs = [
     {
-        "video_id": "ep06_coin_laundry",
+        "video_id": "ep06_coin_laundry_soothing",
         "shot_mode": "multi_cut",
-        "num_frames": 49,
+        "num_frames": 81,
         "steps": 30,
         "captions": False,
-        "ambient": "rain_city",
-        "ambient_volume": 0.42,
+        "ambient": LAUNDRY_RAIN_BED,
+        "ambient_volume": 0.48,
         "title": "Still open.",
         "shots": [
-            # 1 Hook — motion first, but readable as a washer drum (not abstract blur)
-            "Cinematic locked medium close-up of a Japanese coin laundry washing machine door at night, soapy water and clothes tumbling clearly behind the round glass, cool white fluorescent light, soft rain streaks on the shop window in the background, vibrant saturated colors, photo-realistic, vertical 9:16, medium framing so the whole machine door is visible, no people, no faces, no camera move",
-            # 2 Wide establish — full row of machines readable as a coin laundry
-            "Cinematic locked wide shot of a small empty Japanese coin laundry at night, a full row of white washers and dryers clearly visible along the wall, bright fluorescent ceiling lights, large front windows wet with rain showing dark street neon outside, wet tile floor reflections, vivid color contrast, photo-realistic, vertical 9:16, wide establishing frame, no people, no faces, no camera move",
-            # 3 Medium — change machine / detergent shelf as location detail
-            # 4 Atmosphere — rain on glass with laundry interior readable behind
-            # 5 Anchor — human trace without faces
-            "Cinematic locked medium shot of a coin-operated change machine and detergent boxes on a metal shelf inside a Japanese laundromat at night, fluorescent light, rain visible through the window behind, clean readable subject, vibrant colors, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            "Cinematic locked medium-wide shot looking out from inside a Japanese coin laundry through a large rain-lashed front window at night, glowing wet street and neon outside, rows of washers softly visible in the reflection and foreground edges, constant rain motion on glass, saturated cyan and warm interior light, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            "Cinematic locked medium shot of a lone plastic laundry basket on a bench inside an empty Japanese coin laundry at night, one dryer door slightly open with warm light spilling out, soft steam or heat shimmer, rain on the windows behind, cozy saturated colors, photo-realistic, vertical 9:16, subject fully readable in frame, no people, no faces, no camera move",
+            # 1 Hook — Soft pastel clothes tumbling + Calming light
+            "Cinematic locked medium close-up of a Japanese coin laundry washing machine door at night, soft pastel-colored clothes tumbling clearly behind the round glass, gentle warm white and muted teal light spilling across the metal chassis, soft rain on the shop window in the background, soothing pastel color palette, low contrast, calm atmosphere, photo-realistic, vertical 9:16, medium framing so the whole machine door is visible, no people, no faces, no camera move",
+            
+            # 2 Wide establish — Soft seafoam/cream machines + Gentle reflections
+            "Cinematic locked wide shot of a small empty Japanese coin laundry at night, a row of pale seafoam green and soft cream retro washers, gentle warm interior light reflecting softly across the wet tile floor, muted rain and dark teal night outside the windows, soothing cinematic color grading, photo-realistic, vertical 9:16, wide establishing frame, no people, no faces, no camera move",
+            
+            # 3 Anchor — Pale basket + Warm glowing spill
+            "Cinematic locked medium shot of a soft peach-colored plastic laundry basket and pale mint detergent bottles on a bench inside an empty Japanese coin laundry at night, one dryer door slightly open with gentle warm golden light spilling out, soft steam, soothing pastel aesthetic, calm rain on the window behind, photo-realistic, vertical 9:16, subject fully readable in frame, no people, no faces, no camera move",
         ],
     }
 ]
