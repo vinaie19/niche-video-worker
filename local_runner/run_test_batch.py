@@ -18,16 +18,21 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY')
 )
 
-# Prefer RTX 5090, then 4500 (same 32GB + offload). No 6000 for now.
+# Prefer Blackwell PRO 6000 96GB (no offload + GPU Gemma TE), then 5090/4500.
+# Exact RunPod ids (UI "RTX PRO 6000" ≈ Server Edition).
 GPU_FALLBACKS = [
+    ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
+    ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
+    ("NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition", 96),
     ("NVIDIA GeForce RTX 5090", 32),
-    ("NVIDIA RTX PRO 4500 Blackwell", 32)
+    ("NVIDIA RTX PRO 4500 Blackwell", 32),
 ]
 
 
 def _guess_vram_gb(gpu_type_id):
     """Best-effort VRAM when RUNPOD_GPU_TYPE is a custom / unmatched string."""
     name = (gpu_type_id or "").lower()
+    # Blackwell 6000 family only — do NOT treat Ada 6000 (48GB) as 96GB
     if "6000" in name and "blackwell" in name:
         return 96
     if "5090" in name or "4500" in name:
@@ -38,6 +43,17 @@ def _guess_vram_gb(gpu_type_id):
     if "2000" in name:
         return 16
     return 32
+
+
+def _ltx_te_device_for_vram(vram_gb):
+    """Comfy LTXAVTextEncoderLoader only allows device=['default','cpu'].
+    default ≈ GPU/main device; cpu = force CPU encode (32GB-safe)."""
+    explicit = os.getenv("LTX_TE_DEVICE", "").strip().lower()
+    if explicit in ("cpu",):
+        return "cpu"
+    if explicit in ("default", "gpu", "cuda"):
+        return "default"
+    return "default" if float(vram_gb) >= 64 else "cpu"
 
 
 def launch_pod():
@@ -119,12 +135,13 @@ def launch_pod():
         print(f"🔁 Acquire pass {attempt}" + (f"/{max_acquire}" if max_acquire > 0 else "") + "...")
 
         for gpu_type_id, gpu_vram in ordered:
-            # 96GB: keep weights resident. 32/24GB: offload required for 81-frame MoE.
+            # ≥64GB (Blackwell 6000): keep weights resident. 32/24GB: offload for MoE/LTX fit.
             force_offload = os.getenv("FORCE_OFFLOAD")
             if force_offload is None or force_offload.strip() == "":
                 force_offload = "false" if gpu_vram >= 64 else "true"
             else:
                 force_offload = force_offload.strip().lower()
+            ltx_te_device = _ltx_te_device_for_vram(gpu_vram)
 
             # Hunyuan A/B: 40GB is enough (weights on network volume). Wan MoE cache: 75–100GB.
             try:
@@ -134,7 +151,7 @@ def launch_pod():
 
             print(
                 f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload}, "
-                f"disk={container_disk}GB)..."
+                f"LTX_TE_DEVICE={ltx_te_device}, disk={container_disk}GB)..."
             )
             try:
                 pod = runpod.create_pod(
@@ -149,6 +166,7 @@ def launch_pod():
                         **env_vars,
                         "GPU_VRAM_GB": str(gpu_vram),
                         "FORCE_OFFLOAD": force_offload,
+                        "LTX_TE_DEVICE": ltx_te_device,
                     }
                 )
                 print(f"   ✅ Acquired {gpu_type_id}")
@@ -217,16 +235,21 @@ def launch_pod():
         
     return pod_id, comfy_url
 
-def execute_batch(comfy_url, test_jobs):
+def _save_render_manifest(rendered_urls, path="./temp_clips/render_manifest.json"):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(rendered_urls, f, indent=2)
+    print(f"💾 Render manifest → {path}")
+
+
+def wait_for_worker(comfy_url):
     print(f"⏳ Waiting for Worker API at {comfy_url} to become reachable...")
     time.sleep(30)
-    
-    # Hunyuan first boot can take 40–60+ min for HF downloads; Wan cold cache ~20 min.
     try:
-        max_retries = int(os.getenv("HEALTH_MAX_RETRIES", "720"))  # default ~60 min
+        max_retries = int(os.getenv("HEALTH_MAX_RETRIES", "720"))
     except ValueError:
         max_retries = 720
-    for i in range(max_retries):
+    for _ in range(max_retries):
         try:
             res = requests.get(f"{comfy_url}/health", timeout=10)
             if res.status_code == 200:
@@ -241,67 +264,77 @@ def execute_batch(comfy_url, test_jobs):
                 if "setup_log" in health_data:
                     print("\n📜 --- Worker Setup Log ---")
                     print(health_data["setup_log"])
-                break
-        except:
+                return
+        except Exception:
             pass
         time.sleep(5)
+    raise Exception("Worker failed to become reachable.")
+
+
+def _build_shot_payload(vid, idx, prompt, shot_mode):
+    payload = {
+        "prompt": prompt,
+        "video_id": vid["video_id"],
+        "shot_index": idx + 1,
+        "shot_mode": shot_mode,
+        "chunks": vid.get("chunks", 2),
+        "upscale": vid.get("upscale", True),
+    }
+    if "num_frames" in vid:
+        payload["num_frames"] = int(vid["num_frames"])
     else:
-        raise Exception("Worker failed to become reachable.")
+        engine = os.getenv("ENGINE", "wan").strip().lower()
+        if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_NUM_FRAMES"):
+            payload["num_frames"] = int(os.getenv("HY_NUM_FRAMES"))
+        elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_NUM_FRAMES"):
+            payload["num_frames"] = int(os.getenv("LTX_NUM_FRAMES"))
+        elif os.getenv("WAN_NUM_FRAMES"):
+            payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
+    if "steps" in vid:
+        payload["steps"] = int(vid["steps"])
+    else:
+        engine = os.getenv("ENGINE", "wan").strip().lower()
+        if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_STEPS"):
+            payload["steps"] = int(os.getenv("HY_STEPS"))
+        elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_STEPS"):
+            payload["steps"] = int(os.getenv("LTX_STEPS"))
+        elif os.getenv("WAN_STEPS"):
+            payload["steps"] = int(os.getenv("WAN_STEPS"))
+    return payload
 
-    rendered_urls = {}
-    for vid in test_jobs:
-        vid_id = vid["video_id"]
-        rendered_urls[vid_id] = []
-        shot_mode = vid.get("shot_mode", "multi_cut")
-        chunks = vid.get("chunks", 2)
-        upscale = vid.get("upscale", True)
 
-        # Continuous mode: one job with N chained chunks → one R2 URL
-        prompts = vid["shots"] if shot_mode == "multi_cut" else [vid["shots"][0]]
+def render_video_shots(comfy_url, vid, manifest):
+    """Generate every shot for one video. Returns list of R2 URLs."""
+    vid_id = vid["video_id"]
+    shot_mode = vid.get("shot_mode", "multi_cut")
+    prompts = vid["shots"] if shot_mode == "multi_cut" else [vid["shots"][0]]
+    urls = []
+    n = len(prompts)
+    print(f"\n🎬 Generate {vid_id} — {n} shot(s). Stitch after this short only.")
 
-        for idx, prompt in enumerate(prompts):
-            label = (
-                f"{vid_id} continuous ({chunks} chunks)"
-                if shot_mode != "multi_cut"
-                else f"{vid_id} - Shot {idx+1}/{len(prompts)}"
-            )
-            print(f"🎬 Submitting {label}...")
-            payload = {
-                "prompt": prompt,
-                "video_id": vid_id,
-                "shot_index": idx + 1,
-                "shot_mode": shot_mode,
-                "chunks": chunks,
-                "upscale": upscale,
-            }
-            if "num_frames" in vid:
-                payload["num_frames"] = int(vid["num_frames"])
-            else:
-                engine = os.getenv("ENGINE", "wan").strip().lower()
-                if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_NUM_FRAMES"):
-                    payload["num_frames"] = int(os.getenv("HY_NUM_FRAMES"))
-                elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_NUM_FRAMES"):
-                    payload["num_frames"] = int(os.getenv("LTX_NUM_FRAMES"))
-                elif os.getenv("WAN_NUM_FRAMES"):
-                    payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
-            if "steps" in vid:
-                payload["steps"] = int(vid["steps"])
-            else:
-                engine = os.getenv("ENGINE", "wan").strip().lower()
-                if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_STEPS"):
-                    payload["steps"] = int(os.getenv("HY_STEPS"))
-                elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_STEPS"):
-                    payload["steps"] = int(os.getenv("LTX_STEPS"))
-                elif os.getenv("WAN_STEPS"):
-                    payload["steps"] = int(os.getenv("WAN_STEPS"))
+    for idx, prompt in enumerate(prompts):
+        label = (
+            f"{vid_id} continuous ({vid.get('chunks', 2)} chunks)"
+            if shot_mode != "multi_cut"
+            else f"{vid_id} - Shot {idx+1}/{n}"
+        )
+        print(f"🎬 Submitting {label}...")
+        payload = _build_shot_payload(vid, idx, prompt, shot_mode)
 
-            try:
-                # Prefer /render (alias of /prompt). allow_redirects=False so a
-                # proxy 301/302 can't turn POST into an empty GET body.
-                submit_url = f"{comfy_url.rstrip('/')}/render"
-                res = None
-                raw = None
-                for attempt in range(1, 4):
+        try:
+            submit_url = f"{comfy_url.rstrip('/')}/render"
+            res = None
+            raw = None
+            for attempt in range(1, 4):
+                raw = requests.post(
+                    submit_url,
+                    json=payload,
+                    timeout=60,
+                    headers={"Content-Type": "application/json"},
+                    allow_redirects=False,
+                )
+                if raw.status_code == 404:
+                    submit_url = f"{comfy_url.rstrip('/')}/prompt"
                     raw = requests.post(
                         submit_url,
                         json=payload,
@@ -309,94 +342,112 @@ def execute_batch(comfy_url, test_jobs):
                         headers={"Content-Type": "application/json"},
                         allow_redirects=False,
                     )
-                    # Fallback to legacy /prompt if /render missing on older images
-                    if raw.status_code == 404:
-                        submit_url = f"{comfy_url.rstrip('/')}/prompt"
-                        raw = requests.post(
-                            submit_url,
-                            json=payload,
-                            timeout=60,
-                            headers={"Content-Type": "application/json"},
-                            allow_redirects=False,
-                        )
-                    if raw.status_code in (301, 302, 303, 307, 308):
-                        print(
-                            f"   ⚠️ Redirect on submit (attempt {attempt}/3): "
-                            f"status={raw.status_code} location={raw.headers.get('Location')!r}"
-                        )
-                    elif raw.status_code == 200 and (raw.text or "").strip():
-                        try:
-                            res = raw.json()
-                            break
-                        except Exception:
-                            print(
-                                f"   ⚠️ Non-JSON body (attempt {attempt}/3): "
-                                f"status={raw.status_code} body={raw.text[:300]!r}"
-                            )
-                    else:
-                        print(
-                            f"   ⚠️ Bad submit response (attempt {attempt}/3): "
-                            f"status={raw.status_code} body={((raw.text or '')[:300])!r}"
-                        )
-                        try:
-                            h = requests.get(f"{comfy_url}/health", timeout=10)
-                            eng = (h.json() or {}).get("engine") if h.ok else "?"
-                            print(f"   🩺 health={h.status_code} engine={eng}")
-                        except Exception as he:
-                            print(f"   🩺 health check failed: {he}")
-                    time.sleep(5 * attempt)
-
-                if res is None:
-                    raise RuntimeError(
-                        f"submit failed after retries: "
-                        f"status={getattr(raw, 'status_code', None)} "
-                        f"body={((getattr(raw, 'text', None) or '')[:300])!r}"
+                if raw.status_code in (301, 302, 303, 307, 308):
+                    print(
+                        f"   ⚠️ Redirect on submit (attempt {attempt}/3): "
+                        f"status={raw.status_code} location={raw.headers.get('Location')!r}"
                     )
-
-                job_id = res.get("job_id")
-                if not job_id:
-                    print(f"   ❌ Failed to get job_id: {res}")
-                    continue
-
-                print(f"   🕒 Job {job_id} queued ({shot_mode}). Polling for status...")
-
-                finished = False
-                while not finished:
-                    time.sleep(10)
-                    status_raw = requests.get(f"{comfy_url}/status/{job_id}", timeout=15)
+                elif raw.status_code == 200 and (raw.text or "").strip():
                     try:
-                        status_res = status_raw.json()
+                        res = raw.json()
+                        break
                     except Exception:
                         print(
-                            f"   ⚠️ Non-JSON /status: status={status_raw.status_code} "
-                            f"body={status_raw.text[:200]!r}"
+                            f"   ⚠️ Non-JSON body (attempt {attempt}/3): "
+                            f"status={raw.status_code} body={raw.text[:300]!r}"
                         )
-                        continue
-                    status = status_res.get("status")
+                else:
+                    print(
+                        f"   ⚠️ Bad submit response (attempt {attempt}/3): "
+                        f"status={raw.status_code} body={((raw.text or '')[:300])!r}"
+                    )
+                    try:
+                        h = requests.get(f"{comfy_url}/health", timeout=10)
+                        eng = (h.json() or {}).get("engine") if h.ok else "?"
+                        print(f"   🩺 health={h.status_code} engine={eng}")
+                    except Exception as he:
+                        print(f"   🩺 health check failed: {he}")
+                time.sleep(5 * attempt)
 
-                    if status == "completed":
-                        r2_url = status_res.get("output_r2_url")
-                        rendered_urls[vid_id].append(r2_url)
-                        print(f"   ✅ Success! R2 URL: {r2_url}")
-                        finished = True
-                    elif status == "failed":
-                        print(f"   ❌ Job Failed: {status_res.get('error')}")
-                        print("   ⏭️ Skipping this shot and continuing the batch...")
-                        finished = True
-                    else:
-                        progress = status_res.get("progress", status)
-                        elapsed = int(time.time() - status_res.get("created_at", time.time()))
-                        print(f"   ... {progress} (elapsed: {elapsed}s)")
+            if res is None:
+                raise RuntimeError(
+                    f"submit failed after retries: "
+                    f"status={getattr(raw, 'status_code', None)} "
+                    f"body={((getattr(raw, 'text', None) or '')[:300])!r}"
+                )
 
-            except Exception as e:
-                print(f"   ❌ Error on shot {idx+1}: {str(e)}")
-                print("   ⏭️ Skipping this shot and continuing the batch...")
+            job_id = res.get("job_id")
+            if not job_id:
+                print(f"   ❌ Failed to get job_id: {res}")
                 continue
 
-    return rendered_urls
+            print(f"   🕒 Job {job_id} queued ({shot_mode}). Polling for status...")
+            finished = False
+            while not finished:
+                time.sleep(10)
+                status_raw = requests.get(f"{comfy_url}/status/{job_id}", timeout=15)
+                try:
+                    status_res = status_raw.json()
+                except Exception:
+                    print(
+                        f"   ⚠️ Non-JSON /status: status={status_raw.status_code} "
+                        f"body={status_raw.text[:200]!r}"
+                    )
+                    continue
+                status = status_res.get("status")
+                if status == "completed":
+                    r2_url = status_res.get("output_r2_url")
+                    urls.append(r2_url)
+                    manifest[vid_id] = list(urls)
+                    print(f"   ✅ Success! R2 URL: {r2_url}")
+                    _save_render_manifest(manifest)
+                    finished = True
+                elif status == "failed":
+                    print(f"   ❌ Job Failed: {status_res.get('error')}")
+                    print("   ⏭️ Skipping this shot, continuing this short...")
+                    finished = True
+                else:
+                    progress = status_res.get("progress", status)
+                    elapsed = int(time.time() - status_res.get("created_at", time.time()))
+                    print(f"   ... {progress} (elapsed: {elapsed}s)")
+        except Exception as e:
+            print(f"   ❌ Error on {label}: {e}")
+            print("   ⏭️ Skipping this shot, continuing this short...")
+            continue
+
+    return urls
+
+
+def execute_batch(comfy_url, test_jobs):
+    """Per short: generate all its clips → stitch → then start the next short."""
+    wait_for_worker(comfy_url)
+    n_vids = len(test_jobs)
+    print(
+        f"\n📋 Batch plan: {n_vids} shorts — "
+        f"for each: generate all shots → stitch → next short"
+    )
+    manifest = {}
+    for i, vid in enumerate(test_jobs, start=1):
+        vid_id = vid["video_id"]
+        print(f"\n{'=' * 60}")
+        print(f"📌 Short {i}/{n_vids}: {vid_id}")
+        print(f"{'=' * 60}")
+        urls = render_video_shots(comfy_url, vid, manifest)
+        manifest[vid_id] = urls
+        _save_render_manifest(manifest)
+        if urls:
+            print(f"\n🎞️ Stitching {vid_id} ({len(urls)} clips) before next short...")
+            download_and_stitch({vid_id: urls}, [vid])
+        else:
+            print(f"⚠️ No clips for {vid_id} — skip stitch, moving on")
+        if i < n_vids:
+            print(f"\n➡️ Starting next short: {test_jobs[i]['video_id']}")
+    print(f"\n✅ All {n_vids} shorts processed (generate→stitch per video)")
+    return manifest
 
 
 def download_and_stitch(rendered_urls, test_jobs):
+    """Download + concat + audio/title for the given video(s)."""
     from audio_post import add_ambient_and_title, add_voice_and_captions
 
     os.makedirs("./final_videos", exist_ok=True)
@@ -509,31 +560,64 @@ def download_and_stitch(rendered_urls, test_jobs):
                 print(f"🎉 Silent Video Saved: {output_video}")
 
 
+
+
 def destroy_pod(pod_id):
     print(f"🔥 Auto-terminating Pod {pod_id}...")
     runpod.terminate_pod(pod_id)
 
 
-if __name__ == "__main__":
+def _jobs_for_engine(engine):
     from test_prompts import test_jobs, hunyuan_ab_jobs, ltx_ab_jobs
 
-    engine = os.getenv("ENGINE", "wan").strip().lower()
-    if engine in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
-        jobs = hunyuan_ab_jobs
-    elif engine in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
-        jobs = ltx_ab_jobs
-    else:
-        jobs = test_jobs
-    print(f"🧪 Batch engine={engine} | jobs={[j['video_id'] for j in jobs]}")
+    eng = (engine or "wan").strip().lower()
+    if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
+        return eng, hunyuan_ab_jobs
+    if eng in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
+        return eng, ltx_ab_jobs
+    return "wan", test_jobs
+
+
+def run_one_engine(engine):
+    """Launch pod → for each short: generate clips → stitch → next → terminate."""
+    eng, jobs = _jobs_for_engine(engine)
+    os.environ["ENGINE"] = eng
+    print(f"🧪 Batch engine={eng} | jobs={[j['video_id'] for j in jobs]}")
 
     pod_id = None
     try:
         pod_id, comfy_url = launch_pod()
-        urls = execute_batch(comfy_url, jobs)
-        download_and_stitch(urls, jobs)
+        execute_batch(comfy_url, jobs)
     except Exception as e:
-        print(f"❌ Batch Execution Failed: {e}")
+        print(f"❌ Batch Execution Failed ({eng}): {e}")
         raise
     finally:
         if pod_id:
             destroy_pod(pod_id)
+
+
+if __name__ == "__main__":
+    engine = os.getenv("ENGINE", "wan").strip().lower()
+    # Same prompt × 3 engines: Hunyuan 1.5, Wan 2.2, LTX-2.3 (repo has 2.3, not 2.5)
+    if engine in ("compare", "ab", "all"):
+        order = [
+            e.strip()
+            for e in os.getenv("COMPARE_ENGINES", "hunyuan,wan,ltx").split(",")
+            if e.strip()
+        ]
+        print(f"🏁 Cross-engine compare order={order}")
+        failures = []
+        for eng in order:
+            try:
+                run_one_engine(eng)
+            except Exception as e:
+                failures.append((eng, str(e)))
+                print(f"⚠️ Continuing compare after {eng} failure: {e}")
+        if failures:
+            raise SystemExit(
+                "Compare finished with failures: "
+                + ", ".join(f"{e}: {msg}" for e, msg in failures)
+            )
+        print("✅ Cross-engine compare complete")
+    else:
+        run_one_engine(engine)

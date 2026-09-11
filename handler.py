@@ -105,7 +105,7 @@ def detect_vram_gb():
 
 
 def should_force_offload(vram_gb=None):
-    """96GB (RTX PRO 6000): keep resident. 32GB: offload required for MoE."""
+    """≥64GB (Blackwell PRO 6000): keep resident. 32GB: offload required for MoE."""
     flag = os.getenv("FORCE_OFFLOAD", "").lower()
     if flag in ("true", "1", "yes"):
         return True
@@ -114,6 +114,19 @@ def should_force_offload(vram_gb=None):
     if vram_gb is None:
         vram_gb = detect_vram_gb()
     return vram_gb < 64
+
+
+def default_ltx_te_device(vram_gb=None):
+    """LTXAVTextEncoderLoader device combo: only 'default' | 'cpu' (not 'gpu').
+    default = main/GPU device; cpu = 32GB-safe offload for Gemma."""
+    explicit = os.getenv("LTX_TE_DEVICE", "").strip().lower()
+    if explicit in ("cpu",):
+        return "cpu"
+    if explicit in ("default", "gpu", "cuda"):
+        return "default"
+    if vram_gb is None:
+        vram_gb = detect_vram_gb()
+    return "default" if float(vram_gb) >= 64 else "cpu"
 
 
 def default_fps():
@@ -533,8 +546,8 @@ def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=Non
                 node["inputs"]["text_encoder"] = gemma
             if ckpt:
                 node["inputs"]["ckpt_name"] = ckpt
-            # Keep Gemma on CPU — with --highvram it otherwise occupies ~11GB and OOMs the 29GB ckpt on 32GB GPUs
-            node["inputs"]["device"] = os.getenv("LTX_TE_DEVICE", "cpu")
+            # Comfy options: default (GPU/main) | cpu. Never pass 'gpu' — invalid combo.
+            node["inputs"]["device"] = default_ltx_te_device()
 
         if class_type in ("CheckpointLoaderSimple", "LTXVAudioVAELoader") and ckpt:
             node["inputs"]["ckpt_name"] = ckpt
@@ -884,8 +897,10 @@ def execute_multi_cut_ltx(job_id, prompt_text, video_id, shot_index, num_frames=
         raise RuntimeError("LTX Gemma text encoder not found")
 
     vram_gb = detect_vram_gb()
+    te_device = default_ltx_te_device(vram_gb)
     print(
-        f"🖥️ LTX-2.3 | variant={models['variant']} | VRAM≈{vram_gb:.0f}GB | native AV"
+        f"🖥️ LTX-2.3 | variant={models['variant']} | VRAM≈{vram_gb:.0f}GB | "
+        f"TE={te_device} | native AV | force_offload={should_force_offload(vram_gb)}"
     )
 
     workflow = patch_ltx_workflow(

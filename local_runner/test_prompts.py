@@ -4,80 +4,126 @@
 # Ambient: False | "rain" | "rain_city" | path/to.wav  (starts at 0:00)
 # Title: optional one-line overlay at 0:00 (not Whisper captions)
 #
-# Wan: 49 frames @ 16fps ≈ 3.1s/shot
-# Hunyuan: 3×81 @ 24fps ≈ 3.4s/shot ≈ 10s total (3s target; 81 is 4k+1-safe on current image)
-#          steps=30. Soft VO + real laundry/rain bed (not pink-noise hiss).
 # LTX-2.3: 3×97 @ 24fps ≈ 4.0s/shot ≈ 12s total | distilled ManualSigmas (~8) | native AV
+# Batch flow: generate all shots of one short → stitch → next short
 #
-# Series 1 — Places That Stay Open:
-#   ep01 ramen window | ep02 konbini glow | ep03 vending alley
-#   ep04 midnight platform | ep05 capsule hall | ep06 coin laundry | ep07 noren closing
+# Series 2 done: s2_ep01–s2_ep07
+# Series 3 — Places That Stay Open (LTX): s3_ep01–s3_ep07
+# Series 3 on Blackwell PRO 6000 (96GB): FORCE_OFFLOAD=false + LTX_TE_DEVICE=default (GPU).
+#   Comfy TE combo is default|cpu only — launcher maps gpu→default automatically.
 
 import os
 
 _AMBIENT_DIR = os.path.join(os.path.dirname(__file__), "ambient")
 LAUNDRY_RAIN_BED = os.path.join(_AMBIENT_DIR, "laundry_rain_bed.wav")
 
-test_jobs = [
-    {
-        "video_id": "ep05_capsule_rain",
-        "shot_mode": "multi_cut",
-        "num_frames": 49,
-        "steps": 24,
-        "captions": False,
-        "ambient": "rain_city",
-        "ambient_volume": 0.45,
-        "title": "2AM.",
-        "shots": [
-            "Cinematic locked extreme close-up of heavy rain rapidly sliding down a large glass window at night, full frame water motion, out-of-focus bright warm orange capsule hotel lights reflecting on the wet glass, vibrant cyan city neon outside, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            "Cinematic locked shot dominated by a large wet window lashed with heavy rain at night, glowing city lights outside, the bright orange fiberglass lip of an open capsule hotel pod in the immediate foreground, constant water motion on the glass, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            "Cinematic locked close-up of a steaming paper tea cup resting on a wooden ledge, thick steam rising rapidly, a large window covered in heavy moving rain directly behind it, glowing warm orange light filling the space, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-        ],
-    }
+# Keep compare helpers available for ENGINE=wan|hunyuan|compare if needed.
+CC_COMPARE_SHOTS = [
+    "Vertical 9:16 premium sports network intro, heavy After Effects style motion graphics. Extreme close-up of a photoreal cricket ball rocketing toward camera through a deep black void, thick emerald-teal neon light ribbons and particle streaks wrapping the ball, sharp specular leather highlights, aggressive speed-ramp whoosh, cinematic contrast, rich saturated greens not pastel, 24fps, NO text, NO letters, NO words, NO numbers, NO logos, NO hashtags, NO hex codes, no people, no faces, no watermarks",
+    "Vertical 9:16 high-end cricket app splash animation. Cricket ball hits invisible glass mid-frame, violent emerald and deep-forest-green shockwave rings explode outward as holographic wireframe arcs, glowing particles and lens flares fill the dark frame, premium broadcast graphics look like ESPN or Star Sports openers, thunderous impact boom, 24fps, NO text, NO letters, NO words, NO numbers, NO UI labels, no people, no faces, no watermarks",
+    "Vertical 9:16 premium mobile splash end lockup. Abstract geometric cricket emblem forms from glowing emerald neon lines on a dark charcoal-to-black gradient, soft off-white rim light, subtle idle particle drift, luxurious sports-brand atmosphere, quiet stadium hush after big hit, 24fps, NO text, NO letters, NO words, NO brand names, NO slogans, no people, no faces, no watermarks",
 ]
 
-# Used when ENGINE=hunyuan.
-hunyuan_ab_jobs = [
-    {
-        "video_id": "ep06_coin_laundry_soothing",
-        "shot_mode": "multi_cut",
-        "num_frames": 81,
-        "steps": 30,
-        "captions": False,
-        "ambient": LAUNDRY_RAIN_BED,
-        "ambient_volume": 0.48,
-        "title": "Still open.",
-        "shots": [
-            # 1 Hook — Soft pastel clothes tumbling + Calming light
-            "Cinematic locked medium close-up of a Japanese coin laundry washing machine door at night, soft pastel-colored clothes tumbling clearly behind the round glass, gentle warm white and muted teal light spilling across the metal chassis, soft rain on the shop window in the background, soothing pastel color palette, low contrast, calm atmosphere, photo-realistic, vertical 9:16, medium framing so the whole machine door is visible, no people, no faces, no camera move",
-            
-            # 2 Wide establish — Soft seafoam/cream machines + Gentle reflections
-            "Cinematic locked wide shot of a small empty Japanese coin laundry at night, a row of pale seafoam green and soft cream retro washers, gentle warm interior light reflecting softly across the wet tile floor, muted rain and dark teal night outside the windows, soothing cinematic color grading, photo-realistic, vertical 9:16, wide establishing frame, no people, no faces, no camera move",
-            
-            # 3 Anchor — Pale basket + Warm glowing spill
-            "Cinematic locked medium shot of a soft peach-colored plastic laundry basket and pale mint detergent bottles on a bench inside an empty Japanese coin laundry at night, one dryer door slightly open with gentle warm golden light spilling out, soft steam, soothing pastel aesthetic, calm rain on the window behind, photo-realistic, vertical 9:16, subject fully readable in frame, no people, no faces, no camera move",
-        ],
-    }
-]
 
-# Used when ENGINE=ltx — ep07 noren closing (motion-first hook for retention).
-# ambient=False: keep LTX native AV (do not replace with rain bed).
-ltx_ab_jobs = [
-    {
-        "video_id": "ep07_noren_closing_ltx",
+def _cc_compare_job(video_id, num_frames, steps):
+    return {
+        "video_id": video_id,
+        "shot_mode": "multi_cut",
+        "num_frames": num_frames,
+        "steps": steps,
+        "captions": False,
+        "ambient": False,
+        "title": "County Cricket",
+        "shots": list(CC_COMPARE_SHOTS),
+    }
+
+
+def _ltx_place(video_id, title, shots):
+    return {
+        "video_id": video_id,
         "shot_mode": "multi_cut",
         "num_frames": 97,
         "steps": 8,
         "captions": False,
-        "ambient": False,
-        "title": "Last call.",
-        "shots": [
-            # 1 Hook — Full-frame noren sway + fabric/rain sound for LTX AV
-            "Cinematic locked extreme close-up of a dark indigo Japanese noren curtain with bold white kanji swaying hard in a night doorway, fabric snapping and settling, warm amber shop light bleeding through the split, rain droplets on the cloth edge, immediate motion, soft rain and cloth flutter audio, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # 2 Establish — Empty shop mouth after closing
-            "Cinematic locked medium shot of a narrow Tokyo alley shop entrance at night with indigo noren half-drawn across the doorway, warm interior lamp still on, wet pavement reflecting neon cyan and red, light rain falling, quiet after-hours atmosphere, distant rain and faint street hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-            # 3 Anchor — Handwritten closed sign + steam / rain
-            "Cinematic locked close-up of a small handwritten Japanese closed sign hanging beside a swaying noren at night, soft steam from a hidden kitchen vent, rain on dark wood and metal fixtures, warm tungsten spill, melancholic still-open glow, gentle rain and soft wood creak audio, photo-realistic, vertical 9:16, no people, no faces, no camera move",
-        ],
+        "ambient": False,  # keep LTX native AV
+        "title": title,
+        "shots": shots,
     }
+
+
+# ENGINE=wan
+test_jobs = [
+    _cc_compare_job("cc_compare_wan", num_frames=49, steps=16),
+]
+
+# ENGINE=hunyuan
+hunyuan_ab_jobs = [
+    _cc_compare_job("cc_compare_hy", num_frames=81, steps=20),
+]
+
+# ENGINE=ltx — Series 3: Places That Stay Open (7 shorts)
+ltx_ab_jobs = [
+    _ltx_place(
+        "s3_ep01_parking_fluorescent",
+        "Level B2.",
+        [
+            "Cinematic locked extreme close-up of a flickering fluorescent tube buzzing over wet concrete in an empty underground parking garage at night, moths circling the light, immediate flicker motion, harsh buzz and soft drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text, NO letters",
+            "Cinematic locked wide shot of an empty multi-level parking garage at night, long rows of pillars, cold green-white fluorescents, wet tire-shine on the floor, distant traffic rumble and echo drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of a yellow concrete parking barrier and painted curb under stuttering overhead light, dust motes in the beam, soft electrical buzz and distant engine audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
+    _ltx_place(
+        "s3_ep02_florist_fridge",
+        "Still fresh.",
+        [
+            "Cinematic locked extreme close-up of condensation racing down the glass door of a flower-shop cooler at night, bright blooms blurred behind fogged glass, constant water motion, soft compressor hum and drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of an empty tiny florist at night, open glass coolers glowing pink and green, buckets of wrapped stems, soft fridge hum and distant rain audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked close-up of water droplets beading on rose petals inside a lit cooler, soft mist, gentle refrigeration fan and drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
+    _ltx_place(
+        "s3_ep03_bowling_lanes",
+        "Last frame.",
+        [
+            "Cinematic locked extreme close-up of polished bowling-lane wood reflecting neon scoring lights at night, subtle vibration ripple across the varnish, soft mechanical pinsetter hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text, NO readable scores",
+            "Cinematic locked wide shot of an empty bowling alley at night, glowing lanes stretching away, pink and cyan overhead neon, pin decks lit, quiet machine drones and HVAC audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of a rack of colorful bowling balls under warm counter light, soft reflections, distant pinsetter clunk and ambient hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
+    _ltx_place(
+        "s3_ep04_manga_cafe",
+        "All-nighter.",
+        [
+            "Cinematic locked extreme close-up of stacked manga spines under a small desk lamp in a night manga cafe booth, dust drifting in the warm beam, soft page-rustle and rain on window audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text, NO readable titles",
+            "Cinematic locked wide shot of an empty manga cafe corridor of private booths at night, soft orange lamps, carpeted floor, quiet fluorescent spill, calm room-tone and distant rain audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of an empty booth with headphones and a glowing drink fridge in the background, soft fridge hum and lamp buzz audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
+    _ltx_place(
+        "s3_ep05_karaoke_corridor",
+        "Room still lit.",
+        [
+            "Cinematic locked extreme close-up of a glowing karaoke room door indicator light pulsing in a narrow hallway at night, soft pink neon spill, muffled bass thump and corridor hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked wide shot of an empty karaoke hallway at night, rows of closed doors with soft LED strips, patterned carpet, quiet bass leakage and HVAC audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of a drink cart with ice melting in a bucket under magenta hallway light, soft ice crackle and distant muffled music audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
+    _ltx_place(
+        "s3_ep06_fish_market_ice",
+        "Before dawn.",
+        [
+            "Cinematic locked extreme close-up of crushed ice glistening under cold fluorescent light at a closed fish market stall, meltwater dripping fast, soft drip and compressor hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked wide shot of an empty covered fish market corridor at night, shuttered stalls, wet concrete, cool blue-white lights, distant drip echo and fridge hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of stacked polystyrene boxes and a running hose trickle over ice, steam of cold air, soft water and night market hush audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
+    _ltx_place(
+        "s3_ep07_hotel_ice_machine",
+        "Floor 7.",
+        [
+            "Cinematic locked extreme close-up of ice cubes tumbling into a hotel ice machine chute at night, cold blue interior glow, clatter and motor whir audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked wide shot of an empty mid-rise hotel corridor at night, patterned carpet, evenly spaced wall sconces, soft ice-machine hum at the far end, quiet HVAC audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            "Cinematic locked medium shot of a glowing ice and vending alcove, soft drink fridge light, carpet reflections, gentle machine idle and distant elevator ding undertone audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+        ],
+    ),
 ]
