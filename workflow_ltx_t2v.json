@@ -1,31 +1,41 @@
 {
   "11": {
     "inputs": {
-      "text_encoder": "gemma_3_12B_it_fp4_mixed.safetensors",
-      "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors",
-      "device": "cpu"
+      "clip_name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "type": "ltxv",
+      "device": "default"
     },
-    "class_type": "LTXAVTextEncoderLoader",
+    "class_type": "CLIPLoader",
     "_meta": {
-      "title": "LTX Text Encoder"
+      "title": "LTX-2.5 Text Encoder"
     }
   },
   "12": {
     "inputs": {
-      "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors"
+      "unet_name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "weight_dtype": "default"
     },
-    "class_type": "CheckpointLoaderSimple",
+    "class_type": "UNETLoader",
     "_meta": {
-      "title": "LTX Checkpoint"
+      "title": "LTX-2.5 UNET"
     }
   },
   "13": {
     "inputs": {
-      "ckpt_name": "ltx-2.3-22b-distilled-fp8.safetensors"
+      "vae_name": "ltx-2.5-video-vae-bf16.safetensors"
     },
-    "class_type": "LTXVAudioVAELoader",
+    "class_type": "VAELoader",
     "_meta": {
-      "title": "LTX Audio VAE"
+      "title": "LTX-2.5 Video VAE"
+    }
+  },
+  "14": {
+    "inputs": {
+      "vae_name": "ltx-2.5-audio-vae-bf16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX-2.5 Audio VAE"
     }
   },
   "44": {
@@ -61,8 +71,8 @@
   },
   "17": {
     "inputs": {
-      "width": 480,
-      "height": 832,
+      "width": 1088,
+      "height": 1920,
       "length": 97,
       "batch_size": 1
     },
@@ -76,7 +86,7 @@
       "frames_number": 97,
       "frame_rate": 24,
       "batch_size": 1,
-      "audio_vae": ["13", 0]
+      "audio_vae": ["14", 0]
     },
     "class_type": "LTXVEmptyLatentAudio",
     "_meta": {
@@ -122,14 +132,15 @@
   },
   "23": {
     "inputs": {
-      "cfg": 1.0,
       "model": ["12", 0],
       "positive": ["16", 0],
-      "negative": ["16", 1]
+      "negative": ["16", 1],
+      "video_cfg": 1.0,
+      "audio_cfg": 1.0
     },
-    "class_type": "CFGGuider",
+    "class_type": "LTXVDualCFGGuider",
     "_meta": {
-      "title": "LTX CFG Guider"
+      "title": "LTX Dual CFG Guider"
     }
   },
   "24": {
@@ -157,7 +168,7 @@
   "26": {
     "inputs": {
       "samples": ["25", 0],
-      "vae": ["12", 2],
+      "vae": ["13", 0],
       "tile_size": 512,
       "overlap": 64,
       "temporal_size": 4096,
@@ -171,7 +182,7 @@
   "27": {
     "inputs": {
       "samples": ["25", 1],
-      "audio_vae": ["13", 0]
+      "audio_vae": ["14", 0]
     },
     "class_type": "LTXVAudioVAEDecode",
     "_meta": {
@@ -191,7 +202,7 @@
   },
   "29": {
     "inputs": {
-      "filename_prefix": "LTX23_T2V",
+      "filename_prefix": "LTX25_T2V",
       "format": "mp4",
       "codec": "h264",
       "video": ["28", 0]

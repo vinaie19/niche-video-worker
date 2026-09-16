@@ -4,6 +4,7 @@ comfyui:
     diffusion_models: diffusion_models
     text_encoders: text_encoders
     vae: vae
+    latent_upscale_models: latent_upscale_models
     upscale_models: upscale_models
     clip_vision: clip_vision
     loras: loras
@@ -14,6 +15,7 @@ comfyui_models:
     diffusion_models: diffusion_models
     text_encoders: text_encoders
     vae: vae
+    latent_upscale_models: latent_upscale_models
     upscale_models: upscale_models
     clip_vision: clip_vision
     loras: loras
@@ -24,6 +26,7 @@ workspace:
     diffusion_models: diffusion_models
     text_encoders: text_encoders
     vae: vae
+    latent_upscale_models: latent_upscale_models
     upscale_models: upscale_models
     clip_vision: clip_vision
     loras: loras

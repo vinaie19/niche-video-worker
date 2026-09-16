@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-Download ENGINE model weights onto an existing RunPod network volume using a cheap GPU.
+Download LTX-2.5 model weights onto an existing RunPod network volume using a cheap GPU.
 
 Does NOT create volumes — set NETWORK_VOLUME_ID in local_runner/.env first
 (e.g. your Storage-page / global volume id).
+
+Accept the gated license on https://huggingface.co/Lightricks/LTX-2.5 and put
+HF_TOKEN in local_runner/.env before bootstrap.
 
   ENGINE=ltx LTX_VARIANT=distilled \\
     .venv/bin/python local_runner/bootstrap_volume.py
@@ -96,17 +99,18 @@ def resolve_volume() -> tuple[str, str | None]:
 
 
 def launch_download_pod(volume_id: str, data_center: str | None) -> tuple[str, str]:
-    engine = os.getenv("ENGINE", "ltx").strip().lower()
     try:
         container_disk = int(os.getenv("CONTAINER_DISK_GB", "20"))
     except ValueError:
         container_disk = 20
 
     env_vars = {
-        "ENGINE": engine,
+        "ENGINE": "ltx",
         "LTX_VARIANT": os.getenv("LTX_VARIANT", "distilled"),
-        "HY_VARIANT": os.getenv("HY_VARIANT", "480p_distilled"),
-        "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "false"),
+        "HF_TOKEN": os.getenv("HF_TOKEN")
+        or os.getenv("HUGGING_FACE_HUB_TOKEN")
+        or os.getenv("HUGGINGFACE_TOKEN")
+        or "",
         "R2_ACCOUNT_ID": os.getenv("R2_ACCOUNT_ID", ""),
         "R2_ACCESS_KEY_ID": os.getenv("R2_ACCESS_KEY_ID", ""),
         "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY", ""),
@@ -117,9 +121,14 @@ def launch_download_pod(volume_id: str, data_center: str | None) -> tuple[str, s
         "GPU_VRAM_GB": "16",
         "KEEP_MODELS_LOADED": "",
     }
+    if not env_vars["HF_TOKEN"]:
+        print(
+            "⚠️ HF_TOKEN missing — gated LTX-2.5 downloads will fail. "
+            "Accept the license on Hugging Face and set HF_TOKEN in .env"
+        )
 
     ordered = _cheap_gpu_list()
-    print(f"🚀 Download pod | ENGINE={engine} | volume={volume_id} | mount={VOLUME_MOUNT}")
+    print(f"🚀 Download pod | ENGINE=ltx | volume={volume_id} | mount={VOLUME_MOUNT}")
     print(f"   Cheap GPU order: {ordered}")
 
     pod = None
@@ -144,11 +153,12 @@ def launch_download_pod(volume_id: str, data_center: str | None) -> tuple[str, s
             print(f"   🔎 Trying {gpu_type_id}...")
             try:
                 kwargs = dict(
-                    name=f"model-download-{engine}",
+                    name="model-download-ltx25",
                     image_name=IMAGE,
                     gpu_type_id=gpu_type_id,
                     cloud_type=os.getenv("RUNPOD_CLOUD_TYPE", "SECURE"),
                     container_disk_in_gb=container_disk,
+                    volume_in_gb=0,
                     ports="8000/http",
                     network_volume_id=volume_id,
                     volume_mount_path=VOLUME_MOUNT,
@@ -178,22 +188,31 @@ def launch_download_pod(volume_id: str, data_center: str | None) -> tuple[str, s
     comfy_url = None
     while True:
         info = runpod.get_pod(pod_id)
-        if info:
-            status = info.get("desiredStatus") or info.get("status")
-            runtime = info.get("runtime") or {}
-            if status in ("RUNNING", "running"):
-                pod_ip = f"{pod_id}-8000.proxy.runpod.net"
-                if runtime.get("ports"):
-                    for p in runtime["ports"]:
-                        if p.get("privatePort") == 8000 and info.get("publicIp"):
-                            pod_ip = f"{info['publicIp']}:{p.get('publicPort')}"
-                            break
-                if "proxy.runpod.net" in pod_ip:
-                    comfy_url = f"https://{pod_ip}"
-                else:
-                    comfy_url = f"http://{pod_ip}"
-                print(f"⚡ Running → {comfy_url}")
-                break
+        if not info:
+            print(f"⚠️ get_pod({pod_id}) returned empty — pod may have died")
+            time.sleep(8)
+            if time.time() - start > 180:
+                raise SystemExit(f"Pod {pod_id} disappeared before RUNNING")
+            continue
+        status = info.get("desiredStatus") or info.get("status")
+        runtime = info.get("runtime") or {}
+        if int(time.time() - start) % 30 < 9:
+            print(f"   pod status={status} runtime={bool(runtime)}")
+        if status in ("RUNNING", "running"):
+            pod_ip = f"{pod_id}-8000.proxy.runpod.net"
+            if runtime.get("ports"):
+                for p in runtime["ports"]:
+                    if p.get("privatePort") == 8000 and info.get("publicIp"):
+                        pod_ip = f"{info['publicIp']}:{p.get('publicPort')}"
+                        break
+            if "proxy.runpod.net" in pod_ip:
+                comfy_url = f"https://{pod_ip}"
+            else:
+                comfy_url = f"http://{pod_ip}"
+            print(f"⚡ Running → {comfy_url}")
+            break
+        if status in ("EXITED", "TERMINATED", "FAILED"):
+            raise SystemExit(f"Pod {pod_id} ended early with status={status}")
         if time.time() - start > 600:
             raise SystemExit("Pod did not reach RUNNING in 10 minutes")
         time.sleep(8)
@@ -201,11 +220,10 @@ def launch_download_pod(volume_id: str, data_center: str | None) -> tuple[str, s
     return pod_id, comfy_url
 
 
-def wait_for_download(comfy_url: str) -> dict:
+def wait_for_download(comfy_url: str, pod_id: str | None = None) -> dict:
     """/health is only up after setup.py finishes — that means downloads are done."""
-    engine = os.getenv("ENGINE", "ltx").strip().lower()
-    print(f"⏳ Waiting for boot+download (ENGINE={engine}) at {comfy_url}/health ...")
-    print("   LTX ~39GB may take 15–40+ min")
+    print(f"⏳ Waiting for boot+download (ENGINE=ltx / LTX-2.5) at {comfy_url}/health ...")
+    print("   LTX-2.5 ~39GB may take 15–40+ min (gated HF; needs HF_TOKEN)")
 
     try:
         max_retries = int(os.getenv("DOWNLOAD_MAX_RETRIES", "1200"))
@@ -213,6 +231,14 @@ def wait_for_download(comfy_url: str) -> dict:
         max_retries = 1200
 
     for i in range(max_retries):
+        if pod_id and i % 12 == 0:
+            info = runpod.get_pod(pod_id)
+            if not info:
+                raise SystemExit(f"Pod {pod_id} disappeared during download")
+            st = info.get("desiredStatus") or info.get("status")
+            print(f"   pod still {st} | waiting ({i * 5 // 60}m)")
+            if st in ("EXITED", "TERMINATED", "FAILED"):
+                raise SystemExit(f"Pod {pod_id} died during download: {st}")
         try:
             res = requests.get(f"{comfy_url}/health", timeout=15)
             if res.status_code == 200:
@@ -220,10 +246,14 @@ def wait_for_download(comfy_url: str) -> dict:
                 print("\n✅ Worker online — setup.py finished (models on volume)")
                 print(
                     f"   engine={data.get('engine')} "
+                    f"ltx_version={data.get('ltx_version')} "
                     f"ltx_variant={data.get('ltx_variant')} "
+                    f"{data.get('width')}x{data.get('height')} "
                     f"vram={data.get('vram_gb')}"
                 )
                 return data
+            if i % 12 == 0:
+                print(f"   health HTTP {res.status_code} ({i * 5 // 60}m)")
         except Exception as e:
             if i % 12 == 0:
                 print(f"   still booting/downloading... ({i * 5 // 60}m) {e}")
@@ -237,7 +267,7 @@ def main():
     pod_id = None
     try:
         pod_id, comfy_url = launch_download_pod(volume_id, data_center)
-        health = wait_for_download(comfy_url)
+        health = wait_for_download(comfy_url, pod_id=pod_id)
         log = health.get("setup_log") or ""
         print("\n📜 --- setup.log (tail) ---")
         print("\n".join(log.strip().splitlines()[-40:]))

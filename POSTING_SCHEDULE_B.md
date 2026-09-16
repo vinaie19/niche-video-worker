@@ -2,7 +2,7 @@
 
 **Channel:** separate YouTube account from After Hours Japan  
 **Promise:** One question. One physics limit. One image.  
-**Generation:** `CHANNEL=b` + `ENGINE=ltx|wan|hunyuan` (see [local_runner/render_channel_b.sh](local_runner/render_channel_b.sh))  
+**Generation:** `CHANNEL=b` + `ENGINE=ltx` (LTX-2.5 only — see [local_runner/render_channel_b.sh](local_runner/render_channel_b.sh))  
 **Cadence:** Mon–Fri, **12:00 IST** (cold start)  
 **File source:** `final_videos/ready/sci_*_hook.mp4`  
 **Rule:** never reuse After Hours hashtags or cross-promote
@@ -120,20 +120,12 @@ Cross the material threshold and the cable whips faster than the ground can surv
 
 ```bash
 cd local_runner
-# Episode 1 (LTX)
+# All episodes use LTX-2.5
 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sun_closer python run_test_batch.py
-
-# Episode 2 (Wan)
-CHANNEL=b ENGINE=wan VIDEO_ID=sci_ep02_dyson_heat python run_test_batch.py
-
-# Episode 3 (LTX)
+CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep02_dyson_heat python run_test_batch.py
 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep03_black_hole_outer python run_test_batch.py
-
-# Episode 4 (Hunyuan)
-CHANNEL=b ENGINE=hunyuan VIDEO_ID=sci_ep04_atmosphere_freeze python run_test_batch.py
-
-# Episode 5 (Wan)
-CHANNEL=b ENGINE=wan VIDEO_ID=sci_ep05_elevator_snap python run_test_batch.py
+CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep04_atmosphere_freeze python run_test_batch.py
+CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep05_elevator_snap python run_test_batch.py
 ```
 
-Or run all five in engine order: `./render_channel_b.sh`
+Or run all five: `./render_channel_b.sh`

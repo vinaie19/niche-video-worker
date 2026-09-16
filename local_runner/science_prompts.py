@@ -1,5 +1,5 @@
 """
-Threshold Physics (Channel B) — episode jobs for LTX / Wan / Hunyuan batches.
+Threshold Physics (Channel B) — episode jobs for LTX-2.5 batches.
 
 Run: CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sun_closer python run_test_batch.py
 """
@@ -182,14 +182,12 @@ def build_science_jobs(num_frames, steps):
 
 
 science_ltx_jobs = build_science_jobs(num_frames=129, steps=8)
-science_wan_jobs = build_science_jobs(num_frames=81, steps=16)
-science_hunyuan_jobs = build_science_jobs(num_frames=129, steps=20)
 
-# Preferred ENGINE per episode (for render_channel_b.sh)
+# Preferred ENGINE per episode (LTX-2.5 only)
 SCIENCE_ENGINE_BY_ID = {
     "sci_ep01_sun_closer": "ltx",
-    "sci_ep02_dyson_heat": "wan",
+    "sci_ep02_dyson_heat": "ltx",
     "sci_ep03_black_hole_outer": "ltx",
-    "sci_ep04_atmosphere_freeze": "hunyuan",
-    "sci_ep05_elevator_snap": "wan",
+    "sci_ep04_atmosphere_freeze": "ltx",
+    "sci_ep05_elevator_snap": "ltx",
 }

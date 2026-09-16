@@ -2,47 +2,23 @@
 #                andrew | emma | ryan | sonia | prabhat
 # Captions: False | "minimal" | "clean" | "boxed" | "yellow" | "tiny"
 # Ambient: False | "rain" | "rain_city" | "space" | path/to.wav  (starts at 0:00)
-# Channel B (Threshold Physics): CHANNEL=b → science_*_jobs in science_prompts.py
+# Channel B (Threshold Physics): CHANNEL=b → science_ltx_jobs in science_prompts.py
 # Title: optional one-line overlay at 0:00 (not Whisper captions)
 #
-# LTX-2.3: 3×97 @ 24fps ≈ 4.0s/shot ≈ 12s total | distilled ManualSigmas (~8) | native AV
+# LTX-2.5: 3×97 @ 24fps ≈ 4.0s/shot ≈ 12s total | distilled ManualSigmas (~8) | native AV
+# Native latent 1088×1920 → ffmpeg 1080×1920 delivery
 # Batch flow: generate all shots of one short → stitch → next short
 #
 # Series 2 done: s2_ep01–s2_ep07
 # Series 3 — Places That Stay Open (LTX): s3_ep01–s3_ep07
 # Series 3 on Blackwell PRO 6000 (96GB): FORCE_OFFLOAD=false + LTX_TE_DEVICE=default (GPU).
-#   Comfy TE combo is default|cpu only — launcher maps gpu→default automatically.
 
 import os
 
-from science_prompts import (
-    science_hunyuan_jobs,
-    science_ltx_jobs,
-    science_wan_jobs,
-)
+from science_prompts import science_ltx_jobs
 
 _AMBIENT_DIR = os.path.join(os.path.dirname(__file__), "ambient")
 LAUNDRY_RAIN_BED = os.path.join(_AMBIENT_DIR, "laundry_rain_bed.wav")
-
-# Keep compare helpers available for ENGINE=wan|hunyuan|compare if needed.
-CC_COMPARE_SHOTS = [
-    "Vertical 9:16 premium sports network intro, heavy After Effects style motion graphics. Extreme close-up of a photoreal cricket ball rocketing toward camera through a deep black void, thick emerald-teal neon light ribbons and particle streaks wrapping the ball, sharp specular leather highlights, aggressive speed-ramp whoosh, cinematic contrast, rich saturated greens not pastel, 24fps, NO text, NO letters, NO words, NO numbers, NO logos, NO hashtags, NO hex codes, no people, no faces, no watermarks",
-    "Vertical 9:16 high-end cricket app splash animation. Cricket ball hits invisible glass mid-frame, violent emerald and deep-forest-green shockwave rings explode outward as holographic wireframe arcs, glowing particles and lens flares fill the dark frame, premium broadcast graphics look like ESPN or Star Sports openers, thunderous impact boom, 24fps, NO text, NO letters, NO words, NO numbers, NO UI labels, no people, no faces, no watermarks",
-    "Vertical 9:16 premium mobile splash end lockup. Abstract geometric cricket emblem forms from glowing emerald neon lines on a dark charcoal-to-black gradient, soft off-white rim light, subtle idle particle drift, luxurious sports-brand atmosphere, quiet stadium hush after big hit, 24fps, NO text, NO letters, NO words, NO brand names, NO slogans, no people, no faces, no watermarks",
-]
-
-
-def _cc_compare_job(video_id, num_frames, steps):
-    return {
-        "video_id": video_id,
-        "shot_mode": "multi_cut",
-        "num_frames": num_frames,
-        "steps": steps,
-        "captions": False,
-        "ambient": False,
-        "title": "County Cricket",
-        "shots": list(CC_COMPARE_SHOTS),
-    }
 
 
 def _ltx_place(video_id, title, shots):
@@ -58,17 +34,7 @@ def _ltx_place(video_id, title, shots):
     }
 
 
-# ENGINE=wan
-test_jobs = [
-    _cc_compare_job("cc_compare_wan", num_frames=49, steps=16),
-]
-
-# ENGINE=hunyuan
-hunyuan_ab_jobs = [
-    _cc_compare_job("cc_compare_hy", num_frames=81, steps=20),
-]
-
-# ENGINE=ltx — Series 3: Places That Stay Open (7 shorts)
+# Channel A — Series 3: Places That Stay Open (LTX-2.5)
 ltx_ab_jobs = [
     _ltx_place(
         "s3_ep01_parking_fluorescent",
@@ -134,3 +100,6 @@ ltx_ab_jobs = [
         ],
     ),
 ]
+
+# Alias for callers that still say test_jobs
+test_jobs = ltx_ab_jobs

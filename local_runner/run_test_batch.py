@@ -74,31 +74,19 @@ def launch_pod():
         "R2_SECRET_ACCESS_KEY": os.getenv("R2_SECRET_ACCESS_KEY"),
         "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME"),
         "R2_PUBLIC_URL_PREFIX": os.getenv("R2_PUBLIC_URL_PREFIX"),
-        # wan (default) | hunyuan | ltx — LTX A/B: ENGINE=ltx LTX_VARIANT=distilled
-        "ENGINE": os.getenv("ENGINE", "wan"),
-        "HY_VARIANT": os.getenv("HY_VARIANT", "480p_distilled"),
-        "HY_NUM_FRAMES": os.getenv("HY_NUM_FRAMES", "81"),
-        "HY_STEPS": os.getenv("HY_STEPS", "30"),
-        "HY_FPS": os.getenv("HY_FPS", "24"),
+        # LTX-2.5 only
+        "ENGINE": os.getenv("ENGINE", "ltx"),
+        "HF_TOKEN": os.getenv("HF_TOKEN")
+        or os.getenv("HUGGING_FACE_HUB_TOKEN")
+        or os.getenv("HUGGINGFACE_TOKEN")
+        or "",
         "LTX_VARIANT": os.getenv("LTX_VARIANT", "distilled"),
         "LTX_NUM_FRAMES": os.getenv("LTX_NUM_FRAMES", "97"),
         "LTX_STEPS": os.getenv("LTX_STEPS", "8"),
         "LTX_FPS": os.getenv("LTX_FPS", "24"),
-        "LTX_WIDTH": os.getenv("LTX_WIDTH", "480"),
-        "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "832"),
-        # Hunyuan/LTX: keep weights resident between shots (skip /free). Wan still unloads.
-        "KEEP_MODELS_LOADED": os.getenv(
-            "KEEP_MODELS_LOADED",
-            "true" if os.getenv("ENGINE", "wan").strip().lower() in (
-                "hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15",
-                "ltx", "ltx2", "ltx23", "ltxv", "lightricks",
-            ) else "",
-        ),
-        # Wan 2.2 I2V MoE pair (~29GB) — needs ~75GB network volume
-        "INSTALL_WAN22_I2V": os.getenv("INSTALL_WAN22_I2V", "true"),
-        # 5090-safe defaults (override per job in test_prompts if needed)
-        "WAN_NUM_FRAMES": os.getenv("WAN_NUM_FRAMES", "49"),
-        "WAN_STEPS": os.getenv("WAN_STEPS", "16"),
+        "LTX_WIDTH": os.getenv("LTX_WIDTH", "1088"),
+        "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "1920"),
+        "KEEP_MODELS_LOADED": os.getenv("KEEP_MODELS_LOADED", "true"),
     }
 
     pod = None
@@ -119,8 +107,8 @@ def launch_pod():
 
     print(f"🚀 Launching Dedicated GPU Pod with image: {image}...")
     print(
-        f"   ENGINE={env_vars.get('ENGINE')} HY_VARIANT={env_vars.get('HY_VARIANT')} "
-        f"LTX_VARIANT={env_vars.get('LTX_VARIANT')}"
+        f"   ENGINE=ltx LTX_VARIANT={env_vars.get('LTX_VARIANT')} "
+        f"{env_vars.get('LTX_WIDTH')}x{env_vars.get('LTX_HEIGHT')}"
     )
     print(
         f"   Acquire loop: retries={'∞' if max_acquire <= 0 else max_acquire} "
@@ -266,7 +254,9 @@ def wait_for_worker(comfy_url):
                 print("✅ Worker is online and ready for jobs!")
                 print(
                     f"   engine={health_data.get('engine')} "
-                    f"ltx_variant={health_data.get('ltx_variant')} "
+                    f"ltx={health_data.get('ltx_version')} "
+                    f"variant={health_data.get('ltx_variant')} "
+                    f"{health_data.get('width')}x{health_data.get('height')} "
                     f"frames={health_data.get('num_frames')} "
                     f"fps={health_data.get('fps')}"
                 )
@@ -291,24 +281,12 @@ def _build_shot_payload(vid, idx, prompt, shot_mode):
     }
     if "num_frames" in vid:
         payload["num_frames"] = int(vid["num_frames"])
-    else:
-        engine = os.getenv("ENGINE", "wan").strip().lower()
-        if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_NUM_FRAMES"):
-            payload["num_frames"] = int(os.getenv("HY_NUM_FRAMES"))
-        elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_NUM_FRAMES"):
-            payload["num_frames"] = int(os.getenv("LTX_NUM_FRAMES"))
-        elif os.getenv("WAN_NUM_FRAMES"):
-            payload["num_frames"] = int(os.getenv("WAN_NUM_FRAMES"))
+    elif os.getenv("LTX_NUM_FRAMES"):
+        payload["num_frames"] = int(os.getenv("LTX_NUM_FRAMES"))
     if "steps" in vid:
         payload["steps"] = int(vid["steps"])
-    else:
-        engine = os.getenv("ENGINE", "wan").strip().lower()
-        if engine in ("hunyuan", "hy", "hunyuanvideo") and os.getenv("HY_STEPS"):
-            payload["steps"] = int(os.getenv("HY_STEPS"))
-        elif engine in ("ltx", "ltx2", "ltx23", "ltxv") and os.getenv("LTX_STEPS"):
-            payload["steps"] = int(os.getenv("LTX_STEPS"))
-        elif os.getenv("WAN_STEPS"):
-            payload["steps"] = int(os.getenv("WAN_STEPS"))
+    elif os.getenv("LTX_STEPS"):
+        payload["steps"] = int(os.getenv("LTX_STEPS"))
     return payload
 
 
@@ -595,33 +573,18 @@ def _filter_jobs_by_video_id(jobs):
 
 
 def _jobs_for_engine(engine):
-    from test_prompts import (
-        hunyuan_ab_jobs,
-        ltx_ab_jobs,
-        science_hunyuan_jobs,
-        science_ltx_jobs,
-        science_wan_jobs,
-        test_jobs,
-    )
+    from test_prompts import ltx_ab_jobs, science_ltx_jobs
 
-    eng = (engine or "wan").strip().lower()
+    eng = (engine or "ltx").strip().lower()
+    if eng in ("compare", "ab", "all", "wan", "hunyuan", "hy"):
+        print(f"⚠️ ENGINE={eng} ignored — LTX-2.5 only; using ltx")
+        eng = "ltx"
+    elif eng not in ("ltx", "ltx2", "ltx23", "ltx25", "ltxv", "lightricks"):
+        eng = "ltx"
+
     if _channel_mode() == "b":
-        if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
-            jobs = science_hunyuan_jobs
-        elif eng in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
-            jobs = science_ltx_jobs
-        else:
-            jobs = science_wan_jobs
-        return eng if eng in (
-            "hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15",
-            "ltx", "ltx2", "ltx23", "ltxv", "lightricks", "wan",
-        ) else "wan", _filter_jobs_by_video_id(jobs)
-
-    if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
-        return eng, hunyuan_ab_jobs
-    if eng in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
-        return eng, ltx_ab_jobs
-    return "wan", test_jobs
+        return "ltx", _filter_jobs_by_video_id(science_ltx_jobs)
+    return "ltx", ltx_ab_jobs
 
 
 def run_one_engine(engine):
@@ -646,27 +609,5 @@ def run_one_engine(engine):
 
 
 if __name__ == "__main__":
-    engine = os.getenv("ENGINE", "wan").strip().lower()
-    # Same prompt × 3 engines: Hunyuan 1.5, Wan 2.2, LTX-2.3 (repo has 2.3, not 2.5)
-    if engine in ("compare", "ab", "all"):
-        order = [
-            e.strip()
-            for e in os.getenv("COMPARE_ENGINES", "hunyuan,wan,ltx").split(",")
-            if e.strip()
-        ]
-        print(f"🏁 Cross-engine compare order={order}")
-        failures = []
-        for eng in order:
-            try:
-                run_one_engine(eng)
-            except Exception as e:
-                failures.append((eng, str(e)))
-                print(f"⚠️ Continuing compare after {eng} failure: {e}")
-        if failures:
-            raise SystemExit(
-                "Compare finished with failures: "
-                + ", ".join(f"{e}: {msg}" for e, msg in failures)
-            )
-        print("✅ Cross-engine compare complete")
-    else:
-        run_one_engine(engine)
+    engine = os.getenv("ENGINE", "ltx").strip().lower()
+    run_one_engine(engine)
