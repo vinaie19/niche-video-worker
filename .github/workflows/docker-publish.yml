@@ -21,11 +21,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Free disk before build
+        run: |
+          df -h
+          docker system prune -af --volumes || true
+          sudo rm -rf /tmp/* /var/tmp/* || true
+          df -h
+
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/niche-video-worker:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # inline cache only — GHA cache + huge torch layers blow self-hosted disk
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/niche-video-worker:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/niche-video-worker:buildcache,mode=max
