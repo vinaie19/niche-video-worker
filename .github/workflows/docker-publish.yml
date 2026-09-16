@@ -3,14 +3,30 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Allows manual triggering from the UI
+  workflow_dispatch:
 
 jobs:
   build:
+    # Must be GitHub-hosted. Do NOT use a self-hosted label named ubuntu-latest —
+    # a full self-hosted disk fails before any step runs (cannot write _diag logs).
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize build disk
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Disk after cleanup
+        run: df -h
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -21,19 +37,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Free disk before build
-        run: |
-          df -h
-          docker system prune -af --volumes || true
-          sudo rm -rf /tmp/* /var/tmp/* || true
-          df -h
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/niche-video-worker:latest
-          # inline cache only — GHA cache + huge torch layers blow self-hosted disk
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/niche-video-worker:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/niche-video-worker:buildcache,mode=max
+          # No build cache — torch/CUDA layers + cache blow runner disk
+          no-cache: true
