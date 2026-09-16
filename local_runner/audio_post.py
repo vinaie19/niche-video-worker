@@ -8,7 +8,7 @@ Job fields (test_prompts.py):
   voice           — preset key or full Edge-TTS id (see VOICE_PRESETS)
   captions        — False | True | caption style key (see CAPTION_STYLES)
   caption_style   — style key when captions=True (default: minimal)
-  ambient         — False | "rain" | "rain_city" | path to audio file
+  ambient         — False | "rain" | "rain_city" | "space" | path to audio file
   title           — optional one-line overlay from 0:00 (not Whisper captions)
   vo_delay_ms     — ms of ambient-only before VO (default 900 for palate-cleanser hook)
   ambient_volume  — 0.0–1.0 bed level under VO (default 0.38)
@@ -27,7 +27,7 @@ WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
 DEFAULT_AMBIENT = "rain_city"
 DEFAULT_VO_DELAY_MS = 900
 DEFAULT_AMBIENT_VOLUME = 0.38
-AMBIENT_PRESETS = ("rain", "rain_city")
+AMBIENT_PRESETS = ("rain", "rain_city", "space")
 
 # Short keys → Edge-TTS neural voice IDs
 VOICE_PRESETS = {
@@ -321,6 +321,7 @@ def generate_ambient_bed(
 
     rain      — pink-noise rain texture (heavy droplets feel)
     rain_city — rain + low street hum (default palate-cleanser bed)
+    space     — deep low hum + faint static (Threshold Physics VO bed)
     """
     if duration_s <= 0.2:
         raise ValueError(f"duration too short for ambient: {duration_s}")
@@ -328,7 +329,34 @@ def generate_ambient_bed(
     dur = f"{duration_s:.3f}"
     vol = max(0.05, min(1.0, float(volume)))
 
-    if preset == "rain":
+    if preset == "space":
+        static_v = vol * 0.35
+        hum_v = vol * 0.55
+        fade_out_st = max(0.0, duration_s - 0.5)
+        filter = (
+            f"[0:a]highpass=f=800,lowpass=f=14000,volume={static_v:.3f}[st];"
+            f"[1:a]lowpass=f=90,volume={hum_v:.3f}[hum];"
+            f"[st][hum]amix=inputs=2:duration=longest:dropout_transition=0,"
+            f"afade=t=in:st=0:d=0.35,afade=t=out:st={fade_out_st:.3f}:d=0.5[out]"
+        )
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"anoisesrc=color=violet:amplitude=0.12:duration={dur}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"anoisesrc=color=brown:amplitude=0.35:duration={dur}",
+            "-filter_complex",
+            filter,
+            "-map",
+            "[out]",
+            output_wav,
+        ]
+    elif preset == "rain":
         # Broadband rain-ish texture
         af = (
             f"highpass=f=180,lowpass=f=10000,volume={vol:.3f},"
@@ -375,7 +403,8 @@ def generate_ambient_bed(
             output_wav,
         ]
 
-    print(f"🌧️ Ambient bed ({preset}, {duration_s:.1f}s, vol={vol:.2f}) → {output_wav}")
+    icon = "🌌" if preset == "space" else "🌧️"
+    print(f"{icon} Ambient bed ({preset}, {duration_s:.1f}s, vol={vol:.2f}) → {output_wav}")
     subprocess.run(cmd, check=True, capture_output=True)
     if not os.path.isfile(output_wav) or os.path.getsize(output_wav) < 100:
         raise RuntimeError(f"Ambient bed empty: {output_wav}")

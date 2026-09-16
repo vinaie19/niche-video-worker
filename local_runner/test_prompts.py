@@ -1,7 +1,8 @@
 # Voice presets: christopher | guy | davis | jenny | aria | sara | michelle |
 #                andrew | emma | ryan | sonia | prabhat
 # Captions: False | "minimal" | "clean" | "boxed" | "yellow" | "tiny"
-# Ambient: False | "rain" | "rain_city" | path/to.wav  (starts at 0:00)
+# Ambient: False | "rain" | "rain_city" | "space" | path/to.wav  (starts at 0:00)
+# Channel B (Threshold Physics): CHANNEL=b → science_*_jobs in science_prompts.py
 # Title: optional one-line overlay at 0:00 (not Whisper captions)
 #
 # LTX-2.3: 3×97 @ 24fps ≈ 4.0s/shot ≈ 12s total | distilled ManualSigmas (~8) | native AV
@@ -13,6 +14,12 @@
 #   Comfy TE combo is default|cpu only — launcher maps gpu→default automatically.
 
 import os
+
+from science_prompts import (
+    science_hunyuan_jobs,
+    science_ltx_jobs,
+    science_wan_jobs,
+)
 
 _AMBIENT_DIR = os.path.join(os.path.dirname(__file__), "ambient")
 LAUNDRY_RAIN_BED = os.path.join(_AMBIENT_DIR, "laundry_rain_bed.wav")

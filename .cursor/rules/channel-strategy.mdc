@@ -1,66 +1,60 @@
 ---
-description: Planned YouTube/Shorts channel strategy — After Hours Japan first, speculative science second, folklore optional
+description: YouTube/Shorts strategy — After Hours Japan (A) + Threshold Physics (B) on separate accounts
 alwaysApply: true
 ---
 
-# Channel strategy (future plans)
+# Channel strategy
 
-Two channels may exist later. Do not merge them into one generic “AI aesthetic/ASMR” account. Keep one promise per channel.
+Two channels on **separate YouTube accounts**. Do not merge into one generic “AI aesthetic/ASMR” or catch-all what-if account. Keep one promise per channel.
 
-## Channel A — After Hours Japan (primary / ship first)
+## Channel A — After Hours Japan
 
 - Empty night places, locked 9:16, no people/faces, soft ambient hum/drip/fridge.
 - Brand = after-hours mood (Japan-first). Use `#asmr #aesthetic #liminal` in captions only — not as the channel identity.
 - Series pattern: short title card (“Level B2.”) + 2–3 visual beats.
-- Expand via new rooms/angles/weather under the same vibe; do not go fully generic.
+- Posting: `POSTING_SCHEDULE.md`, **21:00 IST**, `final_videos/ready/s*_hook.mp4`.
 
-### Early analytics (mid-Sep 2026) — bias future batches
+### Early analytics (mid-Sep 2026) — bias future A batches
 
-Performance so far tracks **viewer stop-scroll + retention**, not algorithm trivia. Early winners:
+- **Hook:** strong first-frame sensory hit (e.g. Sento ~29% stayed-to-watch).
+- **Retention:** comfort + rain + food (e.g. Late Night Ramen ~83% APV).
+- **Theme:** late-night food / cozy rain / warm interiors over abstract voids.
 
-- **Hook (stayed to watch):** strong first-frame sensory hit — e.g. Sento ~29% stayed-to-watch.
-- **Retention (avg % viewed):** comfort + rain + food holds longest — e.g. Late Night Ramen ~83% APV, solid browse CTR.
-- **Theme pull:** late-night food / cozy rain / warm interiors beat pure liminal voids (ferry, laundry-type) for curiosity.
+When generating A again: ECU openers, sensory titles, optional sub-15s loops.
 
-When generating again (after the analytics gate):
+## Channel B — Threshold Physics
 
-1. First **0.5–1s** = unmistakable audio + motion (sizzle, rain hit, neon flicker, steam). ECU openers stay non-negotiable.
-2. Prefer **comfort/food/wet-street** subjects over abstract empty places unless the ECU hook is unmistakable.
-3. Titles = sensory scene (“Late Night Ramen in the Rain”), not place labels.
-4. Optional: sub-15s seamless loops for rewatch >100% APV.
-5. Give brand-new uploads time across viewing hours before judging them.
+- **Name / promise:** One mind-bending question → one physics **limit** → one lingering image.
+- Narrow speculative physics only (no aliens-invade, no crowds/faces).
+- 30–45s Shorts: VO (`davis`) + burned-in captions + `space` ambient bed.
+- Art bible: photoreal cinematic CGI, void black + white-gold + cool blue→amber, locked camera.
+- **Engines:** LTX-2.3 (default astro), Wan 2.2 (hard-surface stress), HunyuanVideo 1.5 (fluids/phase). **No paid video APIs.**
+- Jobs: `CHANNEL=b` → `local_runner/science_prompts.py` via `run_test_batch.py`.
+- Posting: `POSTING_SCHEDULE_B.md`, **12:00 IST Mon–Fri**, `final_videos/ready/sci_*_hook.mp4`.
+- Hashtags: `#ThresholdPhysics #space #physics #whatif #astronomy #shorts` only on B.
 
-## Channel B — Speculative science / megastructures (second channel or later pivot)
+## Concurrent operation (Sep 2026+)
 
-- One mind-bending question per short with a concrete payoff (e.g. “How would a Dyson swarm dump heat?”).
-- 2–3 locked or slow visuals; one shared art bible every episode (lighting/color/style locked).
-- Short VO; one scientific principle; one lingering end image.
-- No people — same quality rule as Channel A. Visualize the unfilmable; avoid “pretty CGI + vague voiceover.”
+- **OK to run A and B in parallel** on cloud GPU if accounts, tags, art bibles, and batch env (`CHANNEL=a|b`) stay isolated.
+- A: finish posting QC-good backlog; read analytics ~7–14 days after backlog is live.
+- B: cold-start 5-episode batch; log stayed-to-watch, engaged views, APV for 14 days.
 
 ## Optional lane — Folklore / mythology micro-docs
 
-- Only if preferring eerie vibe over smart explainers.
-- One creature/rite, one culture, one eerie fact; atmosphere > gore.
-- Silhouette / place / object only — no creature-face continuity across shots.
-- Prefer obscure regional myths; same episode structure every time.
+- Deferred unless pivoting away from both A and B.
 
 ## Explicitly defer
 
-- Cinematic history battles: crowded + AI consistency (faces, armor, era, geography) is too fragile for a first/second channel with current tools.
+- Cinematic history battles (faces, crowds, geography).
+- Kitchen-sink “What If” (funny/action/edu mashups).
 
 ## Production defaults (both channels)
 
 - Prefer no people / no faces / silhouettes when possible.
 - Same look every post beats niche-hopping.
-- One channel at a time until posting cadence is real.
+- Post only **QC-passed** hooks in `final_videos/ready/`.
 
-## Active phase (Sep 2026) — post inventory, then decide
+## Generation
 
-- **Generation paused.** Network volume torn down until we deliberately restart renders.
-- Post only **QC-passed** ready hooks (`final_videos/ready/*_hook.mp4`). Skip broken shots (e.g. s2_ep03 bookstore last-slide gibberish text) unless trimmed/fixed.
-- Follow `POSTING_SCHEDULE.md` (1 Short/day, ~21:00 IST).
-- Mid-backlog early signal (ramen/sento) is **direction only** (~150–190 views) — finish the queue, then wait.
-- After the good backlog is live (~23 Sep+), **stop and read analytics** for ~7–14 days (views, avg % viewed / engaged views, stayed-to-watch, subs).
-  - If retention/reach look promising → restore volume and continue After Hours Japan, biased by the early-analytics notes above.
-  - If not → explore other niches (Channel B speculative science is first candidate; don’t go generic ASMR).
-- Do not open a second channel or burn GPU until that analytics gate is done.
+- Restart RunPod volume deliberately when rendering (`local_runner/render_channel_b.sh` for B).
+- Channel A generation: default `CHANNEL=a` (or unset).

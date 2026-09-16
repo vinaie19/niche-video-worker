@@ -149,26 +149,35 @@ def launch_pod():
             except ValueError:
                 container_disk = 40
 
-            print(
-                f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload}, "
-                f"LTX_TE_DEVICE={ltx_te_device}, disk={container_disk}GB)..."
-            )
             try:
-                pod = runpod.create_pod(
+                volume_id = os.getenv("NETWORK_VOLUME_ID", "").strip()
+                data_center = os.getenv("DATA_CENTER_ID", "").strip() or None
+                # Network volumes require Secure Cloud. Mount path must match setup.py (/runpod-volume).
+                create_kwargs = dict(
                     name="test-batch-pod",
                     image_name=image,
                     gpu_type_id=gpu_type_id,
+                    cloud_type=os.getenv("RUNPOD_CLOUD_TYPE", "SECURE"),
                     container_disk_in_gb=container_disk,
                     ports="8000/http",
-                    network_volume_id="cxgqbfwsvr",
-                    data_center_id="EU-RO-1",
+                    volume_mount_path=os.getenv("VOLUME_MOUNT_PATH", "/runpod-volume"),
                     env={
                         **env_vars,
                         "GPU_VRAM_GB": str(gpu_vram),
                         "FORCE_OFFLOAD": force_offload,
                         "LTX_TE_DEVICE": ltx_te_device,
-                    }
+                    },
                 )
+                if volume_id:
+                    create_kwargs["network_volume_id"] = volume_id
+                if data_center:
+                    create_kwargs["data_center_id"] = data_center
+                print(
+                    f"   🔎 Trying {gpu_type_id} ({gpu_vram}GB, FORCE_OFFLOAD={force_offload}, "
+                    f"LTX_TE_DEVICE={ltx_te_device}, disk={container_disk}GB, "
+                    f"volume={volume_id or 'none'}, dc={data_center or 'auto'})..."
+                )
+                pod = runpod.create_pod(**create_kwargs)
                 print(f"   ✅ Acquired {gpu_type_id}")
                 break
             except Exception as e:
@@ -567,10 +576,47 @@ def destroy_pod(pod_id):
     runpod.terminate_pod(pod_id)
 
 
+def _channel_mode():
+    ch = os.getenv("CHANNEL", "a").strip().lower()
+    if ch in ("b", "science", "sci", "threshold", "threshold_physics"):
+        return "b"
+    return "a"
+
+
+def _filter_jobs_by_video_id(jobs):
+    raw = (os.getenv("VIDEO_ID") or os.getenv("SCIENCE_ONLY") or "").strip()
+    if not raw:
+        return jobs
+    picked = [j for j in jobs if j.get("video_id") == raw]
+    if not picked:
+        ids = ", ".join(j.get("video_id", "?") for j in jobs)
+        raise SystemExit(f"VIDEO_ID={raw!r} not in batch. Available: {ids}")
+    return picked
+
+
 def _jobs_for_engine(engine):
-    from test_prompts import test_jobs, hunyuan_ab_jobs, ltx_ab_jobs
+    from test_prompts import (
+        hunyuan_ab_jobs,
+        ltx_ab_jobs,
+        science_hunyuan_jobs,
+        science_ltx_jobs,
+        science_wan_jobs,
+        test_jobs,
+    )
 
     eng = (engine or "wan").strip().lower()
+    if _channel_mode() == "b":
+        if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
+            jobs = science_hunyuan_jobs
+        elif eng in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
+            jobs = science_ltx_jobs
+        else:
+            jobs = science_wan_jobs
+        return eng if eng in (
+            "hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15",
+            "ltx", "ltx2", "ltx23", "ltxv", "lightricks", "wan",
+        ) else "wan", _filter_jobs_by_video_id(jobs)
+
     if eng in ("hunyuan", "hy", "hunyuanvideo", "hunyuan_video", "hunyuan15"):
         return eng, hunyuan_ab_jobs
     if eng in ("ltx", "ltx2", "ltx23", "ltxv", "lightricks"):
@@ -582,7 +628,10 @@ def run_one_engine(engine):
     """Launch pod → for each short: generate clips → stitch → next → terminate."""
     eng, jobs = _jobs_for_engine(engine)
     os.environ["ENGINE"] = eng
-    print(f"🧪 Batch engine={eng} | jobs={[j['video_id'] for j in jobs]}")
+    ch = _channel_mode()
+    print(
+        f"🧪 CHANNEL={ch} engine={eng} | jobs={[j['video_id'] for j in jobs]}"
+    )
 
     pod_id = None
     try:
