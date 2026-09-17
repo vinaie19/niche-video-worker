@@ -33,6 +33,12 @@ COPY setup.py /workspace/setup.py
 COPY workflow_ltx_t2v.json /workspace/workflow_ltx_t2v.json
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
+# Late layer: Triton/Gemma4 TE JIT needs a host C compiler (keeps torch layers cached)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+ENV CC=gcc CXX=g++
+
 ENV ENGINE=ltx
 
 EXPOSE 8000

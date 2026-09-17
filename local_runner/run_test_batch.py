@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import json
 import requests
@@ -7,7 +8,16 @@ import subprocess
 import runpod
 from dotenv import load_dotenv
 
+# Line-buffer logs when stdout is not a TTY (agent/CI pipes).
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+        sys.stderr.reconfigure(line_buffering=True)
+    except Exception:
+        pass
+
 load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
 runpod.api_key = os.getenv("RUNPOD_API_KEY")
 
@@ -18,14 +28,13 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY')
 )
 
-# Prefer Blackwell PRO 6000 96GB (no offload + GPU Gemma TE), then 5090/4500.
-# Exact RunPod ids (UI "RTX PRO 6000" ≈ Server Edition).
+POD_NAME = os.getenv("RUNPOD_POD_NAME", "niche-ltx25-render")
+
+# LTX-2.5 @ 1088x1920 needs ~96GB — do not fall back to 32GB cards (OOM / useless offload).
 GPU_FALLBACKS = [
-    ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
+    ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition", 96),
-    ("NVIDIA GeForce RTX 5090", 32),
-    ("NVIDIA RTX PRO 4500 Blackwell", 32),
 ]
 
 
@@ -46,7 +55,7 @@ def _guess_vram_gb(gpu_type_id):
 
 
 def _ltx_te_device_for_vram(vram_gb):
-    """Comfy LTXAVTextEncoderLoader only allows device=['default','cpu'].
+    """CLIPLoader device: only 'default' | 'cpu' (not 'gpu').
     default ≈ GPU/main device; cpu = force CPU encode (32GB-safe)."""
     explicit = os.getenv("LTX_TE_DEVICE", "").strip().lower()
     if explicit in ("cpu",):
@@ -56,8 +65,120 @@ def _ltx_te_device_for_vram(vram_gb):
     return "default" if float(vram_gb) >= 64 else "cpu"
 
 
+def _persist_pod_id(pod_id: str):
+    """Remember pod id in local_runner/.env so the next run can resume it."""
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    lines = []
+    if os.path.isfile(env_path):
+        with open(env_path) as f:
+            lines = f.read().splitlines()
+    out, seen = [], False
+    for line in lines:
+        if line.startswith("RUNPOD_POD_ID="):
+            out.append(f"RUNPOD_POD_ID={pod_id}")
+            seen = True
+        else:
+            out.append(line)
+    if not seen:
+        out.append(f"RUNPOD_POD_ID={pod_id}")
+    with open(env_path, "w") as f:
+        f.write("\n".join(out) + "\n")
+    os.environ["RUNPOD_POD_ID"] = pod_id
+    print(f"💾 Saved RUNPOD_POD_ID={pod_id} to local_runner/.env")
+
+
+def _pod_comfy_url(pod_id: str, info: dict | None = None) -> str:
+    info = info or runpod.get_pod(pod_id) or {}
+    runtime = info.get("runtime") or {}
+    pod_ip = None
+    if runtime.get("ports"):
+        for p in runtime["ports"]:
+            if p.get("privatePort") == 8000:
+                base = info.get("publicIp") or info.get("address")
+                if base and p.get("publicPort"):
+                    pod_ip = f"{base}:{p.get('publicPort')}"
+                    break
+    if not pod_ip:
+        pod_ip = f"{pod_id}-8000.proxy.runpod.net"
+    if "proxy.runpod.net" in pod_ip:
+        return f"https://{pod_ip}" if not pod_ip.startswith("http") else pod_ip
+    if ":" in pod_ip:
+        return f"http://{pod_ip}"
+    return f"http://{pod_ip}:8000"
+
+
+def _wait_for_running_url(pod_id: str, timeout_s: int = 600) -> str:
+    """Block until pod is RUNNING and return worker base URL."""
+    start = time.time()
+    while True:
+        info = runpod.get_pod(pod_id)
+        if not info:
+            if time.time() - start > 120:
+                raise RuntimeError(f"Pod {pod_id} disappeared while waiting for RUNNING")
+            time.sleep(5)
+            continue
+        status = (info.get("desiredStatus") or info.get("status") or "").upper()
+        runtime = info.get("runtime") or {}
+        if status in ("RUNNING",) and (runtime.get("ports") or runtime.get("gpus") or True):
+            # Prefer proxy URL once desiredStatus is RUNNING; ports may lag a few seconds
+            if runtime.get("ports") or time.time() - start > 30:
+                url = _pod_comfy_url(pod_id, info)
+                print(f"⚡ Pod {pod_id} is running → {url}")
+                return url
+        if status in ("EXITED", "TERMINATED", "FAILED"):
+            raise RuntimeError(f"Pod {pod_id} ended with status={status}")
+        if time.time() - start > timeout_s:
+            raise TimeoutError(f"Pod {pod_id} did not reach RUNNING in {timeout_s}s")
+        time.sleep(5)
+
+
+def _try_resume_existing_pod():
+    """
+    Resume a stopped pod (keeps image layers on container disk).
+    Set RUNPOD_POD_ID in .env, or leave empty to skip.
+    """
+    pod_id = (os.getenv("RUNPOD_POD_ID") or "").strip()
+    if not pod_id:
+        return None
+    print(f"♻️ Trying to resume existing pod {pod_id}...")
+    try:
+        info = runpod.get_pod(pod_id)
+    except Exception as e:
+        print(f"⚠️ get_pod({pod_id}) failed: {e}")
+        return None
+    if not info:
+        print(f"⚠️ Pod {pod_id} not found — will create a new one")
+        return None
+    status = (info.get("desiredStatus") or info.get("status") or "").upper()
+    print(f"   current status={status}")
+    if status in ("RUNNING",):
+        url = _wait_for_running_url(pod_id)
+        return pod_id, url
+    if status in ("EXITED", "STOPPED", "DEAD"):
+        try:
+            runpod.resume_pod(pod_id, gpu_count=1)
+            print(f"   resume requested for {pod_id}")
+        except Exception as e:
+            print(f"⚠️ resume failed ({e}) — will create a new pod")
+            return None
+        url = _wait_for_running_url(pod_id)
+        return pod_id, url
+    # Creating / other — wait a bit
+    try:
+        url = _wait_for_running_url(pod_id, timeout_s=180)
+        return pod_id, url
+    except Exception as e:
+        print(f"⚠️ Could not bring {pod_id} up ({e})")
+        return None
+
+
 def launch_pod():
     image = "vinaie/niche-video-worker:latest"
+
+    resumed = _try_resume_existing_pod()
+    if resumed:
+        return resumed
+
     preferred = os.getenv("RUNPOD_GPU_TYPE", "").strip().strip('"')
     # Put preferred GPU first if set, then remaining fallbacks (deduped)
     ordered = []
@@ -87,7 +208,51 @@ def launch_pod():
         "LTX_WIDTH": os.getenv("LTX_WIDTH", "1088"),
         "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "1920"),
         "KEEP_MODELS_LOADED": os.getenv("KEEP_MODELS_LOADED", "true"),
+        # Triton JIT (Gemma4 TE) needs gcc; also set in rebuilt image
+        "CC": "gcc",
+        "CXX": "g++",
+        "DEBIAN_FRONTEND": "noninteractive",
     }
+
+    # Existing Hub image lacks gcc; override CMD to install + patch before worker.
+    # Set SKIP_CC_BOOTSTRAP=true once vinaie/niche-video-worker:latest includes build-essential.
+    skip_cc = (os.getenv("SKIP_CC_BOOTSTRAP") or "").strip().lower() in ("1", "true", "yes")
+    docker_args = None
+    if not skip_cc:
+        import base64
+
+        boot = r"""#!/bin/bash
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive CC=gcc CXX=g++
+echo '🔧 Installing build-essential for Triton/Gemma4...'
+apt-get update -qq
+apt-get install -y -qq --no-install-recommends build-essential python3-dev
+python3 - <<'PY'
+from pathlib import Path
+p = Path("/comfyui/comfy/text_encoders/gemma4.py")
+if p.is_file():
+    t = p.read_text()
+    old = "freqs = (inv_exp @ pos_exp).transpose(1, 2)"
+    new = (
+        "freqs = torch.matmul(inv_exp.cpu().float(), pos_exp.cpu().float())"
+        ".to(device=device, dtype=dtype).transpose(1, 2)"
+    )
+    if old in t:
+        p.write_text(t.replace(old, new, 1))
+        print("✅ Patched gemma4 freqs → CPU matmul")
+    else:
+        print("ℹ️ gemma4 freqs patch skipped (already patched or different source)")
+PY
+python3 /workspace/setup.py
+python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 --dont-upcast-attention --reserve-vram 2 &
+sleep 5
+exec python3 -u /workspace/handler.py
+"""
+        b64 = base64.b64encode(boot.encode()).decode("ascii")
+        # No nested quotes — safe for RunPod GraphQL dockerArgs: "..."
+        docker_args = f"bash -c 'echo {b64} | base64 -d | bash'"
+        print("🔧 docker_args: apt install gcc + gemma4 patch before worker (SKIP_CC_BOOTSTRAP=true to skip)")
+
 
     pod = None
     gpu_type_id = None
@@ -131,7 +296,6 @@ def launch_pod():
                 force_offload = force_offload.strip().lower()
             ltx_te_device = _ltx_te_device_for_vram(gpu_vram)
 
-            # Hunyuan A/B: 40GB is enough (weights on network volume). Wan MoE cache: 75–100GB.
             try:
                 container_disk = int(os.getenv("CONTAINER_DISK_GB", "40"))
             except ValueError:
@@ -142,7 +306,7 @@ def launch_pod():
                 data_center = os.getenv("DATA_CENTER_ID", "").strip() or None
                 # Network volumes require Secure Cloud. Mount path must match setup.py (/runpod-volume).
                 create_kwargs = dict(
-                    name="test-batch-pod",
+                    name=POD_NAME,
                     image_name=image,
                     gpu_type_id=gpu_type_id,
                     cloud_type=os.getenv("RUNPOD_CLOUD_TYPE", "SECURE"),
@@ -156,6 +320,8 @@ def launch_pod():
                         "LTX_TE_DEVICE": ltx_te_device,
                     },
                 )
+                if docker_args:
+                    create_kwargs["docker_args"] = docker_args
                 if volume_id:
                     create_kwargs["network_volume_id"] = volume_id
                 if data_center:
@@ -181,55 +347,8 @@ def launch_pod():
         raise Exception(f"No GPU available from fallback list. Last error: {last_error}")
 
     pod_id = pod["id"]
-    
-    start_time = time.time()
-    pod_ip = None
-    while True:
-        info = runpod.get_pod(pod_id)
-        if info:
-            status = info.get("desiredStatus") or info.get("status")
-            runtime = info.get("runtime")
-            
-            if status == "RUNNING" or status == "running":
-                if runtime and runtime.get("gpus"):
-                    pod_ip = runtime["gpus"][0].get("podIp")
-                if not pod_ip:
-                    pod_ip = info.get("address") or info.get("publicIp")
-                
-                if runtime and runtime.get("ports"):
-                    for p in runtime["ports"]:
-                        if p.get("privatePort") == 8000:
-                            base_addr = info.get("address") or info.get("publicIp")
-                            if base_addr:
-                                pod_ip = f"{base_addr}:{p.get('publicPort')}"
-                                break
-
-                if not pod_ip:
-                    pod_ip = f"{pod_id}-8000.proxy.runpod.net"
-
-                if pod_ip:
-                    print(f"⚡ Pod {pod_id} is running at {pod_ip}")
-                    break
-        
-        if time.time() - start_time > 60:
-            print("\n⚠️ API is taking too long to report the IP.")
-            manual_ip = input("👉 Please paste the 'Address' or 'Pod IP' from your RunPod dashboard: ").strip()
-            if manual_ip:
-                pod_ip = manual_ip
-                break
-        
-        time.sleep(10)
-    
-    if not pod_ip:
-        raise Exception("Failed to retrieve Pod IP address.")
-
-    if "proxy.runpod.net" in pod_ip:
-        comfy_url = f"https://{pod_ip}" if not pod_ip.startswith("http") else pod_ip
-    elif ":" in pod_ip:
-        comfy_url = f"http://{pod_ip}"
-    else:
-        comfy_url = f"http://{pod_ip}:8000"
-        
+    _persist_pod_id(pod_id)
+    comfy_url = _wait_for_running_url(pod_id)
     return pod_id, comfy_url
 
 def _save_render_manifest(rendered_urls, path="./temp_clips/render_manifest.json"):
@@ -550,8 +669,26 @@ def download_and_stitch(rendered_urls, test_jobs):
 
 
 def destroy_pod(pod_id):
-    print(f"🔥 Auto-terminating Pod {pod_id}...")
-    runpod.terminate_pod(pod_id)
+    """Default: stop the pod (keeps image cache for resume). TERMINATE_POD=true → terminate."""
+    terminate = (os.getenv("TERMINATE_POD") or "").strip().lower() in ("1", "true", "yes")
+    if terminate:
+        print(f"🔥 Terminating Pod {pod_id} (TERMINATE_POD=true)...")
+        runpod.terminate_pod(pod_id)
+        # Stale id would only fail resume — clear it
+        env_path = os.path.join(os.path.dirname(__file__), ".env")
+        if os.path.isfile(env_path):
+            with open(env_path) as f:
+                lines = [ln for ln in f.read().splitlines() if not ln.startswith("RUNPOD_POD_ID=")]
+            with open(env_path, "w") as f:
+                f.write("\n".join(lines) + ("\n" if lines else ""))
+        os.environ.pop("RUNPOD_POD_ID", None)
+        return
+    print(f"🛑 Stopping Pod {pod_id} (resume next run via RUNPOD_POD_ID; TERMINATE_POD=true to destroy)...")
+    try:
+        runpod.stop_pod(pod_id)
+    except Exception as e:
+        print(f"⚠️ stop_pod failed ({e}); leaving pod as-is")
+    _persist_pod_id(pod_id)
 
 
 def _channel_mode():
@@ -588,7 +725,7 @@ def _jobs_for_engine(engine):
 
 
 def run_one_engine(engine):
-    """Launch pod → for each short: generate clips → stitch → next → terminate."""
+    """Launch/resume pod → render → stop (or terminate if TERMINATE_POD=true)."""
     eng, jobs = _jobs_for_engine(engine)
     os.environ["ENGINE"] = eng
     ch = _channel_mode()

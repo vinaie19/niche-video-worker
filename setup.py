@@ -91,6 +91,60 @@ def _ensure_volume_file(log, rel_dir, filename, url, expected_size, label, cache
         log.write(f"✅ {label} already cached on SSD\n")
 
 
+def ensure_c_compiler(log):
+    """Triton (Gemma4 freqs / torch._native) needs a host C compiler at runtime."""
+    import shutil
+
+    os.environ.setdefault("CC", "gcc")
+    os.environ.setdefault("CXX", "g++")
+    if shutil.which("gcc"):
+        log.write("✅ C compiler present (gcc)\n")
+        return
+    log.write("🔧 Installing build-essential for Triton JIT (Gemma4 TE)...\n")
+    log.flush()
+    subprocess.run(["apt-get", "update", "-qq"], check=False)
+    r = subprocess.run(
+        [
+            "apt-get",
+            "install",
+            "-y",
+            "-qq",
+            "--no-install-recommends",
+            "build-essential",
+            "python3-dev",
+        ],
+        check=False,
+    )
+    if r.returncode != 0 or not shutil.which("gcc"):
+        log.write("⚠️ apt install gcc failed — will try gemma4 CPU freqs patch\n")
+    else:
+        log.write("✅ build-essential installed\n")
+
+
+def patch_gemma4_freqs_cpu(log):
+    """
+    Avoid Triton JIT on (inv @ pos) in gemma4._freqs_from_inv.
+    Tiny CPU matmul — fine; unblocks TE when gcc is missing.
+    """
+    path = "/comfyui/comfy/text_encoders/gemma4.py"
+    if not os.path.isfile(path):
+        return
+    with open(path) as f:
+        text = f.read()
+    old = "freqs = (inv_exp @ pos_exp).transpose(1, 2)"
+    new = (
+        "freqs = torch.matmul(inv_exp.cpu().float(), pos_exp.cpu().float())"
+        ".to(device=device, dtype=dtype).transpose(1, 2)"
+    )
+    if old not in text:
+        if "inv_exp.cpu().float()" in text:
+            log.write("✅ gemma4 freqs already patched for CPU matmul\n")
+        return
+    with open(path, "w") as f:
+        f.write(text.replace(old, new, 1))
+    log.write("✅ Patched gemma4 freqs → CPU matmul (no Triton/gcc)\n")
+
+
 def ltx_variant():
     """distilled (default) | dev (same int8 layout, higher quality UNET)."""
     v = os.getenv("LTX_VARIANT", "distilled").strip().lower()
@@ -173,6 +227,8 @@ def setup_model_links():
     log_file = "/workspace/setup.log"
     with open(log_file, "w") as log:
         log.write(f"🚀 Starting LTX-2.5 model setup... (ENGINE={ENGINE})\n")
+        ensure_c_compiler(log)
+        patch_gemma4_freqs_cpu(log)
         ensure_ltx_models(log)
 
         folders = [
