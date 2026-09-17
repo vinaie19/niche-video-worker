@@ -607,6 +607,145 @@ def create_subtitles_from_beats(
     return srt_path
 
 
+def nearest_ltx_frames(seconds: float, fps: float = 24.0) -> int:
+    """Map a target duration to LTX 8k+1 frame count."""
+    n = max(17, int(round(float(seconds) * float(fps))))
+    k = max(2, round((n - 1) / 8.0))
+    return 8 * k + 1
+
+
+def beat_shot_durations_s(
+    script_beats: list,
+    work_dir: str,
+    stem: str,
+    vo_delay_ms: int = 0,
+    default_rate: Optional[str] = None,
+    default_pitch: Optional[str] = None,
+) -> list[float]:
+    """
+    Per-shot target durations so picture cuts land when the next VO beat starts.
+
+    shot[i] = beat[i] duration + pause_ms[i]/1000
+    shot[0] also includes vo_delay_ms (ambient-only hook before narration).
+    Requires `{stem}_beat{i}.wav` from generate_voiceover.
+    """
+    beats = normalize_script_beats(
+        script_beats=script_beats,
+        default_rate=default_rate,
+        default_pitch=default_pitch,
+    )
+    if not beats:
+        raise ValueError("script_beats empty")
+    durs: list[float] = []
+    for i, b in enumerate(beats, start=1):
+        wav = os.path.join(work_dir, f"{stem}_beat{i}.wav")
+        if not os.path.isfile(wav):
+            raise FileNotFoundError(f"Missing beat wav: {wav}")
+        dur = _probe_duration(wav) + max(0, int(b.get("pause_ms") or 0)) / 1000.0
+        if i == 1:
+            dur += max(0, int(vo_delay_ms or 0)) / 1000.0
+        durs.append(max(0.5, dur))
+    return durs
+
+
+def fit_clip_duration(src: str, dst: str, target_s: float, fps: float = 24.0) -> str:
+    """Pad (freeze last frame) or trim a clip to target_s. Re-encodes video; drops audio."""
+    cur = _probe_duration(src)
+    target_s = max(0.5, float(target_s))
+    os.makedirs(os.path.dirname(os.path.abspath(dst)) or ".", exist_ok=True)
+    if abs(cur - target_s) < 0.04:
+        subprocess.run(["cp", "-f", src, dst], check=True)
+        return dst
+    if cur < target_s:
+        pad = target_s - cur
+        vf = f"tpad=stop_mode=clone:stop_duration={pad:.3f},fps={fps:.3f}"
+        print(f"🎞️ Pad {os.path.basename(src)} {cur:.2f}s → {target_s:.2f}s (+{pad:.2f}s freeze)")
+    else:
+        vf = f"fps={fps:.3f}"
+        print(f"🎞️ Trim {os.path.basename(src)} {cur:.2f}s → {target_s:.2f}s")
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        src,
+        "-t",
+        f"{target_s:.3f}",
+        "-vf",
+        vf,
+        "-an",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        dst,
+    ]
+    subprocess.run(cmd, check=True, capture_output=True)
+    return dst
+
+
+def fit_shots_to_voice_beats(
+    shot_paths: list[str],
+    script_beats: list,
+    work_dir: str,
+    voice_stem: str,
+    vo_delay_ms: int = 0,
+    voice: Optional[str] = None,
+    voice_rate: Optional[str] = None,
+    voice_pitch: Optional[str] = None,
+) -> list[str]:
+    """
+    Ensure VO beat wavs exist, then pad/trim each shot so cut points match narration.
+    Returns paths to fitted clips (same length as shot_paths).
+    """
+    if len(shot_paths) != len(
+        normalize_script_beats(
+            script_beats=script_beats, default_rate=voice_rate, default_pitch=voice_pitch
+        )
+    ):
+        beats = normalize_script_beats(
+            script_beats=script_beats, default_rate=voice_rate, default_pitch=voice_pitch
+        )
+        print(
+            f"⚠️ shot count {len(shot_paths)} != beat count {len(beats)}; "
+            "fitting min(n) shots only"
+        )
+    os.makedirs(work_dir, exist_ok=True)
+    mp3 = os.path.join(work_dir, f"{voice_stem}.mp3")
+    # Regenerate beat wavs when missing (or always refresh for accurate timing).
+    generate_voiceover(
+        script_beats=script_beats,
+        output_mp3=mp3,
+        voice=voice,
+        rate=voice_rate,
+        pitch=voice_pitch,
+        work_dir=work_dir,
+    )
+    targets = beat_shot_durations_s(
+        script_beats,
+        work_dir,
+        voice_stem,
+        vo_delay_ms=vo_delay_ms,
+        default_rate=voice_rate,
+        default_pitch=voice_pitch,
+    )
+    n = min(len(shot_paths), len(targets))
+    fitted = []
+    for i in range(n):
+        dst = os.path.join(work_dir, f"{voice_stem}_fit_shot_{i+1}.mp4")
+        fit_clip_duration(shot_paths[i], dst, targets[i])
+        fitted.append(dst)
+        print(f"   shot {i+1}: target {targets[i]:.2f}s → {dst}")
+    if len(shot_paths) > n:
+        fitted.extend(shot_paths[n:])
+    return fitted
+
+
 def create_subtitles(audio_path: str, srt_path: str) -> str:
     """Transcribe narration with Whisper and write an SRT file."""
     global _whisper_model

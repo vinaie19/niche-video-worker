@@ -648,6 +648,22 @@ def download_and_stitch(rendered_urls, test_jobs):
                         f.write(chunk)
                 local_paths.append(path)
 
+            # Align hard cuts to VO beat windows (pad/trim) when beats exist.
+            if script_beats and len(local_paths) > 1:
+                from audio_post import fit_shots_to_voice_beats
+
+                audio_dir = f"./temp_clips/{vid_id}_audio"
+                local_paths = fit_shots_to_voice_beats(
+                    local_paths,
+                    script_beats,
+                    work_dir=audio_dir,
+                    voice_stem=f"{vid_id}_complete_voice",
+                    vo_delay_ms=int(job.get("vo_delay_ms", 500)),
+                    voice=job.get("voice"),
+                    voice_rate=job.get("voice_rate"),
+                    voice_pitch=job.get("voice_pitch"),
+                )
+
             list_file = f"./temp_clips/{vid_id}_list.txt"
             with open(list_file, "w") as f:
                 for p in local_paths:

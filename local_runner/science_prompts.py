@@ -60,16 +60,16 @@ def _science_job(video_id, script, shots, num_frames, steps, script_beats=None):
 
 
 # --- Episode 1: Sun 10% closer ---
-# 1 VO beat ↔ 1 literal shot. num_frames on LTX 8k+1 grid (~24fps):
-#   97≈4.0s  129≈5.4s  161≈6.7s  193≈8.0s
-# Target stitch ≈ VO (~30s) so picture and narration land together.
+# 1 VO beat ↔ 1 literal shot. num_frames on LTX 8k+1 grid (~24fps).
+# Sized from measured Edge-TTS beat+pause (+vo_delay on shot1) so cuts match captions.
+# Stitch also pad/trims if TTS drift remains.
 
 _EP01_BEATS = [
     {
         "text": "What if the Sun moved ten percent closer tomorrow—\nwhich limit fails first?",
         "rate": "-12%",
         "pause_ms": 450,
-        "num_frames": 129,
+        "num_frames": 193,  # ~8.0s: vo_delay+beat1+pause
         "shot": (
             "An ultra-wide locked vertical shot reveals the full Sun as a small bright "
             "white-gold disc centered in deep black void, thin corona flickering once, "
@@ -81,7 +81,7 @@ _EP01_BEATS = [
         "text": "Not melting rock.\nNot the oceans boiling overnight.",
         "rate": "+0%",
         "pause_ms": 350,
-        "num_frames": 97,
+        "num_frames": 129,  # ~5.4s: beat2+pause
         "shot": (
             "A wide locked vertical orbital shot of Earth's blue ocean dayside, thick "
             "white steam plumes and boiling vapor columns rising from the sea surface "
@@ -94,7 +94,7 @@ _EP01_BEATS = [
         "text": "First: Earth's energy budget.\nTen percent closer means roughly twenty-one percent more sunlight.",
         "rate": "+5%",
         "pause_ms": 300,
-        "num_frames": 161,
+        "num_frames": 169,  # ~7.0s: beat3+pause
         "shot": (
             "A wide locked vertical shot shows both bodies: an oversized brighter Sun "
             "as a white-gold disc in the upper third and a smaller blue Earth below, "
@@ -107,7 +107,7 @@ _EP01_BEATS = [
         "text": "Then satellites start dying in denser air.",
         "rate": "-4%",
         "pause_ms": 500,
-        "num_frames": 129,
+        "num_frames": 97,  # ~4.0s: beat4+pause
         "shot": (
             "A locked vertical medium shot of a metallic CubeSat with rectangular solar "
             "panels filling the center of frame, tumbling and sparking as it drags through "
@@ -120,7 +120,7 @@ _EP01_BEATS = [
         "text": "The Sun doesn't need to touch us.\nIt only needs to cross a threshold.",
         "rate": "-15%",
         "pause_ms": 150,
-        "num_frames": 193,
+        "num_frames": 161,  # ~6.7s: beat5+pause
         "shot": (
             "An ultra-wide locked vertical linger: a huge closer Sun dominates the upper "
             "half as a blinding white-gold disc, tiny Earth near the bottom edge for scale, "
