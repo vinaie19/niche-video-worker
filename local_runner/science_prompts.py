@@ -10,18 +10,20 @@ _SCI_SUFFIX = (
 )
 
 _VO_DEFAULTS = {
-    # One-pass LTX multishot: hard visual cuts, continuous native AV bed.
-    # Alternatives: join_style="continue" | shot_mode="multi_cut" (old stitch, audio jumps).
-    "shot_mode": "ltx_multishot",
-    "join_style": "cut",
+    # Separate T2V clips → hard visual cuts (one-pass ltx_multishot morphs between scenes).
+    # For soft linger takes: shot_mode="ltx_multishot", join_style="cut"|"continue".
+    "shot_mode": "multi_cut",
+    "join_style": "cut",  # ignored unless shot_mode is ltx_multishot
     "voice": "guy",
     "voice_rate": "+0%",  # fallback when a beat omits rate
     "voice_pitch": "-1Hz",
     "captions": "clean",
-    "ambient": "ltx",  # keep LTX score under VO (not synthetic space)
-    "ambient_volume": 0.22,
+    # Continuous bed under VO (per-clip LTX audio jumps on stitch).
+    # Use ambient="ltx" only if you want native beds and accept cut jumps.
+    "ambient": "space",
+    "ambient_volume": 0.4,
     "vo_delay_ms": 500,
-    "voice_volume": 1.15,
+    "voice_volume": 1.0,
 }
 
 

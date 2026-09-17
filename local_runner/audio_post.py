@@ -511,6 +511,102 @@ def shift_srt_file(srt_path: str, delay_ms: int, output_path: Optional[str] = No
     return out
 
 
+def clamp_srt_file(srt_path: str, max_duration_s: float, output_path: Optional[str] = None) -> str:
+    """Drop/truncate cues that extend past max_duration_s (video length)."""
+    out = output_path or srt_path
+    max_s = max(0.05, float(max_duration_s))
+    with open(srt_path, "r", encoding="utf-8") as f:
+        blocks = re.split(r"\n\s*\n", f.read().strip())
+    kept = []
+    idx = 1
+    for block in blocks:
+        lines = [ln for ln in block.splitlines() if ln.strip()]
+        if len(lines) < 2 or "-->" not in lines[1]:
+            continue
+        start_s, end_s = [
+            _parse_srt_timestamp(p.strip()) for p in lines[1].replace(" --> ", "-->").split("-->")
+        ]
+        if start_s >= max_s - 0.05:
+            continue
+        end_s = min(end_s, max_s)
+        if end_s - start_s < 0.05:
+            continue
+        text = "\n".join(lines[2:]).strip()
+        if not text:
+            continue
+        kept.append(
+            f"{idx}\n{_srt_timestamp(start_s)} --> {_srt_timestamp(end_s)}\n{text}\n"
+        )
+        idx += 1
+    with open(out, "w", encoding="utf-8") as f:
+        f.write("\n".join(kept) + ("\n" if kept else ""))
+    print(f"📝 SRT clamped to {max_s:.2f}s ({len(kept)} cues) → {out}")
+    return out
+
+
+def create_subtitles_from_beats(
+    script_beats: list,
+    work_dir: str,
+    stem: str,
+    srt_path: str,
+    default_rate: Optional[str] = None,
+    default_pitch: Optional[str] = None,
+) -> str:
+    """
+    Build SRT from Edge-TTS beat wav durations (exact VO timeline).
+
+    Prefer this over Whisper when script_beats exist — cues match narration
+    lines and don't drift past the video.
+    """
+    beats = normalize_script_beats(
+        script_beats=script_beats,
+        default_rate=default_rate,
+        default_pitch=default_pitch,
+    )
+    if not beats:
+        raise ValueError("script_beats empty — cannot build beat captions")
+
+    cues: list[tuple[float, float, str]] = []
+    t = 0.0
+    for i, b in enumerate(beats, start=1):
+        wav = os.path.join(work_dir, f"{stem}_beat{i}.wav")
+        if not os.path.isfile(wav):
+            raise FileNotFoundError(f"Missing beat wav for captions: {wav}")
+        dur = _probe_duration(wav)
+        lines = [
+            ln.strip()
+            for ln in str(b.get("text") or "").replace("\r", "").split("\n")
+            if ln.strip()
+        ]
+        if not lines:
+            t += dur
+            pause_ms = int(b.get("pause_ms") or 0)
+            if pause_ms > 0:
+                t += pause_ms / 1000.0
+            continue
+        weights = [max(1, len(ln)) for ln in lines]
+        total_w = float(sum(weights))
+        cursor = t
+        for ln, w in zip(lines, weights):
+            seg = dur * (w / total_w)
+            end = cursor + seg
+            cues.append((cursor, end, ln))
+            cursor = end
+        t += dur
+        pause_ms = int(b.get("pause_ms") or 0)
+        if pause_ms > 0:
+            t += pause_ms / 1000.0
+
+    os.makedirs(os.path.dirname(os.path.abspath(srt_path)) or ".", exist_ok=True)
+    with open(srt_path, "w", encoding="utf-8") as f:
+        for i, (start, end, text) in enumerate(cues, start=1):
+            f.write(
+                f"{i}\n{_srt_timestamp(start)} --> {_srt_timestamp(end)}\n{text}\n\n"
+            )
+    print(f"📝 Beat-timed captions ({len(cues)} cues, VO≈{t:.1f}s) → {srt_path}")
+    return srt_path
+
+
 def create_subtitles(audio_path: str, srt_path: str) -> str:
     """Transcribe narration with Whisper and write an SRT file."""
     global _whisper_model
@@ -908,7 +1004,22 @@ def add_voice_and_captions(
         work_dir=work_dir,
     )
     if burn_captions:
-        create_subtitles(mp3, srt)
+        used_beats = False
+        if script_beats:
+            try:
+                create_subtitles_from_beats(
+                    script_beats,
+                    work_dir=work_dir,
+                    stem=f"{stem}_voice",
+                    srt_path=srt,
+                    default_rate=voice_rate,
+                    default_pitch=voice_pitch,
+                )
+                used_beats = True
+            except Exception as e:
+                print(f"⚠️ Beat captions failed ({e}); falling back to Whisper")
+        if not used_beats:
+            create_subtitles(mp3, srt)
     else:
         print("📝 Captions off — voice only")
         srt = ""
@@ -975,11 +1086,14 @@ def add_voice_and_captions(
             voice_volume=voice_volume,
         )
         final_audio = mixed
-        # Whisper timed raw VO at t=0; final mix delays VO — shift captions to match.
+        # Whisper/beat captions timed at VO t=0; mix delays VO — shift to match.
         if burn_captions and srt and vo_delay_ms:
             shift_srt_file(srt, int(vo_delay_ms))
     else:
         print("🌧️ Ambient off — VO only (weak Shorts hook)")
+
+    if burn_captions and srt:
+        clamp_srt_file(srt, video_dur)
 
     return mux_video_audio_subs(
         silent_video_path,
