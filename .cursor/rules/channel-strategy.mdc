@@ -22,24 +22,26 @@ Two channels on **separate YouTube accounts**. Do not merge into one generic “
 
 When generating A again: ECU openers, sensory titles, optional sub-15s loops.
 
-## Channel B — Threshold Physics
+## Channel B — Threshold Physics (**primary monetize bet**)
 
-- **Name / promise:** One mind-bending question → one physics **limit** → one lingering image.
-- Narrow speculative physics only (no aliens-invade, no crowds/faces).
-- 30–45s Shorts: VO (`guy`, slight `-rate`) + burned-in `clean` captions + `space` ambient bed.
-- Art bible: photoreal cinematic CGI, void black + white-gold + cool blue→amber, locked camera.
-- **Engines:** LTX-2.3 (default astro), Wan 2.2 (hard-surface stress), HunyuanVideo 1.5 (fluids/phase). **No paid video APIs.**
+- **Locked strategy:** `THRESHOLD_PHYSICS_STRATEGY.md` (niche memo, Top 12, metrics, agent review).
+- **Name / promise:** Visualizing the exact numerical limits where physical reality breaks down. (One threshold → one law → one image.)
+- Narrow physics-limits only (no aliens-invade, no crowds/faces, no kitchen-sink What If).
+- **~26–36s** Shorts (ok to ~45s): VO (`guy`, slight `-rate`) + burned-in `clean` captions + `space` ambient bed.
+- Art bible: photoreal cinematic CGI, void black + white-gold + cool blue→amber, locked camera; high contrast; visible object in frame 1.
+- **Engines:** LTX (default), Wan 2.2 (hard-surface stress), HunyuanVideo 1.5 (fluids/phase). **No paid video APIs.**
 - Jobs: `CHANNEL=b` → `local_runner/science_prompts.py` via `run_test_batch.py`.
-- **Shot modes:** `multi_cut` preferred (hard visual cuts per beat); `ltx_multishot` + `join_style: cut|continue` for soft one-pass takes (often morphs).
-- **Audio:** `ambient: space` continuous bed under Edge-TTS VO + `clean` captions; `ambient: ltx` keeps native beds but jumps on `multi_cut` stitch.
-- Posting: `POSTING_SCHEDULE_B.md`, **12:00 IST Mon–Fri**, `final_videos/ready/sci_*_hook.mp4`.
-- Hashtags: `#ThresholdPhysics #space #physics #whatif #astronomy #shorts` only on B.
+- **Shot modes:** `multi_cut` preferred; avoid meme hyper-cuts that kill cinematic scale.
+- **Audio:** `ambient: space` continuous bed under Edge-TTS VO + `clean` captions.
+- Posting: `POSTING_SCHEDULE_B.md`, **1/day @ 12:00 IST** (Top 12 from Sat 19 Sep 2026), `final_videos/ready/sci_*_hook.mp4`.
+- Hashtags: `#ThresholdPhysics #physics #science #space #universe` only on B.
+- **Per render:** local QC → YouTube AI review (prompt in strategy/schedule) → then schedule.
 
 ## Concurrent operation (Sep 2026+)
 
 - **OK to run A and B in parallel** on cloud GPU if accounts, tags, art bibles, and batch env (`CHANNEL=a|b`) stay isolated.
-- A: finish posting QC-good backlog; read analytics ~7–14 days after backlog is live.
-- B: cold-start 5-episode batch; log stayed-to-watch, engaged views, APV for 14 days.
+- A: finish QC-good backlog if desired; **parked as primary YPP bet** (ambient is slower).
+- B: Top 12 thresholds cold start; log stayed-to-watch, viewed vs swiped, APV; scorecard at ep 10 and ep 12.
 
 ## Optional lane — Folklore / mythology micro-docs
 
