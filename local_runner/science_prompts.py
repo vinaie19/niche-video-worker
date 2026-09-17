@@ -10,55 +10,127 @@ _SCI_SUFFIX = (
 )
 
 _VO_DEFAULTS = {
-    "shot_mode": "multi_cut",
-    "voice": "davis",
-    "captions": "minimal",
-    "ambient": "space",
-    "ambient_volume": 0.28,
-    "vo_delay_ms": 400,
+    # One-pass LTX multishot: hard visual cuts, continuous native AV bed.
+    # Alternatives: join_style="continue" | shot_mode="multi_cut" (old stitch, audio jumps).
+    "shot_mode": "ltx_multishot",
+    "join_style": "cut",
+    "voice": "guy",
+    "voice_rate": "+0%",  # fallback when a beat omits rate
+    "voice_pitch": "-1Hz",
+    "captions": "clean",
+    "ambient": "ltx",  # keep LTX score under VO (not synthetic space)
+    "ambient_volume": 0.22,
+    "vo_delay_ms": 500,
+    "voice_volume": 1.15,
 }
 
 
-def _science_job(video_id, script, shots, num_frames, steps):
-    return {
+def _science_job(video_id, script, shots, num_frames, steps, script_beats=None):
+    job = {
         "video_id": video_id,
         "num_frames": num_frames,
         "steps": steps,
-        "script": script.strip(),
         "shots": list(shots),
         **_VO_DEFAULTS,
     }
+    if script_beats:
+        job["script_beats"] = list(script_beats)
+        job["script"] = "\n\n".join(
+            (b.get("text") or "").strip() for b in script_beats if (b.get("text") or "").strip()
+        )
+        # Prefer per-beat shot dicts when present (1 VO beat ↔ 1 visual).
+        beat_shots = []
+        for b in script_beats:
+            shot_text = (b.get("shot") or b.get("prompt") or "").strip()
+            if not shot_text:
+                continue
+            entry = {"prompt": shot_text}
+            if b.get("num_frames") is not None:
+                entry["num_frames"] = int(b["num_frames"])
+            if b.get("steps") is not None:
+                entry["steps"] = int(b["steps"])
+            beat_shots.append(entry)
+        if beat_shots:
+            job["shots"] = beat_shots
+    else:
+        job["script"] = (script or "").strip()
+    return job
 
 
 # --- Episode 1: Sun 10% closer ---
+# 1 VO beat ↔ 1 literal shot. num_frames on LTX 8k+1 grid (~24fps):
+#   97≈4.0s  129≈5.4s  161≈6.7s  193≈8.0s
+# Target stitch ≈ VO (~30s) so picture and narration land together.
 
-_EP01_SCRIPT = """
-What if the Sun moved ten percent closer tomorrow—
-which limit fails first?
+_EP01_BEATS = [
+    {
+        "text": "What if the Sun moved ten percent closer tomorrow—\nwhich limit fails first?",
+        "rate": "-12%",
+        "pause_ms": 450,
+        "num_frames": 129,
+        "shot": (
+            "An ultra-wide locked vertical shot reveals the full Sun as a small bright "
+            "white-gold disc centered in deep black void, thin corona flickering once, "
+            "vast empty space around the whole star so scale is readable, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Not melting rock.\nNot the oceans boiling overnight.",
+        "rate": "+0%",
+        "pause_ms": 350,
+        "num_frames": 97,
+        "shot": (
+            "A wide locked vertical orbital shot of Earth's blue ocean dayside, thick "
+            "white steam plumes and boiling vapor columns rising from the sea surface "
+            "into a glowing amber sky, heat haze over the water, planet limb visible, "
+            "no people, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "First: Earth's energy budget.\nTen percent closer means roughly twenty-one percent more sunlight.",
+        "rate": "+5%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "A wide locked vertical shot shows both bodies: an oversized brighter Sun "
+            "as a white-gold disc in the upper third and a smaller blue Earth below, "
+            "harsh excess sunlight washing the dayside into burned amber glare, "
+            "clear orbital scale, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Then satellites start dying in denser air.",
+        "rate": "-4%",
+        "pause_ms": 500,
+        "num_frames": 129,
+        "shot": (
+            "A locked vertical medium shot of a metallic CubeSat with rectangular solar "
+            "panels filling the center of frame, tumbling and sparking as it drags through "
+            "a thicker glowing orange atmosphere shell, Earth curve soft in the background, "
+            "satellite clearly readable as a spacecraft, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The Sun doesn't need to touch us.\nIt only needs to cross a threshold.",
+        "rate": "-15%",
+        "pause_ms": 150,
+        "num_frames": 193,
+        "shot": (
+            "An ultra-wide locked vertical linger: a huge closer Sun dominates the upper "
+            "half as a blinding white-gold disc, tiny Earth near the bottom edge for scale, "
+            "deep black void, almost no motion, quiet catastrophic composition, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
 
-Not melting rock.
-Not the oceans boiling overnight.
-
-First: Earth's energy budget.
-Ten percent closer means roughly twenty-one percent more sunlight—
-enough to shatter the climate balance we evolved under.
-
-Then: the upper atmosphere expands,
-satellites start dying in denser air,
-and the runaway isn't sci-fi theater—
-it's thermodynamics with nowhere to hide.
-
-The Sun doesn't need to touch us.
-It only needs to cross a threshold.
-""".strip()
-
+_EP01_SCRIPT = "\n\n".join(b["text"] for b in _EP01_BEATS)
 _EP01_SHOTS = [
-    f"Cinematic locked extreme close-up of the Sun's limb, violent white-gold prominence arching and flickering, intense glare and heat shimmer, deep black space void, immediate plasma motion, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of Earth from space, cool blue oceans and thin white atmosphere against deep black void, soft sunlight from off-frame, serene orbital stillness, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of Earth under harsher closer sunlight, oceans shifting from blue to burned amber glare, atmosphere glowing brighter, heat-haze shimmer on the limb, {_SCI_SUFFIX}",
-    f"Cinematic locked medium-wide shot of Earth's upper atmosphere expanding into a thicker glowing shell, tiny dark satellite silhouettes tumbling as sparks of debris, orbital heat shimmer, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of Earth limb with violent amber glare and boiling cloud tops under excess solar flux, heat distortion waves, {_SCI_SUFFIX}",
-    f"Cinematic locked ultra-wide shot of a visibly closer Sun dominating the frame as a blinding white-gold disc, tiny Earth offset near the edge, deep black void, quiet catastrophic scale, minimal motion, {_SCI_SUFFIX}",
+    {"prompt": b["shot"], "num_frames": b["num_frames"]} for b in _EP01_BEATS
 ]
 
 # --- Episode 2: Dyson heat dump ---
@@ -166,18 +238,18 @@ _EP05_SHOTS = [
 ]
 
 _EPISODES = [
-    ("sci_ep01_sun_closer", _EP01_SCRIPT, _EP01_SHOTS),
-    ("sci_ep02_dyson_heat", _EP02_SCRIPT, _EP02_SHOTS),
-    ("sci_ep03_black_hole_outer", _EP03_SCRIPT, _EP03_SHOTS),
-    ("sci_ep04_atmosphere_freeze", _EP04_SCRIPT, _EP04_SHOTS),
-    ("sci_ep05_elevator_snap", _EP05_SCRIPT, _EP05_SHOTS),
+    ("sci_ep01_sun_closer", _EP01_SCRIPT, _EP01_SHOTS, _EP01_BEATS),
+    ("sci_ep02_dyson_heat", _EP02_SCRIPT, _EP02_SHOTS, None),
+    ("sci_ep03_black_hole_outer", _EP03_SCRIPT, _EP03_SHOTS, None),
+    ("sci_ep04_atmosphere_freeze", _EP04_SCRIPT, _EP04_SHOTS, None),
+    ("sci_ep05_elevator_snap", _EP05_SCRIPT, _EP05_SHOTS, None),
 ]
 
 
 def build_science_jobs(num_frames, steps):
     return [
-        _science_job(vid, script, shots, num_frames, steps)
-        for vid, script, shots in _EPISODES
+        _science_job(vid, script, shots, num_frames, steps, script_beats=beats)
+        for vid, script, shots, beats in _EPISODES
     ]
 
 

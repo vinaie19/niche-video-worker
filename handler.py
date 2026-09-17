@@ -19,8 +19,12 @@ s3 = boto3.client(
 
 jobs = {}
 
-# LTX temporal lengths: 8k+1
-VALID_FRAME_COUNTS = {17, 33, 49, 65, 73, 81, 97, 113, 121, 129}
+# LTX temporal lengths: 8k+1 (up to ~40s @24fps for one-pass multishot on 96GB)
+def _build_valid_frame_counts(max_frames=961):
+    return {8 * k + 1 for k in range(2, (max_frames - 1) // 8 + 1)}
+
+
+VALID_FRAME_COUNTS = _build_valid_frame_counts()
 COMFY_HEADERS = {"Host": "127.0.0.1"}
 COMFY_URL = "http://127.0.0.1:8188"
 OUTPUT_DIR = "/comfyui/output"
@@ -485,7 +489,9 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None
 
     jobs[job_id]["status"] = "completed"
     jobs[job_id]["output_r2_url"] = r2_public_url
-    jobs[job_id]["shot_mode"] = "multi_cut"
+    # Preserve caller shot_mode (multi_cut vs ltx_multishot / continuous).
+    if not jobs[job_id].get("shot_mode"):
+        jobs[job_id]["shot_mode"] = "multi_cut"
     jobs[job_id]["engine"] = "ltx"
 
 
@@ -499,14 +505,28 @@ def execute_render_async(
     upscale=True,
     num_frames=None,
     steps=None,
+    join_style=None,
 ):
     try:
         jobs[job_id]["status"] = "processing"
         mode = (shot_mode or "multi_cut").lower().strip()
-        if mode in ("continuous", "single_shot", "singleshot"):
-            raise RuntimeError(
-                "ENGINE=ltx does not support continuous mode — use shot_mode=multi_cut"
-            )
+        # multi_cut = independent short clips (caller stitches; audio jumps).
+        # ltx_multishot / continuous / cut / continue = one native AV pass
+        # (caller sends a combined chronological prompt + total frames).
+        if mode not in (
+            "multi_cut",
+            "ltx_multishot",
+            "continuous",
+            "cut",
+            "continue",
+            "single_shot",
+            "singleshot",
+        ):
+            raise RuntimeError(f"Unknown shot_mode={shot_mode!r}")
+        print(
+            f"🎬 LTX render mode={mode} join_style={join_style or '-'} "
+            f"frames={num_frames} shot_index={shot_index}"
+        )
         execute_multi_cut(
             job_id,
             prompt_text,
@@ -515,6 +535,9 @@ def execute_render_async(
             num_frames=num_frames,
             steps=steps,
         )
+        jobs[job_id]["shot_mode"] = mode
+        if join_style:
+            jobs[job_id]["join_style"] = join_style
     except Exception as e:
         import traceback
 
@@ -565,7 +588,14 @@ def health_check():
             "fps": default_fps(),
             "width": int(os.getenv("LTX_WIDTH", "1088")),
             "height": int(os.getenv("LTX_HEIGHT", "1920")),
-            "modes": ["multi_cut"],
+            "modes": [
+                "multi_cut",
+                "ltx_multishot",
+                "continuous",
+                "cut",
+                "continue",
+            ],
+            "join_styles": ["cut", "continue"],
         }
     )
 
@@ -576,6 +606,7 @@ def handle_prompt():
     data = request.json or {}
     job_id = str(uuid.uuid4())
     shot_mode = data.get("shot_mode", "multi_cut")
+    join_style = data.get("join_style")
     chunks = int(data.get("chunks", 2))
     upscale = bool(data.get("upscale", True))
     num_frames = data.get("num_frames")
@@ -590,6 +621,7 @@ def handle_prompt():
         "video_id": data.get("video_id"),
         "shot_index": data.get("shot_index"),
         "shot_mode": shot_mode,
+        "join_style": join_style,
         "chunks": chunks,
         "num_frames": num_frames,
         "steps": steps,
@@ -608,6 +640,7 @@ def handle_prompt():
             upscale,
             num_frames,
             steps,
+            join_style,
         )
 
     threading.Thread(target=_start, daemon=True).start()
@@ -618,6 +651,7 @@ def handle_prompt():
             "status": "queued",
             "engine": "ltx",
             "shot_mode": shot_mode,
+            "join_style": join_style,
             "chunks": chunks,
             "num_frames": num_frames,
             "steps": steps,

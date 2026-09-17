@@ -389,49 +389,136 @@ def wait_for_worker(comfy_url):
     raise Exception("Worker failed to become reachable.")
 
 
-def _build_shot_payload(vid, idx, prompt, shot_mode):
+def _normalize_shot_entry(shot):
+    """Accept a prompt string or {prompt|shot, num_frames?, steps?, chunks?, upscale?}."""
+    if isinstance(shot, dict):
+        prompt = (shot.get("prompt") or shot.get("shot") or "").strip()
+        if not prompt:
+            raise ValueError(f"shot dict missing prompt/shot text: {shot!r}")
+        meta = {
+            "prompt": prompt,
+            "num_frames": shot.get("num_frames"),
+            "steps": shot.get("steps"),
+            "chunks": shot.get("chunks"),
+            "upscale": shot.get("upscale"),
+        }
+        return meta
+    return {"prompt": str(shot), "num_frames": None, "steps": None, "chunks": None, "upscale": None}
+
+
+def _build_shot_payload(vid, idx, shot, shot_mode, join_style=None, override_prompt=None, override_frames=None):
+    entry = _normalize_shot_entry(shot)
     payload = {
-        "prompt": prompt,
+        "prompt": override_prompt if override_prompt is not None else entry["prompt"],
         "video_id": vid["video_id"],
         "shot_index": idx + 1,
         "shot_mode": shot_mode,
-        "chunks": vid.get("chunks", 2),
-        "upscale": vid.get("upscale", True),
+        "chunks": entry["chunks"] if entry["chunks"] is not None else vid.get("chunks", 2),
+        "upscale": entry["upscale"] if entry["upscale"] is not None else vid.get("upscale", True),
     }
-    if "num_frames" in vid:
+    if join_style:
+        payload["join_style"] = join_style
+    # Per-shot num_frames wins over job/env default (LTX uses 8k+1 frame grid).
+    if override_frames is not None:
+        payload["num_frames"] = int(override_frames)
+    elif entry["num_frames"] is not None:
+        payload["num_frames"] = int(entry["num_frames"])
+    elif "num_frames" in vid:
         payload["num_frames"] = int(vid["num_frames"])
     elif os.getenv("LTX_NUM_FRAMES"):
         payload["num_frames"] = int(os.getenv("LTX_NUM_FRAMES"))
-    if "steps" in vid:
+    if entry["steps"] is not None:
+        payload["steps"] = int(entry["steps"])
+    elif "steps" in vid:
         payload["steps"] = int(vid["steps"])
     elif os.getenv("LTX_STEPS"):
         payload["steps"] = int(os.getenv("LTX_STEPS"))
     return payload
 
 
+def _nearest_ltx_frames(n):
+    """Match handler 8k+1 grid (local, so we don't under-request multishot length)."""
+    n = max(17, int(n))
+    k = max(2, round((n - 1) / 8))
+    return 8 * k + 1
+
+
 def render_video_shots(comfy_url, vid, manifest):
     """Generate every shot for one video. Returns list of R2 URLs."""
+    from ltx_multishot import (
+        build_multishot_prompt,
+        is_multishot_mode,
+        normalize_join_style,
+        sum_shot_frames,
+    )
+
     vid_id = vid["video_id"]
     shot_mode = vid.get("shot_mode", "multi_cut")
-    prompts = vid["shots"] if shot_mode == "multi_cut" else [vid["shots"][0]]
+    join_style = normalize_join_style(vid.get("join_style"), shot_mode)
     urls = []
+
+    if is_multishot_mode(shot_mode):
+        # One native AV pass: chronological cut|continue prompt, continuous bed.
+        shots = list(vid["shots"])
+        prompt = build_multishot_prompt(shots, join_style=join_style)
+        total_frames = _nearest_ltx_frames(
+            sum_shot_frames(shots, default_frames=vid.get("num_frames", 97))
+        )
+        print(
+            f"\n🎬 Generate {vid_id} — LTX multishot join={join_style} "
+            f"({len(shots)} beats → {total_frames} frames, one pass)."
+        )
+        print(f"🎬 Submitting {vid_id} multishot ({join_style})...")
+        payload = _build_shot_payload(
+            vid,
+            0,
+            shots[0],
+            shot_mode="ltx_multishot",
+            join_style=join_style,
+            override_prompt=prompt,
+            override_frames=total_frames,
+        )
+        url = _submit_and_poll_shot(comfy_url, payload, vid_id, manifest, label=f"{vid_id} multishot")
+        if url:
+            urls.append(url)
+        return urls
+
+    prompts = vid["shots"]
     n = len(prompts)
     print(f"\n🎬 Generate {vid_id} — {n} shot(s). Stitch after this short only.")
 
     for idx, prompt in enumerate(prompts):
-        label = (
-            f"{vid_id} continuous ({vid.get('chunks', 2)} chunks)"
-            if shot_mode != "multi_cut"
-            else f"{vid_id} - Shot {idx+1}/{n}"
+        entry = _normalize_shot_entry(prompt)
+        frames_note = (
+            f" frames={entry['num_frames']}"
+            if entry.get("num_frames") is not None
+            else ""
         )
+        label = f"{vid_id} - Shot {idx+1}/{n}{frames_note}"
         print(f"🎬 Submitting {label}...")
         payload = _build_shot_payload(vid, idx, prompt, shot_mode)
+        url = _submit_and_poll_shot(comfy_url, payload, vid_id, manifest, label=label)
+        if url:
+            urls.append(url)
+    return urls
 
-        try:
-            submit_url = f"{comfy_url.rstrip('/')}/render"
-            res = None
-            raw = None
-            for attempt in range(1, 4):
+
+def _submit_and_poll_shot(comfy_url, payload, vid_id, manifest, label=""):
+    """POST one render job and poll until R2 URL is ready. Returns URL or None."""
+    try:
+        submit_url = f"{comfy_url.rstrip('/')}/render"
+        res = None
+        raw = None
+        for attempt in range(1, 4):
+            raw = requests.post(
+                submit_url,
+                json=payload,
+                timeout=60,
+                headers={"Content-Type": "application/json"},
+                allow_redirects=False,
+            )
+            if raw.status_code == 404:
+                submit_url = f"{comfy_url.rstrip('/')}/prompt"
                 raw = requests.post(
                     submit_url,
                     json=payload,
@@ -439,89 +526,59 @@ def render_video_shots(comfy_url, vid, manifest):
                     headers={"Content-Type": "application/json"},
                     allow_redirects=False,
                 )
-                if raw.status_code == 404:
-                    submit_url = f"{comfy_url.rstrip('/')}/prompt"
-                    raw = requests.post(
-                        submit_url,
-                        json=payload,
-                        timeout=60,
-                        headers={"Content-Type": "application/json"},
-                        allow_redirects=False,
-                    )
-                if raw.status_code in (301, 302, 303, 307, 308):
-                    print(
-                        f"   ⚠️ Redirect on submit (attempt {attempt}/3): "
-                        f"status={raw.status_code} location={raw.headers.get('Location')!r}"
-                    )
-                elif raw.status_code == 200 and (raw.text or "").strip():
-                    try:
-                        res = raw.json()
-                        break
-                    except Exception:
-                        print(
-                            f"   ⚠️ Non-JSON body (attempt {attempt}/3): "
-                            f"status={raw.status_code} body={raw.text[:300]!r}"
-                        )
-                else:
-                    print(
-                        f"   ⚠️ Bad submit response (attempt {attempt}/3): "
-                        f"status={raw.status_code} body={((raw.text or '')[:300])!r}"
-                    )
-                    try:
-                        h = requests.get(f"{comfy_url}/health", timeout=10)
-                        eng = (h.json() or {}).get("engine") if h.ok else "?"
-                        print(f"   🩺 health={h.status_code} engine={eng}")
-                    except Exception as he:
-                        print(f"   🩺 health check failed: {he}")
-                time.sleep(5 * attempt)
-
-            if res is None:
-                raise RuntimeError(
-                    f"submit failed after retries: "
-                    f"status={getattr(raw, 'status_code', None)} "
-                    f"body={((getattr(raw, 'text', None) or '')[:300])!r}"
+            if raw.status_code in (301, 302, 303, 307, 308):
+                print(
+                    f"   ⚠️ Redirect on submit (attempt {attempt}/3): "
+                    f"status={raw.status_code} location={raw.headers.get('Location')!r}"
                 )
-
-            job_id = res.get("job_id")
-            if not job_id:
-                print(f"   ❌ Failed to get job_id: {res}")
-                continue
-
-            print(f"   🕒 Job {job_id} queued ({shot_mode}). Polling for status...")
-            finished = False
-            while not finished:
-                time.sleep(10)
-                status_raw = requests.get(f"{comfy_url}/status/{job_id}", timeout=15)
+            elif raw.status_code == 200 and (raw.text or "").strip():
                 try:
-                    status_res = status_raw.json()
+                    res = raw.json()
+                    break
                 except Exception:
                     print(
-                        f"   ⚠️ Non-JSON /status: status={status_raw.status_code} "
-                        f"body={status_raw.text[:200]!r}"
+                        f"   ⚠️ Non-JSON submit body (attempt {attempt}/3): "
+                        f"status={raw.status_code} body={raw.text[:200]!r}"
                     )
-                    continue
-                status = status_res.get("status")
-                if status == "completed":
-                    r2_url = status_res.get("output_r2_url")
-                    urls.append(r2_url)
-                    manifest[vid_id] = list(urls)
-                    print(f"   ✅ Success! R2 URL: {r2_url}")
-                    _save_render_manifest(manifest)
-                    finished = True
-                elif status == "failed":
-                    print(f"   ❌ Job Failed: {status_res.get('error')}")
-                    print("   ⏭️ Skipping this shot, continuing this short...")
-                    finished = True
-                else:
-                    progress = status_res.get("progress", status)
-                    elapsed = int(time.time() - status_res.get("created_at", time.time()))
-                    print(f"   ... {progress} (elapsed: {elapsed}s)")
-        except Exception as e:
-            print(f"   ❌ Error on {label}: {e}")
-            print("   ⏭️ Skipping this shot, continuing this short...")
-            continue
+            else:
+                print(
+                    f"   ⚠️ Submit failed (attempt {attempt}/3): "
+                    f"status={raw.status_code} body={(raw.text or '')[:200]!r}"
+                )
+            time.sleep(2 * attempt)
+        else:
+            raise RuntimeError(
+                f"Empty/invalid submit response after retries "
+                f"(last status={getattr(raw, 'status_code', None)})"
+            )
 
-    return urls
+        job_id = res["job_id"]
+        print(f"   🕒 Job {job_id} queued ({payload.get('shot_mode')}). Polling for status...")
+
+        poll_s = int(os.getenv("POLL_INTERVAL_S", "10"))
+        max_polls = int(os.getenv("MAX_POLLS", "720"))
+        for poll_i in range(max_polls):
+            time.sleep(poll_s)
+            st = requests.get(f"{comfy_url.rstrip('/')}/status/{job_id}", timeout=30)
+            data = st.json()
+            status = data.get("status")
+            if status == "completed":
+                url = data.get("output_r2_url")
+                print(f"   ✅ {label or vid_id} ready: {url}")
+                manifest.setdefault(vid_id, []).append(url)
+                _save_render_manifest(manifest)
+                return url
+            if status == "failed":
+                err = data.get("error", "unknown")
+                print(f"   ❌ Job failed: {err}")
+                return None
+            if poll_i % 6 == 0:
+                print(f"   … still {status} ({poll_i * poll_s}s)")
+        print(f"   ⚠️ Timed out polling {job_id}")
+        return None
+    except Exception as e:
+        print(f"   💥 Submit/poll error for {label or vid_id}: {e}")
+        return None
 
 
 def execute_batch(comfy_url, test_jobs):
@@ -555,6 +612,7 @@ def execute_batch(comfy_url, test_jobs):
 def download_and_stitch(rendered_urls, test_jobs):
     """Download + concat + audio/title for the given video(s)."""
     from audio_post import add_ambient_and_title, add_voice_and_captions
+    from ltx_multishot import is_multishot_mode
 
     os.makedirs("./final_videos", exist_ok=True)
     os.makedirs("./temp_clips", exist_ok=True)
@@ -569,16 +627,17 @@ def download_and_stitch(rendered_urls, test_jobs):
 
         job = jobs_by_id.get(vid_id, {})
         script = (job.get("script") or "").strip()
+        script_beats = job.get("script_beats")
         silent_path = f"./temp_clips/{vid_id}_silent.mp4"
         output_video = f"./final_videos/{vid_id}_complete.mp4"
 
-        # Continuous already returns one final clip
-        if mode_by_id.get(vid_id) in ("continuous", "single_shot", "singleshot"):
+        # One-pass multishot / continuous already returns a single AV clip.
+        if is_multishot_mode(mode_by_id.get(vid_id)) or len(urls) == 1:
             r = requests.get(urls[0], stream=True)
             with open(silent_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-            print(f"⬇️ Continuous silent clip: {silent_path}")
+            print(f"⬇️ One-pass clip (keep LTX AV): {silent_path}")
         else:
             local_paths = []
             for idx, url in enumerate(urls):
@@ -612,7 +671,7 @@ def download_and_stitch(rendered_urls, test_jobs):
             )
             print(f"⬇️ Stitched silent video: {silent_path}")
 
-        if script:
+        if script or script_beats:
             from audio_post import parse_captions_option
 
             # captions: False | True | "minimal"|"clean"|"boxed"|"yellow"|"tiny"
@@ -626,6 +685,7 @@ def download_and_stitch(rendered_urls, test_jobs):
                 vo_delay_ms = int(job.get("vo_delay_ms", 900))
                 ambient_volume = float(job.get("ambient_volume", 0.38))
                 voice_volume = float(job.get("voice_volume", 1.0))
+                script_beats = job.get("script_beats")
                 add_voice_and_captions(
                     silent_path,
                     script,
@@ -638,6 +698,9 @@ def download_and_stitch(rendered_urls, test_jobs):
                     vo_delay_ms=vo_delay_ms,
                     ambient_volume=ambient_volume,
                     voice_volume=voice_volume,
+                    voice_rate=job.get("voice_rate"),
+                    voice_pitch=job.get("voice_pitch"),
+                    script_beats=script_beats,
                 )
                 mode = (
                     f"voice + captions({caption_style})"
