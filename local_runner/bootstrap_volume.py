@@ -13,7 +13,7 @@ HF_TOKEN in local_runner/.env before bootstrap.
 
 Then destroy the cheap pod (default) and later render on PRO 6000:
 
-  CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sun_closer \\
+  CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sound_194db \\
     RUNPOD_GPU_TYPE='NVIDIA RTX PRO 6000 Blackwell Server Edition' \\
     .venv/bin/python local_runner/run_test_batch.py
 """

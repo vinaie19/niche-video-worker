@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Threshold Physics batch — one RunPod session per episode (LTX-2.5 only).
+# Threshold Physics Top 12 — one RunPod session per episode (LTX).
+# Strategy: ../THRESHOLD_PHYSICS_STRATEGY.md
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -15,11 +16,20 @@ render_one() {
   CHANNEL=b ENGINE=ltx VIDEO_ID="${vid}" python run_test_batch.py
 }
 
-render_one sci_ep01_sun_closer
-render_one sci_ep02_dyson_heat
-render_one sci_ep03_black_hole_outer
-render_one sci_ep04_atmosphere_freeze
-render_one sci_ep05_elevator_snap
+# Top 12 posting order (POSTING_SCHEDULE_B.md)
+render_one sci_ep01_sound_194db
+render_one sci_ep02_roche_limit
+render_one sci_ep03_neutron_impact
+render_one sci_ep04_absolute_zero
+render_one sci_ep05_spaghettification
+render_one sci_ep06_absolute_hot
+render_one sci_ep07_chandrasekhar
+render_one sci_ep08_metallic_hydrogen
+render_one sci_ep09_solar_escape
+render_one sci_ep10_eddington
+render_one sci_ep11_vacuum_decay
+render_one sci_ep12_neutron_drip
 
 echo ""
 echo "Done. QC complete MP4s in ../final_videos/ then promote with promote_to_ready.sh"
+echo "Per episode: local QC → YouTube AI review → schedule (see POSTING_SCHEDULE_B.md)"

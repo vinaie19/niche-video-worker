@@ -79,7 +79,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep03_neutron_impact_hook.mp4`
 - **Slug:** `sci_ep03_neutron_impact`
 - **Title:** `Dropping an Object 1 Meter at 200 Million Gs`
-- **Spoken hook:** `Drop an apple one meter here, and it hits at light speed.`
+- **Spoken hook:** `Drop a solid mass one meter here, and it hits with nuclear force.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -291,14 +291,15 @@ If revise: give exact new title + first sentence + what to cut.
 
 ## Render notes (operator)
 
-Prompts / `science_prompts.py` entries for these 12 slugs are **not generated yet** — strategy + schedule only.
-
-When generating later:
+Prompts live in [`local_runner/science_prompts.py`](local_runner/science_prompts.py) (Top 12 beat scripts).
 
 ```bash
 cd local_runner
+# Single episode (start here):
 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sound_194db python run_test_batch.py
-# …per slug from the table above
+
+# Full Top 12 (one RunPod session each):
+./render_channel_b.sh
 ```
 
-Or extend `render_channel_b.sh` once prompts exist.
+Then: local QC → YouTube AI review (prompt above) → `./promote_to_ready.sh <slug>` → schedule 12:00 IST.

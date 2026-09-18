@@ -1,7 +1,10 @@
 """
-Threshold Physics (Channel B) — episode jobs for LTX-2.5 batches.
+Threshold Physics (Channel B) — Top 12 limit episodes for LTX batches.
 
-Run: CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sun_closer python run_test_batch.py
+Strategy: ../THRESHOLD_PHYSICS_STRATEGY.md
+Schedule: ../POSTING_SCHEDULE_B.md
+
+Run: CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sound_194db python run_test_batch.py
 """
 
 _SCI_SUFFIX = (
@@ -19,10 +22,10 @@ _VO_DEFAULTS = {
     "voice_pitch": "-1Hz",
     "captions": "clean",
     # Continuous bed under VO (per-clip LTX audio jumps on stitch).
-    # Use ambient="ltx" only if you want native beds and accept cut jumps.
     "ambient": "space",
     "ambient_volume": 0.4,
-    "vo_delay_ms": 500,
+    # Hard hook: start VO near frame zero (strategy §2).
+    "vo_delay_ms": 100,
     "voice_volume": 1.0,
 }
 
@@ -59,192 +62,629 @@ def _science_job(video_id, script, shots, num_frames, steps, script_beats=None):
     return job
 
 
-# --- Episode 1: Sun 10% closer ---
-# 1 VO beat ↔ 1 literal shot. num_frames on LTX 8k+1 grid (~24fps).
-# Sized from measured Edge-TTS beat+pause (+vo_delay on shot1) so cuts match captions.
-# Stitch also pad/trims if TTS drift remains.
+def _beats_script(beats):
+    return "\n\n".join(b["text"] for b in beats)
+
+
+def _beats_shots(beats):
+    return [{"prompt": b["shot"], "num_frames": b["num_frames"]} for b in beats]
+
+
+# =============================================================================
+# TOP 12 — Physics Limits / Thresholds (primary posting queue)
+# Formula: threshold → paradox → one law → visual climax (~55–65 words VO)
+# num_frames on LTX 8k+1 grid (~24fps); stitch still pad/trims for TTS drift.
+# =============================================================================
+
+# --- Ep 01: 194 dB Sound Barrier ---
 
 _EP01_BEATS = [
     {
-        "text": "What if the Sun moved ten percent closer tomorrow—\nwhich limit fails first?",
-        "rate": "-12%",
-        "pause_ms": 450,
-        "num_frames": 193,  # ~8.0s: vo_delay+beat1+pause
-        "shot": (
-            "An ultra-wide locked vertical shot reveals the full Sun as a small bright "
-            "white-gold disc centered in deep black void, thin corona flickering once, "
-            "vast empty space around the whole star so scale is readable, "
-            f"{_SCI_SUFFIX}"
-        ),
-    },
-    {
-        "text": "Not melting rock.\nNot the oceans boiling overnight.",
-        "rate": "+0%",
+        "text": "At 194 decibels, sound stops being sound\nand becomes a shockwave.",
+        "rate": "-8%",
         "pause_ms": 350,
-        "num_frames": 129,  # ~5.4s: beat2+pause
+        "num_frames": 161,
         "shot": (
-            "A wide locked vertical orbital shot of Earth's blue ocean dayside, thick "
-            "white steam plumes and boiling vapor columns rising from the sea surface "
-            "into a glowing amber sky, heat haze over the water, planet limb visible, "
-            "no people, "
+            "Cinematic locked extreme close-up of a razor-sharp circular compression "
+            "shockwave ripping through a dense luminescent gas cloud into black void, "
+            "violent compression ripples, high contrast particulate haze, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "First: Earth's energy budget.\nTen percent closer means roughly twenty-one percent more sunlight.",
-        "rate": "+5%",
+        "text": "Air can only vibrate so hard.\nPast that limit, the wave carries more energy than the atmosphere can hold.",
+        "rate": "+0%",
         "pause_ms": 300,
-        "num_frames": 169,  # ~7.0s: beat3+pause
+        "num_frames": 169,
         "shot": (
-            "A wide locked vertical shot shows both bodies: an oversized brighter Sun "
-            "as a white-gold disc in the upper third and a smaller blue Earth below, "
-            "harsh excess sunlight washing the dayside into burned amber glare, "
-            "clear orbital scale, "
+            "Cinematic locked medium shot of layered air density sheets buckling under a "
+            "passing pressure wave, translucent shock rings expanding through fog, "
+            "deep black background, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "Then satellites start dying in denser air.",
+        "text": "So the medium itself fails—\nmolecules shoved aside instead of oscillating.",
         "rate": "-4%",
-        "pause_ms": 500,
-        "num_frames": 97,  # ~4.0s: beat4+pause
+        "pause_ms": 300,
+        "num_frames": 145,
         "shot": (
-            "A locked vertical medium shot of a metallic CubeSat with rectangular solar "
-            "panels filling the center of frame, tumbling and sparking as it drags through "
-            "a thicker glowing orange atmosphere shell, Earth curve soft in the background, "
-            "satellite clearly readable as a spacecraft, "
+            "Cinematic locked close-up of glowing gas molecules blasted into a hollow "
+            "vacuum tunnel behind a luminous shock front, particles streaming sideways, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "The Sun doesn't need to touch us.\nIt only needs to cross a threshold.",
-        "rate": "-15%",
-        "pause_ms": 150,
-        "num_frames": 161,  # ~6.7s: beat5+pause
+        "text": "The threshold isn't loudness.\nIt's when sound becomes pure destruction.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 153,
         "shot": (
-            "An ultra-wide locked vertical linger: a huge closer Sun dominates the upper "
-            "half as a blinding white-gold disc, tiny Earth near the bottom edge for scale, "
-            "deep black void, almost no motion, quiet catastrophic composition, "
+            "Cinematic locked wide shot of a spherical shock shell expanding through a "
+            "dark chamber of glowing gas, center voided to black, quiet catastrophic linger, "
             f"{_SCI_SUFFIX}"
         ),
     },
 ]
 
-_EP01_SCRIPT = "\n\n".join(b["text"] for b in _EP01_BEATS)
-_EP01_SHOTS = [
-    {"prompt": b["shot"], "num_frames": b["num_frames"]} for b in _EP01_BEATS
+# --- Ep 02: Roche Limit ---
+
+_EP02_BEATS = [
+    {
+        "text": "Cross this exact boundary,\nand planetary gravity shreds an entire moon.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a cracked grey lunar body fracturing into "
+            "luminous debris beside a huge banded gas giant, tidal stress cracks glowing, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Too close, and the near side feels stronger pull than the far side.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked medium shot of a moon stretching egg-shaped toward a giant "
+            "planet, near face brighter under tidal strain, cold blue rim light, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "That difference—the Roche limit—\noverpowers the moon's own gravity.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked medium shot of rocky crust peeling into arcs of debris "
+            "streaming into a thin ring plane, sparks of colliding rubble, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Cross it, and a world becomes a ring.",
+        "rate": "-15%",
+        "pause_ms": 200,
+        "num_frames": 129,
+        "shot": (
+            "Cinematic locked ultra-wide linger: gas giant with a bright newly formed "
+            "ring system, last moon fragments dissolving into the plane, deep black void, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
 ]
 
-# --- Episode 2: Dyson heat dump ---
+# --- Ep 03: Neutron Star Surface Impact ---
 
-_EP02_SCRIPT = """
-A Dyson swarm doesn't break because it blocks sunlight.
-It breaks on waste heat.
-
-Every watt you use becomes heat you must dump.
-At stellar scale, that means enormous infrared radiators—
-not a solid shell, but countless collectors bleeding energy into space.
-
-If the swarm can't radiate fast enough,
-the structure cooks itself long before the star goes dark.
-
-The limit isn't power.
-It's thermodynamics at cosmic scale.
-""".strip()
-
-_EP02_SHOTS = [
-    f"Cinematic locked extreme close-up of a solar collector panel vibrating under intense sunlight, molten heat shimmer, deep black starfield, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of countless thin solar collectors orbiting a bright star in a sparse swarm, glinting metal geometry, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of massive infrared radiator fins glowing dull red against the void, heat waves rippling, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of crimson heat plumes venting from radiator arrays into deep space, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of a warped collector structure overheating, metal stress shimmer, {_SCI_SUFFIX}",
-    f"Cinematic locked ultra-wide shot of star plus swarm with glowing red waste-heat halo dominating the frame, linger on scale, {_SCI_SUFFIX}",
+_EP03_BEATS = [
+    {
+        "text": "Drop a solid mass one meter here,\nand it hits with nuclear force.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked extreme close-up of a dense metallic sphere falling toward "
+            "a glowing blue crystalline neutron-star crust, extreme foreshortening, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Surface gravity near two hundred million g\nturns a tiny fall into a hypersonic impact.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of the sphere streaking downward as a white "
+            "motion trail above an azure crust, faint blue aurora glow on the surface, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Kinetic energy dumps into heat and gamma flash\nbefore the object even looks like itself.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked close-up of the sphere flattening into an ultra-bright "
+            "plasma ring on impact, crust cratering with blue-white glare, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold isn't height.\nIt's gravity so extreme that one meter is a bomb.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide linger: glowing impact scar on neutron-star surface, "
+            "expanding plasma halo, deep black space above the limb, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
 ]
 
-# --- Episode 3: Black hole outer solar system ---
+# --- Ep 04: Absolute Zero ---
 
-_EP03_SCRIPT = """
-What if a stellar-mass black hole drifted into the outer solar system—
-which orbital limit breaks first?
-
-Not Earth swallowed in a day.
-Gravity works at distance.
-
-First: comets and ice giants get their orbits rewritten.
-Resonances stack until paths cross.
-
-Then: the Oort cloud becomes a storm of inbound trajectories—
-a slow, statistical siege, not a cinematic plunge.
-
-The threshold is orbital chaos long before the event horizon touches us.
-""".strip()
-
-_EP03_SHOTS = [
-    f"Cinematic locked extreme close-up of accretion disk edge glowing white-blue, violent swirling plasma, deep black void, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of outer solar system with faint ice giant and distant starfield, cold blue lighting, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of comet trails bending toward an invisible gravity well, curved trajectories, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of scattered comet paths crossing like tangled threads around a dark central point, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of ice giant atmosphere rippling under tidal stress, aurora-like glow, {_SCI_SUFFIX}",
-    f"Cinematic locked ultra-wide shot of tiny black hole silhouette with lensed starfield and chaotic comet streaks, {_SCI_SUFFIX}",
+_EP04_BEATS = [
+    {
+        "text": "Cool matter to absolute zero,\nand all motion completely vanishes.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked extreme macro close-up of a translucent faceted geometric "
+            "crystal with pulsating interior light nodes jittering violently, white-gold "
+            "sparks, dark void around, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Temperature is motion.\nZero kelvin is the floor where kinetic energy hits pure zero.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of a translucent faceted geometric crystal, "
+            "interior light nodes dimming and freezing into place, cold blue specular "
+            "reflections, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "You can approach it—\nbut thermodynamics forbids ever reaching a perfect stop.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked close-up of the crystal almost frozen, last faint interior "
+            "glimmers dying out, frost-like light fading to dim blue, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold is the coldest possible state of matter.",
+        "rate": "-15%",
+        "pause_ms": 200,
+        "num_frames": 129,
+        "shot": (
+            "Cinematic locked wide linger: perfectly still dark crystal structure in "
+            "void, almost no motion, high contrast silhouette, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
 ]
 
-# --- Episode 4: Atmosphere freeze ---
+# --- Ep 05: Spaghettification Radius ---
 
-_EP04_SCRIPT = """
-How cold can a planet get before the atmosphere itself starts to fail?
-
-Not instant vacuum.
-Phase change.
-
-As temperature drops, gases begin to condense and freeze out of the sky—
-first the trace gases, then the bulk atmosphere rains down as snow and frost.
-
-The threshold is when air stops behaving like a permanent ocean
-and becomes a seasonal surface deposit.
-
-Cold enough, the sky falls.
-""".strip()
-
-_EP04_SHOTS = [
-    f"Cinematic locked extreme close-up of frost crystals forming on rock in thin alien air, sharp micro motion, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of a grey alien planet under dim distant starlight, thin atmosphere haze, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of nitrogen fog condensing and falling like snow from a dark sky, particle drift, {_SCI_SUFFIX}",
-    f"Cinematic locked close-up of atmospheric gases freezing into layered ice on a cliff face, crackling texture, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of a planet with pale frozen atmosphere pools on the surface, empty sky, {_SCI_SUFFIX}",
-    f"Cinematic locked ultra-wide shot of a cold world with star and frozen atmospheric shell glinting, minimal motion linger, {_SCI_SUFFIX}",
+_EP05_BEATS = [
+    {
+        "text": "Cross the tidal limit,\nand gravity stretches matter into strings.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a glowing celestial sphere violently stretching "
+            "into a thin luminous thread toward a pitch-black center, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Near a compact mass, your feet feel stronger pull than your head.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked medium shot of a metallic test sphere elongating into an "
+            "oval under tidal shear, cool blue highlights, black void, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "That gradient—not the darkness—\nrenders objects into one-dimensional filaments.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked close-up of matter pulling into glowing atom-thin strands "
+            "streaming into an accretion ribbon, white-gold against black, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold is tidal force.\nThe strand is what remains.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked ultra-wide linger: single luminous filament falling toward "
+            "a dark compact core, sparse starfield lensed at the edge, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
 ]
 
-# --- Episode 5: Space elevator snap ---
+# --- Ep 06: Absolute Hot / Planck Temperature ---
 
-_EP05_SCRIPT = """
-Where does a space elevator snap first—
-not at the top, but at the tension limit.
-
-The cable isn't one material.
-It's a line under its own weight plus payload, plus weather, plus Coriolis drag.
-
-The threshold is where stress exceeds strength along the longest span—
-often lower atmosphere, not orbit.
-
-The failure isn't drama.
-It's a material limit crossing, then a whip the ground can't survive.
-""".strip()
-
-_EP05_SHOTS = [
-    f"Cinematic locked extreme close-up of carbon-fiber tether strands vibrating under tension, specular highlights, sky background, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of a single impossibly thin cable rising from equatorial platform into cloud deck, {_SCI_SUFFIX}",
-    f"Cinematic locked medium shot of cable bowing under wind shear in lower atmosphere, stress shimmer, {_SCI_SUFFIX}",
-    f"Cinematic locked close-up of fraying tether fibers at a stress node, sparks of fiber snap, {_SCI_SUFFIX}",
-    f"Cinematic locked wide shot of cable whipping after snap, motion blur against ocean and clouds, no people, {_SCI_SUFFIX}",
-    f"Cinematic locked ultra-wide shot of broken elevator cable arc falling toward horizon, equatorial dawn light, {_SCI_SUFFIX}",
+_EP06_BEATS = [
+    {
+        "text": "Heat an object past 141 nonillion degrees,\nand physics collapses.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked extreme close-up of a piercing white-hot core vibrating "
+            "violently, blinding glare, edges fraying into black rupture, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "At the Planck temperature, heat isn't just energy—\nit curves spacetime itself.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked medium shot of a blinding white sphere warping and "
+            "distorting background cosmic light and distant star rays, gravitational "
+            "lensing shimmer, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Radiation densifies until gravity wins\nand the concept of temperature breaks.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked close-up of the white core imploding into a pitch-black "
+            "dimensional rupture, light folding inward, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold is absolute hot—\nthe ceiling where known physics ends.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked wide linger: black rupture scar in void with fading white "
+            "embers, almost still, catastrophic quiet, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
 ]
 
+# --- Ep 07: Chandrasekhar Limit ---
+
+_EP07_BEATS = [
+    {
+        "text": "Cross 1.44 solar masses,\nand a white dwarf cannot hold itself up.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a glowing white dwarf star, dense white-blue "
+            "disc in deep black void, subtle surface shimmer, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Electron degeneracy pressure fights gravity—\nuntil mass pushes past the Chandrasekhar limit.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of a glowing white dwarf star rapidly "
+            "shrinking under severe gravitational strain, surface fracturing with "
+            "intense internal light, brighter core, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Electrons can no longer support the star.\nCollapse runs away.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked close-up of the star imploding into a blinding point then "
+            "blasting outward as an expanding supernova shockwave shell, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold is exact.\nOne mass line separates dwarf from detonation.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked ultra-wide linger: expanding supernova remnant ring, "
+            "white-gold shock against void, quiet aftermath scale, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+# --- Ep 08: Metallic Hydrogen ---
+
+_EP08_BEATS = [
+    {
+        "text": "Compress hydrogen to 4 million atmospheres,\nand it turns into metal.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked descending POV through pitch-black Jovian storm clouds "
+            "toward a turbulent mirror-reflective liquid silver surface, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Deep inside a gas giant, pressure forces molecules so close\nelectrons delocalize.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of translucent hydrogen gas layers crushing "
+            "downward into denser glowing bands, amber to silver transition, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Gas becomes a liquid metallic sea—\nconductive, reflective, alien.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked close-up of a churning liquid metal ocean surface, "
+            "mirror reflections of storm light, mercury-like ripples, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold is 400 gigapascals.\nPast it, hydrogen stops being a gas.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked wide linger: vast metallic hydrogen sea under dark cloud "
+            "deck, silver horizon curve, deep pressure gloom, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+# --- Ep 09: Solar Escape Velocity (swap) ---
+
+_EP09_BEATS = [
+    {
+        "text": "Move slower than 617 kilometers per second,\nand the Sun traps you.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a small metallic probe accelerating away from "
+            "a massive solar flare arc into deep space, white-gold sun limb dominating, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Escape velocity is the speed to climb out of a gravity well\nwithout further thrust.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked medium shot of curved gravitational path lines around the "
+            "Sun, probe on a steep outbound trajectory, corona flicker, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "From the solar surface, that number is about 617.5 kilometers a second.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked close-up of the probe punching through bright coronal "
+            "loops, heat shimmer, velocity streak, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Below the limit, gravity wins.\nAbove it, you leave the star's grip.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked ultra-wide linger: tiny probe clear of the Sun, flare "
+            "receding, deep black void ahead, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+# --- Ep 10: Eddington Luminosity ---
+
+_EP10_BEATS = [
+    {
+        "text": "Shine brighter than this limit,\nand radiation pressure tears you apart.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a hyper-luminous blue giant star shedding "
+            "outer gas layers in violent glowing radial plumes, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Light itself carries momentum.\nToo much outward push, and gravity loses grip on the atmosphere.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of stellar atmosphere lifting off in luminous "
+            "sheets against inward gravity, blue-white glare, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "That balance point is the Eddington limit—\nthe maximum brightness a star can sustain.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked close-up of outer envelope ripping into glowing filaments "
+            "streaming into space, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Cross it, and the star blows its own skin into the void.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked ultra-wide linger: stripped luminous core with expanding "
+            "shell of ejected gas, deep black surroundings, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+# --- Ep 11: Vacuum Decay ---
+
+_EP11_BEATS = [
+    {
+        "text": "If space drops into a lower energy state,\nphysics resets instantly.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a perfectly smooth dark void bubble expanding "
+            "across a field of stars, extinguishing them cleanly at the edge, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Our vacuum might be metastable—\na false floor above a deeper true vacuum.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked medium shot of a nucleation speck of absolute black "
+            "appearing in glowing quantum foam, stars still visible beyond, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "A bubble of true vacuum expands at light speed,\nrewriting constants as it goes.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked medium shot of the dark sphere growing, starlight cutting "
+            "off at a razor-sharp boundary, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold isn't an explosion.\nIt's a new set of physical laws, advancing forever.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked ultra-wide linger: mostly erased starfield, smooth true-"
+            "vacuum darkness dominating the frame, quiet existential scale, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+# --- Ep 12: Neutron Drip / Critical Density (swap) ---
+
+_EP12_BEATS = [
+    {
+        "text": "Compress matter past 400 billion grams per centimeter,\nand atoms vanish.",
+        "rate": "-8%",
+        "pause_ms": 350,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked extreme macro shot of an interlocking geometric crystalline "
+            "cube imploding under crushing pressure, bright white stress fractures, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Electrons are forced into protons.\nNeutron drip begins—the structure dissolves.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked medium shot of a faceted crystal collapsing inward, "
+            "material merging into denser blue-glowing nodes, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Normal atomic shells cannot survive that density.\nMatter becomes a neutron-rich slab.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked close-up of the crystal flattening into a solid ultra-dense "
+            "glowing blue slab, specular stress fractures, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "The threshold is critical density—\nwhere chemistry ends and nuclear matter begins.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 153,
+        "shot": (
+            "Cinematic locked wide linger: featureless dense blue slab in void, faint "
+            "edge glow, almost no motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+
+# Primary queue (Top 12)
 _EPISODES = [
-    ("sci_ep01_sun_closer", _EP01_SCRIPT, _EP01_SHOTS, _EP01_BEATS),
-    ("sci_ep02_dyson_heat", _EP02_SCRIPT, _EP02_SHOTS, None),
-    ("sci_ep03_black_hole_outer", _EP03_SCRIPT, _EP03_SHOTS, None),
-    ("sci_ep04_atmosphere_freeze", _EP04_SCRIPT, _EP04_SHOTS, None),
-    ("sci_ep05_elevator_snap", _EP05_SCRIPT, _EP05_SHOTS, None),
+    ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
+    ("sci_ep02_roche_limit", _beats_script(_EP02_BEATS), _beats_shots(_EP02_BEATS), _EP02_BEATS),
+    ("sci_ep03_neutron_impact", _beats_script(_EP03_BEATS), _beats_shots(_EP03_BEATS), _EP03_BEATS),
+    ("sci_ep04_absolute_zero", _beats_script(_EP04_BEATS), _beats_shots(_EP04_BEATS), _EP04_BEATS),
+    ("sci_ep05_spaghettification", _beats_script(_EP05_BEATS), _beats_shots(_EP05_BEATS), _EP05_BEATS),
+    ("sci_ep06_absolute_hot", _beats_script(_EP06_BEATS), _beats_shots(_EP06_BEATS), _EP06_BEATS),
+    ("sci_ep07_chandrasekhar", _beats_script(_EP07_BEATS), _beats_shots(_EP07_BEATS), _EP07_BEATS),
+    ("sci_ep08_metallic_hydrogen", _beats_script(_EP08_BEATS), _beats_shots(_EP08_BEATS), _EP08_BEATS),
+    ("sci_ep09_solar_escape", _beats_script(_EP09_BEATS), _beats_shots(_EP09_BEATS), _EP09_BEATS),
+    ("sci_ep10_eddington", _beats_script(_EP10_BEATS), _beats_shots(_EP10_BEATS), _EP10_BEATS),
+    ("sci_ep11_vacuum_decay", _beats_script(_EP11_BEATS), _beats_shots(_EP11_BEATS), _EP11_BEATS),
+    ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
 ]
 
 
@@ -257,8 +697,21 @@ def build_science_jobs(num_frames, steps):
 
 science_ltx_jobs = build_science_jobs(num_frames=129, steps=8)
 
-# Preferred ENGINE per episode (LTX-2.5 only)
+# Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
+    "sci_ep01_sound_194db": "ltx",
+    "sci_ep02_roche_limit": "ltx",
+    "sci_ep03_neutron_impact": "ltx",
+    "sci_ep04_absolute_zero": "ltx",
+    "sci_ep05_spaghettification": "ltx",
+    "sci_ep06_absolute_hot": "ltx",
+    "sci_ep07_chandrasekhar": "ltx",
+    "sci_ep08_metallic_hydrogen": "ltx",
+    "sci_ep09_solar_escape": "ltx",
+    "sci_ep10_eddington": "ltx",
+    "sci_ep11_vacuum_decay": "ltx",
+    "sci_ep12_neutron_drip": "ltx",
+    # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",
     "sci_ep03_black_hole_outer": "ltx",
