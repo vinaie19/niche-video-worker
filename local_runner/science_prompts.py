@@ -228,13 +228,14 @@ _EP03_BEATS = [
 ]
 
 # --- Ep 04: Absolute Zero ---
+# Retention fix: ~50 words, named 0 K hook, Beat 3 = hard visual scale reset.
 
 _EP04_BEATS = [
     {
-        "text": "Cool matter to absolute zero,\nand all motion completely vanishes.",
+        "text": "At absolute zero—zero kelvin—\nall atomic motion completely vanishes.",
         "rate": "-8%",
-        "pause_ms": 350,
-        "num_frames": 161,
+        "pause_ms": 300,
+        "num_frames": 145,
         "shot": (
             "Cinematic locked extreme macro close-up of a translucent faceted geometric "
             "crystal with pulsating interior light nodes jittering violently, white-gold "
@@ -243,36 +244,37 @@ _EP04_BEATS = [
         ),
     },
     {
-        "text": "Temperature is motion.\nZero kelvin is the floor where kinetic energy hits pure zero.",
+        "text": "Temperature is motion.\nHit that floor and kinetic energy reaches pure zero.",
         "rate": "+0%",
-        "pause_ms": 300,
-        "num_frames": 169,
-        "shot": (
-            "Cinematic locked medium shot of a translucent faceted geometric crystal, "
-            "interior light nodes dimming and freezing into place, cold blue specular "
-            "reflections, "
-            f"{_SCI_SUFFIX}"
-        ),
-    },
-    {
-        "text": "You can approach it—\nbut thermodynamics forbids ever reaching a perfect stop.",
-        "rate": "-4%",
-        "pause_ms": 300,
-        "num_frames": 153,
-        "shot": (
-            "Cinematic locked close-up of the crystal almost frozen, last faint interior "
-            "glimmers dying out, frost-like light fading to dim blue, "
-            f"{_SCI_SUFFIX}"
-        ),
-    },
-    {
-        "text": "The threshold is the coldest possible state of matter.",
-        "rate": "-15%",
-        "pause_ms": 200,
+        "pause_ms": 250,
         "num_frames": 129,
         "shot": (
-            "Cinematic locked wide linger: perfectly still dark crystal structure in "
-            "void, almost no motion, high contrast silhouette, "
+            "Cinematic locked medium shot of the same crystal, interior light nodes "
+            "dimming and freezing into place, cold blue specular reflections, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "You can approach it—\nbut thermodynamics forbids a perfect stop.",
+        "rate": "-4%",
+        "pause_ms": 250,
+        "num_frames": 129,
+        "shot": (
+            "Cinematic locked ultra-wide shot of an entire frozen alien planet under a "
+            "dim distant star, nitrogen frost storms falling from a black sky onto icy "
+            "continents, sudden scale jump from crystal to world, high contrast blue-white "
+            "against void, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Absolute zero is the coldest possible state of matter.",
+        "rate": "-12%",
+        "pause_ms": 150,
+        "num_frames": 113,
+        "shot": (
+            "Cinematic locked wide linger: perfectly still dark crystal silhouette in "
+            "void, almost no motion, last faint blue edge glow dying out, "
             f"{_SCI_SUFFIX}"
         ),
     },

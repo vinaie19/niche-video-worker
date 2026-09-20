@@ -94,11 +94,11 @@ One threshold. One law. One image.
 - **File:** `sci_ep04_absolute_zero_hook.mp4`
 - **Slug:** `sci_ep04_absolute_zero`
 - **Title:** `The Exact Temperature Where Atomic Motion Stops (0 K)`
-- **Spoken hook:** `Cool matter to absolute zero, and all motion completely vanishes.`
+- **Spoken hook:** `At absolute zero—zero kelvin—all atomic motion completely vanishes.`
 - **Status:** Pending
 - **Description:**
 ```
-The absolute lower limit of thermodynamics where atomic kinetic energy hits pure zero.
+At absolute zero (0 K), atomic motion hits the thermodynamic floor — the coldest possible state of matter.
 
 One threshold. One law. One image.
 
