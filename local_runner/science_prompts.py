@@ -13,17 +13,18 @@ _SCI_SUFFIX = (
 )
 
 _VO_DEFAULTS = {
-    # Separate T2V clips → hard visual cuts (one-pass ltx_multishot morphs between scenes).
-    # For soft linger takes: shot_mode="ltx_multishot", join_style="cut"|"continue".
+    # Separate T2V clips → soft crossfades in stitch (see crossfade_s).
+    # For one-pass linger: shot_mode="ltx_multishot", join_style="cut"|"continue".
     "shot_mode": "multi_cut",
     "join_style": "cut",  # ignored unless shot_mode is ltx_multishot
+    "crossfade_s": 0.35,  # video xfade + audio acrossfade between beats
     "voice": "guy",
     "voice_rate": "+0%",  # fallback when a beat omits rate
     "voice_pitch": "-1Hz",
     "captions": "clean",
-    # Continuous bed under VO (per-clip LTX audio jumps on stitch).
-    "ambient": "space",
-    "ambient_volume": 0.4,
+    # Keep LTX native AV under VO (was "space" synth — replaced clip audio).
+    "ambient": "ltx",
+    "ambient_volume": 0.55,
     # Hard hook: start VO near frame zero (strategy §2).
     "vo_delay_ms": 100,
     "voice_volume": 1.0,
@@ -80,7 +81,7 @@ def _beats_shots(beats):
 
 _EP01_BEATS = [
     {
-        "text": "At 194 decibels, sound stops being sound\nand becomes a shockwave.",
+        "text": "At the 194-decibel sound barrier,\nsound stops being sound and becomes a shockwave.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -131,7 +132,7 @@ _EP01_BEATS = [
 
 _EP02_BEATS = [
     {
-        "text": "Cross this exact boundary,\nand planetary gravity shreds an entire moon.",
+        "text": "Cross the Roche limit,\nand planetary gravity shreds an entire moon.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -153,7 +154,7 @@ _EP02_BEATS = [
         ),
     },
     {
-        "text": "That difference—the Roche limit—\noverpowers the moon's own gravity.",
+        "text": "That tidal difference\noverpowers the moon's own gravity.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 153,
@@ -180,7 +181,7 @@ _EP02_BEATS = [
 
 _EP03_BEATS = [
     {
-        "text": "Drop a solid mass one meter here,\nand it hits with nuclear force.",
+        "text": "On a neutron star, drop a solid mass one meter—\nand it hits with nuclear force.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -196,8 +197,8 @@ _EP03_BEATS = [
         "pause_ms": 300,
         "num_frames": 169,
         "shot": (
-            "Cinematic locked medium shot of the sphere streaking downward as a white "
-            "motion trail above an azure crust, faint blue aurora glow on the surface, "
+            "Cinematic locked medium shot of a blinding white motion trail streaking downward "
+            "toward an azure crust, faint blue aurora glow illuminating the descent, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -207,8 +208,9 @@ _EP03_BEATS = [
         "pause_ms": 300,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked close-up of the sphere flattening into an ultra-bright "
-            "plasma ring on impact, crust cratering with blue-white glare, "
+            "Cinematic locked close-up of a blinding white-hot circular shockwave detonating "
+            "across a blue crystalline surface, violent flash of plasma erasing the center "
+            "of the frame, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -218,8 +220,8 @@ _EP03_BEATS = [
         "pause_ms": 200,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide linger: glowing impact scar on neutron-star surface, "
-            "expanding plasma halo, deep black space above the limb, "
+            "Cinematic locked wide linger: glowing white-hot impact scar on a neutron-star "
+            "surface, expanding plasma halo fading into deep black space above the limb, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -280,7 +282,7 @@ _EP04_BEATS = [
 
 _EP05_BEATS = [
     {
-        "text": "Cross the tidal limit,\nand gravity stretches matter into strings.",
+        "text": "Cross the spaghettification radius,\nand gravity stretches matter into strings.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -329,7 +331,7 @@ _EP05_BEATS = [
 
 _EP06_BEATS = [
     {
-        "text": "Heat an object past 141 nonillion degrees,\nand physics collapses.",
+        "text": "Past the Planck temperature—141 nonillion degrees—\nphysics collapses.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 169,
@@ -379,7 +381,7 @@ _EP06_BEATS = [
 
 _EP07_BEATS = [
     {
-        "text": "Cross 1.44 solar masses,\nand a white dwarf cannot hold itself up.",
+        "text": "At the Chandrasekhar limit—1.44 solar masses—\na white dwarf cannot hold itself up.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -390,7 +392,7 @@ _EP07_BEATS = [
         ),
     },
     {
-        "text": "Electron degeneracy pressure fights gravity—\nuntil mass pushes past the Chandrasekhar limit.",
+        "text": "Electron degeneracy pressure fights gravity—\nuntil that mass threshold is crossed.",
         "rate": "+0%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -429,7 +431,7 @@ _EP07_BEATS = [
 
 _EP08_BEATS = [
     {
-        "text": "Compress hydrogen to 4 million atmospheres,\nand it turns into metal.",
+        "text": "This is the metallic hydrogen threshold:\ncompress gas to 4 million atmospheres, and it turns into metal.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -478,7 +480,7 @@ _EP08_BEATS = [
 
 _EP09_BEATS = [
     {
-        "text": "Move slower than 617 kilometers per second,\nand the Sun traps you.",
+        "text": "Below solar escape velocity—617 kilometers a second—\nthe Sun traps you.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -527,7 +529,7 @@ _EP09_BEATS = [
 
 _EP10_BEATS = [
     {
-        "text": "Shine brighter than this limit,\nand radiation pressure tears you apart.",
+        "text": "Above the Eddington limit,\nradiation pressure tears a star apart.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -549,7 +551,7 @@ _EP10_BEATS = [
         ),
     },
     {
-        "text": "That balance point is the Eddington limit—\nthe maximum brightness a star can sustain.",
+        "text": "That balance point is the maximum brightness\na star can sustain before it strips itself.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 153,
@@ -576,7 +578,7 @@ _EP10_BEATS = [
 
 _EP11_BEATS = [
     {
-        "text": "If space drops into a lower energy state,\nphysics resets instantly.",
+        "text": "This is vacuum decay:\nif space drops into a lower energy state, physics resets instantly.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -625,7 +627,7 @@ _EP11_BEATS = [
 
 _EP12_BEATS = [
     {
-        "text": "Compress matter past 400 billion grams per centimeter,\nand atoms vanish.",
+        "text": "Past the neutron-drip density—400 billion grams per centimeter—\natoms vanish.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 169,

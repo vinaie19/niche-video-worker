@@ -648,9 +648,11 @@ def download_and_stitch(rendered_urls, test_jobs):
                         f.write(chunk)
                 local_paths.append(path)
 
-            # Align hard cuts to VO beat windows (pad/trim) when beats exist.
+            # Align hard cuts to VO beat windows (stretch/trim) when beats exist.
+            # Soft crossfade between shots (Channel B default 0.35s).
+            crossfade_s = float(job.get("crossfade_s", 0.35))
             if script_beats and len(local_paths) > 1:
-                from audio_post import fit_shots_to_voice_beats
+                from audio_post import concat_clips_crossfade, fit_shots_to_voice_beats
 
                 audio_dir = f"./temp_clips/{vid_id}_audio"
                 local_paths = fit_shots_to_voice_beats(
@@ -662,30 +664,58 @@ def download_and_stitch(rendered_urls, test_jobs):
                     voice=job.get("voice"),
                     voice_rate=job.get("voice_rate"),
                     voice_pitch=job.get("voice_pitch"),
+                    crossfade_s=crossfade_s if crossfade_s > 0 else 0.0,
                 )
+                if crossfade_s > 0:
+                    concat_clips_crossfade(
+                        local_paths,
+                        silent_path,
+                        fade_s=crossfade_s,
+                    )
+                else:
+                    list_file = f"./temp_clips/{vid_id}_list.txt"
+                    with open(list_file, "w") as f:
+                        for p in local_paths:
+                            f.write(f"file '{os.path.abspath(p)}'\n")
+                    subprocess.run(
+                        [
+                            "ffmpeg",
+                            "-y",
+                            "-f",
+                            "concat",
+                            "-safe",
+                            "0",
+                            "-i",
+                            list_file,
+                            "-c",
+                            "copy",
+                            silent_path,
+                        ],
+                        check=True,
+                    )
+            else:
+                list_file = f"./temp_clips/{vid_id}_list.txt"
+                with open(list_file, "w") as f:
+                    for p in local_paths:
+                        f.write(f"file '{os.path.abspath(p)}'\n")
 
-            list_file = f"./temp_clips/{vid_id}_list.txt"
-            with open(list_file, "w") as f:
-                for p in local_paths:
-                    f.write(f"file '{os.path.abspath(p)}'\n")
-
-            subprocess.run(
-                [
-                    "ffmpeg",
-                    "-y",
-                    "-f",
-                    "concat",
-                    "-safe",
-                    "0",
-                    "-i",
-                    list_file,
-                    "-c",
-                    "copy",
-                    silent_path,
-                ],
-                check=True,
-            )
-            print(f"⬇️ Stitched silent video: {silent_path}")
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-f",
+                        "concat",
+                        "-safe",
+                        "0",
+                        "-i",
+                        list_file,
+                        "-c",
+                        "copy",
+                        silent_path,
+                    ],
+                    check=True,
+                )
+            print(f"⬇️ Stitched video: {silent_path}")
 
         if script or script_beats:
             from audio_post import parse_captions_option

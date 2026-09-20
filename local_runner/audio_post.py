@@ -649,20 +649,105 @@ def beat_shot_durations_s(
 
 
 def fit_clip_duration(src: str, dst: str, target_s: float, fps: float = 24.0) -> str:
-    """Pad (freeze last frame) or trim a clip to target_s. Re-encodes video; drops audio."""
+    """
+    Fit a clip to target_s without freezing the last frame.
+
+    - Too short: time-stretch (setpts + atempo) so motion continues
+    - Too long: trim
+    Keeps audio when present (needed for ambient=ltx under VO).
+    """
     cur = _probe_duration(src)
     target_s = max(0.5, float(target_s))
     os.makedirs(os.path.dirname(os.path.abspath(dst)) or ".", exist_ok=True)
+    has_audio = _probe_has_audio(src)
+
     if abs(cur - target_s) < 0.04:
         subprocess.run(["cp", "-f", src, dst], check=True)
         return dst
+
     if cur < target_s:
-        pad = target_s - cur
-        vf = f"tpad=stop_mode=clone:stop_duration={pad:.3f},fps={fps:.3f}"
-        print(f"🎞️ Pad {os.path.basename(src)} {cur:.2f}s → {target_s:.2f}s (+{pad:.2f}s freeze)")
-    else:
-        vf = f"fps={fps:.3f}"
-        print(f"🎞️ Trim {os.path.basename(src)} {cur:.2f}s → {target_s:.2f}s")
+        # Prefer gentle slowdown over tpad freeze (stuck end-of-shot).
+        ratio = target_s / cur
+        # Cap extreme stretch; leftover would be rare for our beat windows.
+        stretch = min(ratio, 2.0)
+        vf = f"setpts={stretch:.6f}*PTS,fps={fps:.3f}"
+        print(
+            f"🎞️ Stretch {os.path.basename(src)} {cur:.2f}s → {target_s:.2f}s "
+            f"(x{stretch:.3f}, no freeze)"
+        )
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            src,
+            "-vf",
+            vf,
+            "-t",
+            f"{target_s:.3f}",
+        ]
+        if has_audio:
+            # atempo = 1/stretch; chain if outside 0.5–2.0
+            tempo = cur / (cur * stretch)  # == 1/stretch
+            af_parts = _atempo_chain(tempo)
+            cmd += ["-af", ",".join(af_parts), "-c:a", "aac", "-b:a", "192k"]
+        else:
+            cmd += ["-an"]
+        cmd += [
+            "-c:v",
+            "libx264",
+            "-preset",
+            "fast",
+            "-crf",
+            "18",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "+faststart",
+            dst,
+        ]
+        subprocess.run(cmd, check=True, capture_output=True)
+        # If stretch capped below target, pad remaining with freeze as last resort.
+        out_dur = _probe_duration(dst)
+        if out_dur + 0.05 < target_s:
+            pad = target_s - out_dur
+            tmp = dst + ".pad.mp4"
+            print(f"🎞️ Residual pad {pad:.2f}s freeze after max stretch")
+            vf_pad = f"tpad=stop_mode=clone:stop_duration={pad:.3f},fps={fps:.3f}"
+            pad_cmd = [
+                "ffmpeg",
+                "-y",
+                "-i",
+                dst,
+                "-vf",
+                vf_pad,
+                "-t",
+                f"{target_s:.3f}",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "18",
+                "-pix_fmt",
+                "yuv420p",
+            ]
+            if has_audio:
+                pad_cmd += [
+                    "-af",
+                    f"apad=pad_dur={pad:.3f}",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "192k",
+                ]
+            else:
+                pad_cmd += ["-an"]
+            pad_cmd += [tmp]
+            subprocess.run(pad_cmd, check=True, capture_output=True)
+            os.replace(tmp, dst)
+        return dst
+
+    print(f"🎞️ Trim {os.path.basename(src)} {cur:.2f}s → {target_s:.2f}s")
     cmd = [
         "ffmpeg",
         "-y",
@@ -671,8 +756,7 @@ def fit_clip_duration(src: str, dst: str, target_s: float, fps: float = 24.0) ->
         "-t",
         f"{target_s:.3f}",
         "-vf",
-        vf,
-        "-an",
+        f"fps={fps:.3f}",
         "-c:v",
         "libx264",
         "-preset",
@@ -683,10 +767,143 @@ def fit_clip_duration(src: str, dst: str, target_s: float, fps: float = 24.0) ->
         "yuv420p",
         "-movflags",
         "+faststart",
-        dst,
     ]
+    if has_audio:
+        cmd += ["-c:a", "aac", "-b:a", "192k"]
+    else:
+        cmd += ["-an"]
+    cmd += [dst]
     subprocess.run(cmd, check=True, capture_output=True)
     return dst
+
+
+def _atempo_chain(tempo: float) -> list[str]:
+    """Build atempo filter chain; each stage must be in [0.5, 2.0]."""
+    t = max(0.05, float(tempo))
+    parts: list[str] = []
+    # Speed up
+    while t > 2.0 + 1e-6:
+        parts.append("atempo=2.0")
+        t /= 2.0
+    # Slow down
+    while t < 0.5 - 1e-6:
+        parts.append("atempo=0.5")
+        t /= 0.5
+    parts.append(f"atempo={t:.6f}")
+    return parts
+
+
+def concat_clips_crossfade(
+    paths: list[str],
+    output_path: str,
+    fade_s: float = 0.35,
+    fps: float = 24.0,
+) -> str:
+    """
+    Soft-cut stitch: video xfade + audio acrossfade.
+    paths must already be duration-fitted (include +fade_s on all but last if
+    you need final length ≈ sum of beat targets).
+    """
+    if not paths:
+        raise ValueError("no clips to concat")
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True)
+    fade_s = max(0.05, min(1.0, float(fade_s)))
+
+    if len(paths) == 1:
+        subprocess.run(["cp", "-f", paths[0], output_path], check=True)
+        return output_path
+
+    durs = [_probe_duration(p) for p in paths]
+    # Ensure every clip has an audio stream for acrossfade (silence if missing).
+    prepared: list[str] = []
+    work = os.path.join(os.path.dirname(output_path) or ".", "_xfade_prep")
+    os.makedirs(work, exist_ok=True)
+    for i, p in enumerate(paths):
+        if _probe_has_audio(p):
+            prepared.append(p)
+            continue
+        silent = os.path.join(work, f"silent_a_{i}.mp4")
+        dur = durs[i]
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                p,
+                "-f",
+                "lavfi",
+                "-i",
+                f"anullsrc=r=48000:cl=stereo",
+                "-t",
+                f"{dur:.3f}",
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-shortest",
+                silent,
+            ],
+            check=True,
+            capture_output=True,
+        )
+        prepared.append(silent)
+        durs[i] = _probe_duration(silent)
+
+    n = len(prepared)
+    cmd = ["ffmpeg", "-y"]
+    for p in prepared:
+        cmd += ["-i", p]
+
+    filters: list[str] = []
+    # Normalize pixel formats for xfade
+    for i in range(n):
+        filters.append(f"[{i}:v]fps={fps:.3f},format=yuv420p[v{i}]")
+        filters.append(f"[{i}:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[a{i}]")
+
+    offset = durs[0] - fade_s
+    filters.append(
+        f"[v0][v1]xfade=transition=fade:duration={fade_s:.3f}:offset={max(0.0, offset):.3f}[vx1]"
+    )
+    filters.append(
+        f"[a0][a1]acrossfade=d={fade_s:.3f}[ax1]"
+    )
+    for i in range(2, n):
+        offset += durs[i - 1] - fade_s
+        prev_v = f"vx{i-1}"
+        prev_a = f"ax{i-1}"
+        filters.append(
+            f"[{prev_v}][v{i}]xfade=transition=fade:duration={fade_s:.3f}:offset={max(0.0, offset):.3f}[vx{i}]"
+        )
+        filters.append(f"[{prev_a}][a{i}]acrossfade=d={fade_s:.3f}[ax{i}]")
+
+    last = n - 1
+    filter_complex = ";".join(filters)
+    cmd += [
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        f"[vx{last}]",
+        "-map",
+        f"[ax{last}]",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-movflags",
+        "+faststart",
+        output_path,
+    ]
+    print(f"🎞️ Crossfade stitch ({n} clips, fade={fade_s:.2f}s) → {output_path}")
+    subprocess.run(cmd, check=True, capture_output=True)
+    return output_path
 
 
 def fit_shots_to_voice_beats(
@@ -698,9 +915,12 @@ def fit_shots_to_voice_beats(
     voice: Optional[str] = None,
     voice_rate: Optional[str] = None,
     voice_pitch: Optional[str] = None,
+    crossfade_s: float = 0.0,
 ) -> list[str]:
     """
     Ensure VO beat wavs exist, then pad/trim each shot so cut points match narration.
+    If crossfade_s > 0, every shot except the last is lengthened by crossfade_s so
+    that after xfade the timeline still matches VO beat sum.
     Returns paths to fitted clips (same length as shot_paths).
     """
     if len(shot_paths) != len(
@@ -735,12 +955,16 @@ def fit_shots_to_voice_beats(
         default_pitch=voice_pitch,
     )
     n = min(len(shot_paths), len(targets))
+    fade = max(0.0, float(crossfade_s or 0.0))
     fitted = []
     for i in range(n):
+        target = targets[i]
+        if fade > 0 and i < n - 1:
+            target += fade
         dst = os.path.join(work_dir, f"{voice_stem}_fit_shot_{i+1}.mp4")
-        fit_clip_duration(shot_paths[i], dst, targets[i])
+        fit_clip_duration(shot_paths[i], dst, target)
         fitted.append(dst)
-        print(f"   shot {i+1}: target {targets[i]:.2f}s → {dst}")
+        print(f"   shot {i+1}: target {target:.2f}s → {dst}")
     if len(shot_paths) > n:
         fitted.extend(shot_paths[n:])
     return fitted

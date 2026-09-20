@@ -140,7 +140,7 @@ Generic “inside a black hole”, bare “speed of light”, multiverse theory 
 ### Ep 03 — Neutron Star Surface Impact
 
 - **Title:** `Dropping an Object 1 Meter at 200 Million Gs`
-- **Spoken hook:** Drop a solid mass one meter here, and it hits with nuclear force.
+- **Spoken hook:** On a neutron star, drop a solid mass one meter—and it hits with nuclear force.
 - **Description:** The extreme gravitational threshold where a one-meter fall releases the energy of a nuclear blast.
 - **Frame 1:** Dense metallic sphere flattening into an ultra-bright plasma ring on a glowing blue crust.
 

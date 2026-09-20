@@ -49,7 +49,7 @@ Do **not** post two on the same day. Skip / hold if QC or agent review fails.
 - **File:** `sci_ep01_sound_194db_hook.mp4`
 - **Slug:** `sci_ep01_sound_194db`
 - **Title:** `The Exact Point Where Sound Destroys Matter (194 dB)`
-- **Spoken hook:** `At 194 decibels, sound stops being sound and becomes a shockwave.`
+- **Spoken hook:** `At the 194-decibel sound barrier, sound stops being sound and becomes a shockwave.`
 - **Status:** Pending render → agent review → schedule
 - **Description:**
 ```
@@ -64,7 +64,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep02_roche_limit_hook.mp4`
 - **Slug:** `sci_ep02_roche_limit`
 - **Title:** `The Exact Distance Where Gravity Shatters a Moon`
-- **Spoken hook:** `Cross this exact boundary, and planetary gravity shreds an entire moon.`
+- **Spoken hook:** `Cross the Roche limit, and planetary gravity shreds an entire moon.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -78,12 +78,12 @@ One threshold. One law. One image.
 ### Mon 21 Sep 2026 — ep03 neutron star impact
 - **File:** `sci_ep03_neutron_impact_hook.mp4`
 - **Slug:** `sci_ep03_neutron_impact`
-- **Title:** `Dropping an Object 1 Meter at 200 Million Gs`
-- **Spoken hook:** `Drop a solid mass one meter here, and it hits with nuclear force.`
+- **Title:** `Dropping an Object 1 Meter on a Neutron Star (200 Million Gs)`
+- **Spoken hook:** `On a neutron star, drop a solid mass one meter—and it hits with nuclear force.`
 - **Status:** Pending
 - **Description:**
 ```
-The extreme gravitational threshold where a one-meter fall releases the energy of a nuclear blast.
+On a neutron star, surface gravity is so extreme that a one-meter fall hits with nuclear force.
 
 One threshold. One law. One image.
 
@@ -109,7 +109,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep05_spaghettification_hook.mp4`
 - **Slug:** `sci_ep05_spaghettification`
 - **Title:** `The Exact Boundary Where Matter Stretches into 1D Strands`
-- **Spoken hook:** `Cross the tidal limit, and tidal forces stretch matter into strings.`
+- **Spoken hook:** `Cross the spaghettification radius, and gravity stretches matter into strings.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -124,7 +124,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep06_absolute_hot_hook.mp4`
 - **Slug:** `sci_ep06_absolute_hot`
 - **Title:** `The Temperature Where Physics Completely Breaks (10^32 K)`
-- **Spoken hook:** `Heat an object past 141 nonillion degrees, and physics collapses.`
+- **Spoken hook:** `Past the Planck temperature—141 nonillion degrees—physics collapses.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -139,7 +139,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep07_chandrasekhar_hook.mp4`
 - **Slug:** `sci_ep07_chandrasekhar`
 - **Title:** `The Exact Mass That Causes a White Dwarf Collapse (1.44 M☉)`
-- **Spoken hook:** `Cross 1.44 solar masses, and electron degeneracy pressure fails completely.`
+- **Spoken hook:** `At the Chandrasekhar limit—1.44 solar masses—a white dwarf cannot hold itself up.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -154,7 +154,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep08_metallic_hydrogen_hook.mp4`
 - **Slug:** `sci_ep08_metallic_hydrogen`
 - **Title:** `The Exact Pressure That Turns Gas into Liquid Metal (400 GPa)`
-- **Spoken hook:** `Compress hydrogen to 4 million atmospheres, and it turns into metal.`
+- **Spoken hook:** `This is the metallic hydrogen threshold: compress gas to 4 million atmospheres, and it turns into metal.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -169,7 +169,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep09_solar_escape_hook.mp4`
 - **Slug:** `sci_ep09_solar_escape`
 - **Title:** `The Exact Speed Needed to Escape the Sun (617.5 km/s)`
-- **Spoken hook:** `Move slower than 617 kilometers per second, and the Sun traps you.`
+- **Spoken hook:** `Below solar escape velocity—617 kilometers a second—the Sun traps you.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -184,7 +184,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep10_eddington_hook.mp4`
 - **Slug:** `sci_ep10_eddington`
 - **Title:** `The Exact Brightness That Blows a Star Apart`
-- **Spoken hook:** `Shine brighter than this limit, and radiation pressure tears you apart.`
+- **Spoken hook:** `Above the Eddington limit, radiation pressure tears a star apart.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -199,7 +199,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep11_vacuum_decay_hook.mp4`
 - **Slug:** `sci_ep11_vacuum_decay`
 - **Title:** `The Speed-of-Light Sphere That Deletes the Universe`
-- **Spoken hook:** `If space drops into a lower energy state, physics resets instantly.`
+- **Spoken hook:** `This is vacuum decay: if space drops into a lower energy state, physics resets instantly.`
 - **Status:** Pending
 - **Description:**
 ```
@@ -214,7 +214,7 @@ One threshold. One law. One image.
 - **File:** `sci_ep12_neutron_drip_hook.mp4`
 - **Slug:** `sci_ep12_neutron_drip`
 - **Title:** `The Exact Density Where Protons and Electrons Fuse`
-- **Spoken hook:** `Compress matter past 400 billion grams per centimeter, atoms vanish.`
+- **Spoken hook:** `Past the neutron-drip density—400 billion grams per centimeter—atoms vanish.`
 - **Status:** Pending
 - **Description:**
 ```
