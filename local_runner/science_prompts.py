@@ -345,51 +345,71 @@ _EP05_BEATS = [
 ]
 
 # --- Ep 06: Absolute Hot / Planck Temperature ---
+# Spaghetti-process rewrite 2026-09-22 (Claude + Grok): one plasma sphere continuity,
+# name Planck/absolute hot in beat 1, cause→effect VO, dense LTX, threshold close.
 
 _EP06_BEATS = [
     {
-        "text": "Past the Planck temperature—141 nonillion degrees—\nphysics collapses.",
+        "text": "Heat plasma to the Planck temperature — absolute hot —\n"
+            "and physics itself hits a ceiling.",
         "rate": "-8%",
         "pause_ms": 350,
-        "num_frames": 169,
-        "shot": (
-            "Cinematic locked extreme close-up of a piercing white-hot core vibrating "
-            "violently, blinding glare, edges fraying into black rupture, "
-            f"{_SCI_SUFFIX}"
-        ),
-    },
-    {
-        "text": "At the Planck temperature, heat isn't just energy—\nit curves spacetime itself.",
-        "rate": "+0%",
-        "pause_ms": 300,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked medium shot of a blinding white sphere warping and "
-            "distorting background cosmic light and distant star rays, gravitational "
-            "lensing shimmer, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked extreme close-up of ONE dense white-hot plasma sphere in pure black void,  "
+            "surface a turbulent boiling texture of blinding blue-white light, continuous turbulent  "
+            "surface motion from frame one, sharp spherical silhouette (not fraying into goo), high  "
+            "dynamic range glare with readable limb edge, photoreal cinematic CGI, vertical 9:16,  "
+            "locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no  "
+            "watermarks, no morphing into smoke or liquid, consistent materials, solid readable  "
+            "silhouette"
         ),
     },
     {
-        "text": "Radiation densifies until gravity wins\nand the concept of temperature breaks.",
-        "rate": "-4%",
-        "pause_ms": 300,
+        "text": "Radiation packs in so densely,\n"
+            "its own energy starts warping spacetime.",
+        "rate": "+0%",
+        "pause_ms": 280,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked close-up of the white core imploding into a pitch-black "
-            "dimensional rupture, light folding inward, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked medium shot of the SAME white-hot plasma sphere, denser and tighter,  "
+            "faint gravitational lensing beginning to bend a sparse starfield into thin bright arcs  "
+            "behind it, continuous inward surface tension motion, sphere stays solid and spherical (not  "
+            "melting), deep black void, photoreal cinematic CGI, vertical 9:16, locked camera, no pan,  "
+            "no zoom, no people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing  "
+            "into smoke or liquid, consistent materials, solid readable silhouette"
         ),
     },
     {
-        "text": "The threshold is absolute hot—\nthe ceiling where known physics ends.",
+        "text": "Push further, and heat's gravity outweighs\n"
+            "every other force in the universe.",
+        "rate": "-4%",
+        "pause_ms": 280,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked close-up of the SAME plasma sphere compressed further, pronounced  "
+            "gravitational lensing arcs wrapping around its perimeter as spacetime visibly warps like a  "
+            "lens, continuous warp shimmer of background light, sphere remains one solid glowing mass  "
+            "(anti-morph, no dissolve into particles), photoreal cinematic CGI, vertical 9:16, locked  "
+            "camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no  "
+            "watermarks, no morphing into smoke or liquid, consistent materials, solid readable  "
+            "silhouette"
+        ),
+    },
+    {
+        "text": "The threshold is the Planck temperature —\n"
+            "ten to the thirty-two kelvin — where temperature stops meaning anything.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 145,
         "shot": (
-            "Cinematic locked wide linger: black rupture scar in void with fading white "
-            "embers, almost still, catastrophic quiet, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked ultra-wide linger on the SAME plasma sphere at critical intensity,  "
+            "surface fracturing into bright jagged white-gold seams that pulse without the sphere  "
+            "breaking apart or dissolving, almost still aftermath of the threshold, sparse starfield at  "
+            "the rim warped by residual lensing, quiet catastrophic hold, photoreal cinematic CGI,  "
+            "vertical 9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters,  "
+            "NO logos, no watermarks, no morphing into smoke or liquid, consistent materials, solid  "
+            "readable silhouette"
         ),
     },
 ]

@@ -123,17 +123,18 @@ One threshold. One law. One image.
 ### Thu 24 Sep 2026 — ep06 absolute hot
 - **File:** `sci_ep06_absolute_hot_hook.mp4`
 - **Slug:** `sci_ep06_absolute_hot`
-- **Title:** `The Temperature Where Physics Completely Breaks (10^32 K)`
-- **Spoken hook:** `Past the Planck temperature—141 nonillion degrees—physics collapses.`
-- **Status:** Pending
+- **Title:** `The Exact Temperature Where Physics Completely Breaks (10^32 K)`
+- **Spoken hook:** `Heat plasma to the Planck temperature — absolute hot — and physics itself hits a ceiling.`
+- **Status:** Prompt ready (Spaghetti-process rewrite) — pending render → QC → schedule
 - **Description:**
 ```
-At the Planck temperature, thermal radiation creates gravitational fields strong enough to collapse space.
+Heat something to 10^32 K and the concept of temperature stops working.
 
 One threshold. One law. One image.
 
 #ThresholdPhysics #physics #science #space #universe
 ```
+
 
 ### Fri 25 Sep 2026 — ep07 Chandrasekhar
 - **File:** `sci_ep07_chandrasekhar_hook.mp4`
