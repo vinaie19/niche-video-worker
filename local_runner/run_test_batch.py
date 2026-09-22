@@ -830,7 +830,7 @@ def _jobs_for_engine(engine):
 
     if _channel_mode() == "b":
         return "ltx", _filter_jobs_by_video_id(science_ltx_jobs)
-    return "ltx", ltx_ab_jobs
+    return "ltx", _filter_jobs_by_video_id(ltx_ab_jobs)
 
 
 def run_one_engine(engine):

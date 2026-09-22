@@ -284,47 +284,62 @@ _EP04_BEATS = [
 
 _EP05_BEATS = [
     {
-        "text": "Cross the spaghettification radius,\nand gravity stretches matter into strings.",
+        # Retention: Roche-style one object transforming; stakes before jargon.
+        # ~60 spoken words total — Shorts cap; clarity in mechanism beats.
+        "text": "Spaghettification: too close to a black hole,\ngravity stretches matter into spaghetti.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot of a glowing celestial sphere violently stretching "
-            "into a thin luminous thread toward a pitch-black center, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked ultra-wide establishing shot of a small grey rocky asteroid "
+            "with sharp cratered detail already stretching lengthwise toward a pitch-black "
+            "compact core, white-gold tidal stress seams glowing along its long axis, "
+            "immediate elongation motion from frame one, thin accretion dust starting to "
+            "peel off the near face, deep pure black void, high contrast photoreal space CGI, "
+            "vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, "
+            "no watermarks"
         ),
     },
     {
-        "text": "Near a compact mass, your feet feel stronger pull than your head.",
+        "text": "The near side is pulled harder than the far side—\nso the body tears along that pull.",
         "rate": "+0%",
-        "pause_ms": 300,
-        "num_frames": 145,
+        "pause_ms": 280,
+        "num_frames": 153,
         "shot": (
-            "Cinematic locked medium shot of a metallic test sphere elongating into an "
-            "oval under tidal shear, cool blue highlights, black void, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked medium shot of the SAME grey rocky asteroid pulled into a "
+            "clear egg shape pointing at the dark core, near hemisphere brighter and "
+            "fracturing under stronger tidal pull, far hemisphere dimmer and lagging, "
+            "cool blue rim light on the crust, fine rock dust streaming from the near tip, "
+            "readable solid silhouette (not melting goo), black void, photoreal cinematic CGI, "
+            "vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, "
+            "no watermarks"
         ),
     },
     {
-        "text": "That gradient—not the darkness—\nrenders objects into one-dimensional filaments.",
+        "text": "That tidal gradient—not the darkness—\npulls the rock into thin glowing filaments.",
         "rate": "-4%",
-        "pause_ms": 300,
-        "num_frames": 161,
+        "pause_ms": 280,
+        "num_frames": 169,
         "shot": (
-            "Cinematic locked close-up of matter pulling into glowing atom-thin strands "
-            "streaming into an accretion ribbon, white-gold against black, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked close-up of the SAME asteroid crust splitting into parallel "
+            "luminous white-gold filaments like stretched taffy of rock and light, strands "
+            "streaming into a thin curved accretion ribbon toward the black core, "
+            "individual filament edges still visible (not blurry smoke), high contrast "
+            "against pure black, photoreal cinematic CGI, vertical 9:16, locked camera, "
+            "no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
     {
-        "text": "The threshold is tidal force.\nThe strand is what remains.",
+        "text": "The threshold is the tidal radius.\nThe strand is what remains.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 145,
         "shot": (
-            "Cinematic locked ultra-wide linger: single luminous filament falling toward "
-            "a dark compact core, sparse starfield lensed at the edge, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked ultra-wide linger: only a single bright luminous filament "
+            "remains, falling slowly toward a pitch-black compact core, faint gravitational "
+            "lensing on a sparse starfield at the rim, almost still, quiet catastrophic "
+            "aftermath, photoreal cinematic CGI, vertical 9:16, locked camera, no people, "
+            "no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
 ]

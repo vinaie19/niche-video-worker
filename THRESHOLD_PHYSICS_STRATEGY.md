@@ -153,10 +153,10 @@ Generic “inside a black hole”, bare “speed of light”, multiverse theory 
 
 ### Ep 05 — Spaghettification Radius
 
-- **Title:** `The Exact Boundary Where Matter Stretches into 1D Strands`
-- **Spoken hook:** Cross the tidal limit, and tidal forces stretch matter into strings.
-- **Description:** How extreme gravitational gradients pull objects into single-atom-thick filaments before the horizon.
-- **Frame 1:** Glowing sphere stretching into a thin luminous thread toward a pitch-black center.
+- **Title:** `The Exact Point Where Gravity Stretches Matter Into Spaghetti`
+- **Spoken hook:** Spaghettification: too close to a black hole, gravity stretches matter into spaghetti.
+- **Description:** Too close to a black hole, tidal gravity stretches matter into thin filaments — spaghetti.
+- **Frame 1:** Small cratered rocky asteroid already elongating toward a pitch-black compact core, white-gold tidal seams, immediate stretch.
 
 ### Ep 06 — Absolute Hot (Planck Temperature)
 

@@ -154,6 +154,157 @@ Direction only — finish backlog before restoring generation.
 
 ---
 
+
+
+---
+
+## Series 4 — Sensory night (generate → QC → pick winners)
+
+**Pattern locked:** warm food / steam / drip + cold rain; motion in first frames; no people; no readable text.
+**Batch:** `local_runner/test_prompts.py` (`s4_ep01`–`s4_ep10`). Prompt pack: `local_runner/SEASON4_PROMPTS.md`.
+**Render:** `CHANNEL=a ENGINE=ltx VIDEO_ID=<slug> python run_test_batch.py`
+**Rule:** render all (or a subset), QC locally, promote only keepers to `ready/`, upload the best.
+
+### s4_ep01_ramen_steam_rain
+- **File:** `s4_ep01_ramen_steam_rain_hook.mp4`
+- **Overlay:** `Still steaming.`
+- **Title:** `After Hours Japan | Late night ramen still steaming in the rain`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Late night ramen still steaming while the rain keeps the street empty.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep02_taiyaki_griddle
+- **File:** `s4_ep02_taiyaki_griddle_hook.mp4`
+- **Overlay:** `Still sizzling.`
+- **Title:** `After Hours Japan | Taiyaki griddle still hot at 1AM`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Fish-shaped cakes still sizzling on the iron molds after midnight.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep03_convenience_oden
+- **File:** `s4_ep03_convenience_oden_hook.mp4`
+- **Overlay:** `Still simmering.`
+- **Title:** `After Hours Japan | Conbini oden pot that never sleeps`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+The convenience-store oden pot keeps simmering under fluorescent light.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep04_yakitori_grill_drip
+- **File:** `s4_ep04_yakitori_grill_drip_hook.mp4`
+- **Overlay:** `Fat still drips.`
+- **Title:** `After Hours Japan | Yakitori coals still glowing after last call`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Skewers over charcoal — fat still drips into the coals after last call.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep05_udon_noodle_steam
+- **File:** `s4_ep05_udon_noodle_steam_hook.mp4`
+- **Overlay:** `Still boiling.`
+- **Title:** `After Hours Japan | Udon pot still boiling at midnight`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Thick udon noodles lifted from water that never quite stops boiling.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep06_hotpot_solo_booth
+- **File:** `s4_ep06_hotpot_solo_booth_hook.mp4`
+- **Overlay:** `Table for one.`
+- **Title:** `After Hours Japan | Solo hotpot booth still bubbling at 2AM`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+A one-person hotpot keeps bubbling in an empty booth.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep07_rain_gutter_alley
+- **File:** `s4_ep07_rain_gutter_alley_hook.mp4`
+- **Overlay:** `Still raining.`
+- **Title:** `After Hours Japan | Rain gutter alley that never dries`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Rainwater keeps streaming down a narrow Tokyo alley drain.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep08_vending_condensation
+- **File:** `s4_ep08_vending_condensation_hook.mp4`
+- **Overlay:** `Glass still fogged.`
+- **Title:** `After Hours Japan | Vending machine fogged up in the rain`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+A glowing drink machine stands alone, glass fogged with cold condensation.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep09_dumpling_steamer
+- **File:** `s4_ep09_dumpling_steamer_hook.mp4`
+- **Overlay:** `Lids still venting.`
+- **Title:** `After Hours Japan | Dumpling steamers still venting at night`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Stacked bamboo steamers keep venting over the burner after the crowd is gone.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
+### s4_ep10_okonomiyaki_griddle
+- **File:** `s4_ep10_okonomiyaki_griddle_hook.mp4`
+- **Overlay:** `Still on the iron.`
+- **Title:** `After Hours Japan | Okonomiyaki still sizzling on the iron`
+- **Status:** Prompt ready — pending render → QC
+- **Description:**
+```
+Okonomiyaki keeps sizzling on the flat-top after the last order.
+
+Empty places after midnight in Japan.
+
+#AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
+```
+
 ## After backlog (~23 Sep)
 
 1. Stop posting new AI batches.

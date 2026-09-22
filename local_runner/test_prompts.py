@@ -10,7 +10,8 @@
 # Batch flow: generate all shots of one short → stitch → next short
 #
 # Series 2 done: s2_ep01–s2_ep07
-# Series 3 — Places That Stay Open (LTX): s3_ep01–s3_ep07
+# Series 3 backlog retired from active batch (files still in final_videos/ready)
+# Series 4 — Sensory night (LTX): s4_ep01–s4_ep10
 # Series 3 on Blackwell PRO 6000 (96GB): FORCE_OFFLOAD=false + LTX_TE_DEVICE=default (GPU).
 
 import os
@@ -34,69 +35,97 @@ def _ltx_place(video_id, title, shots):
     }
 
 
-# Channel A — Series 3: Places That Stay Open (LTX-2.5)
+# Channel A — Season 4 Sensory night (VIDEO_ID selects one; omit to run all 10)
+# Pattern: warm food / steam / drip + cold rain; first-frame motion; no people/text
 ltx_ab_jobs = [
     _ltx_place(
-        "s3_ep01_parking_fluorescent",
-        "Level B2.",
+        's4_ep01_ramen_steam_rain',
+        'Still steaming.',
         [
-            "Cinematic locked extreme close-up of a flickering fluorescent tube buzzing over wet concrete in an empty underground parking garage at night, moths circling the light, immediate flicker motion, harsh buzz and soft drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text, NO letters",
-            "Cinematic locked wide shot of an empty multi-level parking garage at night, long rows of pillars, cold green-white fluorescents, wet tire-shine on the floor, distant traffic rumble and echo drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of a yellow concrete parking barrier and painted curb under stuttering overhead light, dust motes in the beam, soft electrical buzz and distant engine audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of a deep ceramic ramen bowl on dark wood, thick white steam columns rising continuously from glossy pork-bone broth, soft oil sheen catching warm amber pendant light, chopsticks resting on the rim, green onion flecks still, continuous steam motion only, soft broth simmer crackle and rain tapping glass audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty tiny late-night ramen counter shop after midnight in Japan, one steaming bowl alone on the wooden counter under a warm amber lamp, faded fabric noren barely swaying, cold blue rain streaking the street window behind, warm orange interior versus cold wet street contrast, soft rain and quiet kitchen exhaust hum audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of rain rivulets racing down the shop window glass with warm ramen-counter amber light reflecting in the wet pane, soft steam haze blooming inside the reflection, continuous rain motion, intimate rain and distant wet-tire hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
     _ltx_place(
-        "s3_ep02_florist_fridge",
-        "Still fresh.",
+        's4_ep02_taiyaki_griddle',
+        'Still sizzling.',
         [
-            "Cinematic locked extreme close-up of condensation racing down the glass door of a flower-shop cooler at night, bright blooms blurred behind fogged glass, constant water motion, soft compressor hum and drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of an empty tiny florist at night, open glass coolers glowing pink and green, buckets of wrapped stems, soft fridge hum and distant rain audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked close-up of water droplets beading on rose petals inside a lit cooler, soft mist, gentle refrigeration fan and drip audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of cast-iron taiyaki fish molds on a street-stall griddle at night, golden batter bubbling at the seam edges, thin oil smoke wisps rising, fish-scale mold texture sharp and constant, continuous sizzle motion, hot oil pop and soft rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty tiny taiyaki stall under a striped awning after midnight in Japan, glowing orange griddle, stacked paper bags, rain beading on the metal counter edge, warm stall light versus cold wet pavement, soft griddle hiss and rain on awning audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of a freshly opened taiyaki shell on parchment, molten red-bean filling glistening, faint steam curling from the cut, warm tungsten light, soft crackle cooling and distant rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
     _ltx_place(
-        "s3_ep03_bowling_lanes",
-        "Last frame.",
+        's4_ep03_convenience_oden',
+        'Still simmering.',
         [
-            "Cinematic locked extreme close-up of polished bowling-lane wood reflecting neon scoring lights at night, subtle vibration ripple across the varnish, soft mechanical pinsetter hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text, NO readable scores",
-            "Cinematic locked wide shot of an empty bowling alley at night, glowing lanes stretching away, pink and cyan overhead neon, pin decks lit, quiet machine drones and HVAC audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of a rack of colorful bowling balls under warm counter light, soft reflections, distant pinsetter clunk and ambient hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of an oden hot-case broth surface under harsh convenience-store fluorescent light, slow steady bubbles breaking, steam fogging the curved glass lid from inside, daikon and egg shapes softly blurred underwater, continuous bubble motion, soft simmer and fridge compressor hum audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty Japanese convenience store aisle at night focused on the glowing oden and fried-food warmer, wet floor reflections near the automatic door, cold fluorescent wash, soft door chime fade and rain drip outside audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of condensation racing down the inside of the oden glass case, orange broth glow behind the fog, continuous droplet trails, soft bubble tick and store ambient hum audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
     _ltx_place(
-        "s3_ep04_manga_cafe",
-        "All-nighter.",
+        's4_ep04_yakitori_grill_drip',
+        'Fat still drips.',
         [
-            "Cinematic locked extreme close-up of stacked manga spines under a small desk lamp in a night manga cafe booth, dust drifting in the warm beam, soft page-rustle and rain on window audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text, NO readable titles",
-            "Cinematic locked wide shot of an empty manga cafe corridor of private booths at night, soft orange lamps, carpeted floor, quiet fluorescent spill, calm room-tone and distant rain audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of an empty booth with headphones and a glowing drink fridge in the background, soft fridge hum and lamp buzz audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of chicken yakitori skewers over glowing charcoal, a fat droplet falling and flaring into a brief orange flame lick, smoke ribbon rising, metal grate sharp and unmoving, continuous drip-and-sizzle motion, fat sizzle and soft rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty yakitori alley counter after midnight in Japan, row of skewers over red coals, noren half tied, smoke drifting under warm lantern light, wet alley cobble behind, soft charcoal crackle and rain gutter drip audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of ash-dusted charcoal embers pulsing orange under the grill, thin blue smoke threads, heat shimmer above the coals, continuous ember glow motion, quiet crackle and distant train hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
     _ltx_place(
-        "s3_ep05_karaoke_corridor",
-        "Room still lit.",
+        's4_ep05_udon_noodle_steam',
+        'Still boiling.',
         [
-            "Cinematic locked extreme close-up of a glowing karaoke room door indicator light pulsing in a narrow hallway at night, soft pink neon spill, muffled bass thump and corridor hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked wide shot of an empty karaoke hallway at night, rows of closed doors with soft LED strips, patterned carpet, quiet bass leakage and HVAC audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of a drink cart with ice melting in a bucket under magenta hallway light, soft ice crackle and distant muffled music audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of thick white udon noodles being held just above a violently boiling pot, sheets of steam rolling upward, water droplets falling back into the pot, noodle strands consistent and opaque, continuous steam and drip motion, hard boil roar and soft kitchen fan audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty tiny udon shop kitchen pass after midnight, one steaming pot under a warm work light, empty stools at the counter, rain on the alley window, soft boil and exhaust fan audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of cloudy udon broth in a dark bowl with rising steam ribbons under warm light, chopped green onion still on the surface, continuous steam only, soft simmer and rain on metal roof audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
     _ltx_place(
-        "s3_ep06_fish_market_ice",
-        "Before dawn.",
+        's4_ep06_hotpot_solo_booth',
+        'Table for one.',
         [
-            "Cinematic locked extreme close-up of crushed ice glistening under cold fluorescent light at a closed fish market stall, meltwater dripping fast, soft drip and compressor hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked wide shot of an empty covered fish market corridor at night, shuttered stalls, wet concrete, cool blue-white lights, distant drip echo and fridge hum audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of stacked polystyrene boxes and a running hose trickle over ice, steam of cold air, soft water and night market hush audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of a single-person metal hotpot on an empty booth table, broth rolling with steady bubbles, chili oil swirls, steam curling toward a small overhead lamp, continuous simmer motion, soft bubble pop and booth AC hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty late-night solo-dining booth corridor in Japan, one lit booth with a steaming pot, curtains half drawn, warm wood and soft LED strips, quiet HVAC and distant rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of steam fogging a small booth partition glass beside the glowing pot, droplet trails forming, continuous steam-to-fog motion, intimate simmer and muffled kitchen clatter far away audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
     _ltx_place(
-        "s3_ep07_hotel_ice_machine",
-        "Floor 7.",
+        's4_ep07_rain_gutter_alley',
+        'Still raining.',
         [
-            "Cinematic locked extreme close-up of ice cubes tumbling into a hotel ice machine chute at night, cold blue interior glow, clatter and motor whir audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked wide shot of an empty mid-rise hotel corridor at night, patterned carpet, evenly spaced wall sconces, soft ice-machine hum at the far end, quiet HVAC audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
-            "Cinematic locked medium shot of a glowing ice and vending alcove, soft drink fridge light, carpet reflections, gentle machine idle and distant elevator ding undertone audio, photo-realistic, vertical 9:16, no people, no faces, no camera move, NO text",
+            'Cinematic locked extreme close-up of a continuous chain of raindrops falling from a metal eaves edge into a black puddle, each impact making expanding rings, neon pink and cyan reflections warping in the water, continuous drip motion, crisp drip and soft city hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of a narrow empty Tokyo back alley at night after rain, wet asphalt mirror, glowing vending machine at the far end, cables overhead, soft rain and distant traffic hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of rainwater racing along a concrete alley gutter toward a drain grate, leaves stuck at the edge, neon color streaks in the flow, continuous water motion, water rush and quiet transformer hum audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+        ],
+    ),
+    _ltx_place(
+        's4_ep08_vending_condensation',
+        'Glass still fogged.',
+        [
+            'Cinematic locked extreme close-up of thick condensation on a Japanese drink vending machine glass at night, a single droplet trail sliding slowly downward, soft RGB button glow bleeding through the fog, continuous droplet motion, soft rain and electrical hum audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of a lone glowing vending machine against a dark wet concrete wall after midnight in Japan, rain falling through the pool of machine light, empty sidewalk, soft rain and machine compressor hum audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of rain beading and sliding on the metal top edge of the vending machine, warm drink-button colors reflecting in the wet metal, continuous rain motion, intimate rain tick and distant scooter hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+        ],
+    ),
+    _ltx_place(
+        's4_ep09_dumpling_steamer',
+        'Lids still venting.',
+        [
+            'Cinematic locked extreme close-up of stacked bamboo steamer lids with bright white steam jetting from the rim seams, woven bamboo texture sharp and constant, warm stall light, continuous pressurized steam motion, soft steam hiss and rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty night food stall with a tower of bamboo steamers over a low burner, wet street shine, warm sodium light under a canopy, soft burner roar and rain on tarp audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of one steamer lid lifted just enough to show plump dumplings in a burst of escaping steam, consistent dumpling shapes, continuous steam bloom, soft hiss and distant wet footsteps far away audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+        ],
+    ),
+    _ltx_place(
+        's4_ep10_okonomiyaki_griddle',
+        'Still on the iron.',
+        [
+            'Cinematic locked extreme close-up of okonomiyaki batter bubbling on a flat iron griddle, edges crisping, fine oil mist and steam rising, spatula resting nearby unused, continuous bubble-and-sizzle motion, hot iron sizzle and soft rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked medium shot of an empty okonomiyaki counter stall at night, wide iron griddle glowing, sauce bottles silhouetted, rain on the street outside the open front, warm stall versus cold wet street, soft sizzle and rain audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
+            'Cinematic locked close-up of glossy okonomiyaki sauce being caught by warm light as steam lifts from the finished pancake on the iron, continuous thin steam, soft sizzle fading and distant city hush audio, photo-realistic, vertical 9:16, locked tripod, no camera move, no pan, no zoom, no people, no faces, no hands, no silhouettes, no crowd, NO text, NO letters, NO numbers, NO logos, NO signage, NO subtitles, NO UI, no morphing, no melting objects, no warping geometry, consistent materials across the shot',
         ],
     ),
 ]

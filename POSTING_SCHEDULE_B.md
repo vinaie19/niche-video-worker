@@ -108,12 +108,12 @@ One threshold. One law. One image.
 ### Wed 23 Sep 2026 — ep05 spaghettification
 - **File:** `sci_ep05_spaghettification_hook.mp4`
 - **Slug:** `sci_ep05_spaghettification`
-- **Title:** `The Exact Boundary Where Matter Stretches into 1D Strands`
-- **Spoken hook:** `Cross the spaghettification radius, and gravity stretches matter into strings.`
+- **Title:** `The Exact Point Where Gravity Stretches Matter Into Spaghetti`
+- **Spoken hook:** `Spaghettification: too close to a black hole, gravity stretches matter into spaghetti.`
 - **Status:** Pending
 - **Description:**
 ```
-How extreme gravitational gradients pull objects into thin filaments before the horizon.
+Too close to a black hole, tidal gravity stretches matter into thin filaments — spaghetti.
 
 One threshold. One law. One image.
 
