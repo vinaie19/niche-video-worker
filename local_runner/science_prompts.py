@@ -345,8 +345,9 @@ _EP05_BEATS = [
 ]
 
 # --- Ep 06: Absolute Hot / Planck Temperature ---
-# 2026-09-22 v2: plain storytelling VO (no em dashes), ltx_multishot + continue
-# (one locked take, same plasma sphere evolves). Claude + Grok.
+# 2026-09-22 v3: plain storytelling VO (no em dashes), multi_cut + SAME plasma
+# sphere with cracked stellar-photosphere surface (Claude + Grok). Readable
+# heat ramp white-gold → blue-white → violet-white; not soft blob / continue.
 
 _EP06_BEATS = [
     {
@@ -356,13 +357,11 @@ _EP06_BEATS = [
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked extreme close-up of ONE dense white-hot plasma sphere in pure black void, "
-            "surface a turbulent boiling texture of blinding blue-white light, continuous turbulent "
-            "surface motion from frame one, sharp spherical silhouette not fraying into goo, high "
-            "dynamic range glare with readable limb edge, photoreal cinematic CGI, vertical 9:16, "
-            "locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no "
-            "watermarks, no morphing into smoke or liquid, consistent materials, solid readable "
-            "silhouette"
+            "Cinematic locked extreme close-up of the SAME churning plasma sphere, "
+            "glowing white-gold ionized surface cracked into vivid orange-white fissures "
+            "venting solar flares, sharp circular silhouette against pure black void, "
+            "surface plates of light constantly shifting like a stellar photosphere, "
+            "no lensing, no camera movement, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
     {
@@ -372,12 +371,11 @@ _EP06_BEATS = [
         "pause_ms": 280,
         "num_frames": 153,
         "shot": (
-            "Without cutting, the SAME white-hot plasma sphere grows denser and tighter, faint "
-            "gravitational lensing begins bending a sparse starfield into thin bright arcs behind it, "
-            "continuous inward surface tension, sphere stays solid and spherical not melting, deep "
-            "black void, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no "
-            "people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or "
-            "liquid, consistent materials, solid readable silhouette"
+            "Cinematic locked extreme close-up of the SAME plasma sphere, surface now "
+            "blazing blue-white at the fissure edges while the core stays molten orange-gold, "
+            "wider glowing cracks venting brighter plasma flares, sharp circular silhouette "
+            "still fully intact against black void, faint heat-shimmer just barely bending "
+            "the space directly behind it, no visible lensing arcs yet, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
     {
@@ -387,12 +385,11 @@ _EP06_BEATS = [
         "pause_ms": 280,
         "num_frames": 169,
         "shot": (
-            "Still the SAME continuous take: the plasma sphere compresses further, pronounced "
-            "gravitational lensing arcs wrap around its perimeter as spacetime visibly warps like a "
-            "lens, continuous warp shimmer of background light, one solid glowing mass anti-morph no "
-            "dissolve, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no "
-            "people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or "
-            "liquid, consistent materials, solid readable silhouette"
+            "Cinematic locked extreme close-up of the SAME plasma sphere, surface now "
+            "dominant blinding blue-white ionized plasma, fissures fused into rippling "
+            "bright seams, faint gravitational lensing arcs bending the black void behind "
+            "it, circular silhouette still the clear readable center of frame despite the "
+            "bending light, plasma streamers licking off the edge, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
     {
@@ -402,13 +399,12 @@ _EP06_BEATS = [
         "pause_ms": 200,
         "num_frames": 145,
         "shot": (
-            "Still the SAME continuous take lingering on the plasma sphere at critical intensity, "
-            "surface fracturing into bright jagged white-gold seams that pulse without the sphere "
-            "breaking apart or dissolving, almost still threshold aftermath, sparse starfield at the "
-            "rim warped by residual lensing, quiet catastrophic hold, photoreal cinematic CGI, vertical "
-            "9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, "
-            "no watermarks, no morphing into smoke or liquid, consistent materials, solid readable "
-            "silhouette"
+            "Cinematic locked extreme close-up of the SAME plasma sphere, core now "
+            "violet-white and impossibly bright like a collapsing star, surface rippling "
+            "in continuous plasma waves, strong gravitational lensing visibly warping the "
+            "black void around it, circular silhouette still dominant and readable at "
+            "center even as light bends past its edge, final most extreme heat state, "
+            "photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
 ]
@@ -734,12 +730,6 @@ def build_science_jobs(num_frames, steps):
 
 
 science_ltx_jobs = build_science_jobs(num_frames=129, steps=8)
-
-# Absolute Hot: one native multishot pass (continue) for object continuity.
-for _job in science_ltx_jobs:
-    if _job.get("video_id") == "sci_ep06_absolute_hot":
-        _job["shot_mode"] = "ltx_multishot"
-        _job["join_style"] = "continue"
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {

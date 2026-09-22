@@ -1,12 +1,13 @@
-# Absolute Hot (sci_ep06) — v2 continue + plain VO
+# Absolute Hot (sci_ep06) — v3 multi_cut + plasma surface
 
 **Title:** The Exact Temperature Where Physics Completely Breaks (10^32 K)
 **Spoken hook:** This is the exact temperature where physics itself stops making sense.
-**Mode:** `ltx_multishot` + `join_style=continue`
-**VO words:** 56 (no em dashes)
+**Mode:** `multi_cut` (default) — four SAME plasma-sphere shots, Spaghetti path
+**VO words:** 56 (no em dashes) — unchanged from v2
+**Why v3:** v2 `ltx_multishot`+`continue` stayed one soft blue blob → veiny grey egg. Claude+Grok locked cracked stellar-photosphere / ionized fissure language so viewers can read plasma.
 
 ```bash
-CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep06_absolute_hot python run_test_batch.py
+CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep06_absolute_hot ./venv/bin/python run_test_batch.py
 ```
 
 ## Beat 1
@@ -16,7 +17,7 @@ CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep06_absolute_hot python run_test_batch.py
 **Frames:** 161
 
 ```
-Cinematic locked extreme close-up of ONE dense white-hot plasma sphere in pure black void, surface a turbulent boiling texture of blinding blue-white light, continuous turbulent surface motion from frame one, sharp spherical silhouette not fraying into goo, high dynamic range glare with readable limb edge, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or liquid, consistent materials, solid readable silhouette
+Cinematic locked extreme close-up of the SAME churning plasma sphere, glowing white-gold ionized surface cracked into vivid orange-white fissures venting solar flares, sharp circular silhouette against pure black void, surface plates of light constantly shifting like a stellar photosphere, no lensing, no camera movement, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks
 ```
 
 ## Beat 2
@@ -26,7 +27,7 @@ Cinematic locked extreme close-up of ONE dense white-hot plasma sphere in pure b
 **Frames:** 153
 
 ```
-Without cutting, the SAME white-hot plasma sphere grows denser and tighter, faint gravitational lensing begins bending a sparse starfield into thin bright arcs behind it, continuous inward surface tension, sphere stays solid and spherical not melting, deep black void, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or liquid, consistent materials, solid readable silhouette
+Cinematic locked extreme close-up of the SAME plasma sphere, surface now blazing blue-white at the fissure edges while the core stays molten orange-gold, wider glowing cracks venting brighter plasma flares, sharp circular silhouette still fully intact against black void, faint heat-shimmer just barely bending the space directly behind it, no visible lensing arcs yet, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks
 ```
 
 ## Beat 3
@@ -36,7 +37,7 @@ Without cutting, the SAME white-hot plasma sphere grows denser and tighter, fain
 **Frames:** 169
 
 ```
-Still the SAME continuous take: the plasma sphere compresses further, pronounced gravitational lensing arcs wrap around its perimeter as spacetime visibly warps like a lens, continuous warp shimmer of background light, one solid glowing mass anti-morph no dissolve, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or liquid, consistent materials, solid readable silhouette
+Cinematic locked extreme close-up of the SAME plasma sphere, surface now dominant blinding blue-white ionized plasma, fissures fused into rippling bright seams, faint gravitational lensing arcs bending the black void behind it, circular silhouette still the clear readable center of frame despite the bending light, plasma streamers licking off the edge, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks
 ```
 
 ## Beat 4
@@ -46,6 +47,5 @@ Still the SAME continuous take: the plasma sphere compresses further, pronounced
 **Frames:** 145
 
 ```
-Still the SAME continuous take lingering on the plasma sphere at critical intensity, surface fracturing into bright jagged white-gold seams that pulse without the sphere breaking apart or dissolving, almost still threshold aftermath, sparse starfield at the rim warped by residual lensing, quiet catastrophic hold, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or liquid, consistent materials, solid readable silhouette
+Cinematic locked extreme close-up of the SAME plasma sphere, core now violet-white and impossibly bright like a collapsing star, surface rippling in continuous plasma waves, strong gravitational lensing visibly warping the black void around it, circular silhouette still dominant and readable at center even as light bends past its edge, final most extreme heat state, photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks
 ```
-
