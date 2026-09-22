@@ -345,71 +345,70 @@ _EP05_BEATS = [
 ]
 
 # --- Ep 06: Absolute Hot / Planck Temperature ---
-# Spaghetti-process rewrite 2026-09-22 (Claude + Grok): one plasma sphere continuity,
-# name Planck/absolute hot in beat 1, cause→effect VO, dense LTX, threshold close.
+# 2026-09-22 v2: plain storytelling VO (no em dashes), ltx_multishot + continue
+# (one locked take, same plasma sphere evolves). Claude + Grok.
 
 _EP06_BEATS = [
     {
-        "text": "Heat plasma to the Planck temperature — absolute hot —\n"
-            "and physics itself hits a ceiling.",
+        "text": "Imagine heating something, hotter and hotter,\n"
+            "with no limit in sight.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked extreme close-up of ONE dense white-hot plasma sphere in pure black void,  "
-            "surface a turbulent boiling texture of blinding blue-white light, continuous turbulent  "
-            "surface motion from frame one, sharp spherical silhouette (not fraying into goo), high  "
-            "dynamic range glare with readable limb edge, photoreal cinematic CGI, vertical 9:16,  "
-            "locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no  "
-            "watermarks, no morphing into smoke or liquid, consistent materials, solid readable  "
+            "Cinematic locked extreme close-up of ONE dense white-hot plasma sphere in pure black void, "
+            "surface a turbulent boiling texture of blinding blue-white light, continuous turbulent "
+            "surface motion from frame one, sharp spherical silhouette not fraying into goo, high "
+            "dynamic range glare with readable limb edge, photoreal cinematic CGI, vertical 9:16, "
+            "locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no "
+            "watermarks, no morphing into smoke or liquid, consistent materials, solid readable "
             "silhouette"
         ),
     },
     {
-        "text": "Radiation packs in so densely,\n"
-            "its own energy starts warping spacetime.",
+        "text": "But push far enough, and the heat gets so extreme\n"
+            "it starts warping space itself.",
         "rate": "+0%",
         "pause_ms": 280,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked medium shot of the SAME white-hot plasma sphere, denser and tighter,  "
-            "faint gravitational lensing beginning to bend a sparse starfield into thin bright arcs  "
-            "behind it, continuous inward surface tension motion, sphere stays solid and spherical (not  "
-            "melting), deep black void, photoreal cinematic CGI, vertical 9:16, locked camera, no pan,  "
-            "no zoom, no people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing  "
-            "into smoke or liquid, consistent materials, solid readable silhouette"
+            "Without cutting, the SAME white-hot plasma sphere grows denser and tighter, faint "
+            "gravitational lensing begins bending a sparse starfield into thin bright arcs behind it, "
+            "continuous inward surface tension, sphere stays solid and spherical not melting, deep "
+            "black void, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no "
+            "people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or "
+            "liquid, consistent materials, solid readable silhouette"
         ),
     },
     {
-        "text": "Push further, and heat's gravity outweighs\n"
-            "every other force in the universe.",
+        "text": "Go further still, and temperature as an idea\n"
+            "simply falls apart.",
         "rate": "-4%",
         "pause_ms": 280,
         "num_frames": 169,
         "shot": (
-            "Cinematic locked close-up of the SAME plasma sphere compressed further, pronounced  "
-            "gravitational lensing arcs wrapping around its perimeter as spacetime visibly warps like a  "
-            "lens, continuous warp shimmer of background light, sphere remains one solid glowing mass  "
-            "(anti-morph, no dissolve into particles), photoreal cinematic CGI, vertical 9:16, locked  "
-            "camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, no  "
-            "watermarks, no morphing into smoke or liquid, consistent materials, solid readable  "
-            "silhouette"
+            "Still the SAME continuous take: the plasma sphere compresses further, pronounced "
+            "gravitational lensing arcs wrap around its perimeter as spacetime visibly warps like a "
+            "lens, continuous warp shimmer of background light, one solid glowing mass anti-morph no "
+            "dissolve, photoreal cinematic CGI, vertical 9:16, locked camera, no pan, no zoom, no "
+            "people, no faces, NO text, NO letters, NO logos, no watermarks, no morphing into smoke or "
+            "liquid, consistent materials, solid readable silhouette"
         ),
     },
     {
-        "text": "The threshold is the Planck temperature —\n"
-            "ten to the thirty-two kelvin — where temperature stops meaning anything.",
+        "text": "Scientists call that edge the Planck temperature, ten to the thirty two kelvin,\n"
+            "the hottest anything can ever be.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 145,
         "shot": (
-            "Cinematic locked ultra-wide linger on the SAME plasma sphere at critical intensity,  "
-            "surface fracturing into bright jagged white-gold seams that pulse without the sphere  "
-            "breaking apart or dissolving, almost still aftermath of the threshold, sparse starfield at  "
-            "the rim warped by residual lensing, quiet catastrophic hold, photoreal cinematic CGI,  "
-            "vertical 9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters,  "
-            "NO logos, no watermarks, no morphing into smoke or liquid, consistent materials, solid  "
-            "readable silhouette"
+            "Still the SAME continuous take lingering on the plasma sphere at critical intensity, "
+            "surface fracturing into bright jagged white-gold seams that pulse without the sphere "
+            "breaking apart or dissolving, almost still threshold aftermath, sparse starfield at the "
+            "rim warped by residual lensing, quiet catastrophic hold, photoreal cinematic CGI, vertical "
+            "9:16, locked camera, no pan, no zoom, no people, no faces, NO text, NO letters, NO logos, "
+            "no watermarks, no morphing into smoke or liquid, consistent materials, solid readable "
+            "silhouette"
         ),
     },
 ]
@@ -735,6 +734,12 @@ def build_science_jobs(num_frames, steps):
 
 
 science_ltx_jobs = build_science_jobs(num_frames=129, steps=8)
+
+# Absolute Hot: one native multishot pass (continue) for object continuity.
+for _job in science_ltx_jobs:
+    if _job.get("video_id") == "sci_ep06_absolute_hot":
+        _job["shot_mode"] = "ltx_multishot"
+        _job["join_style"] = "continue"
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {

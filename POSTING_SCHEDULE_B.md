@@ -124,11 +124,12 @@ One threshold. One law. One image.
 - **File:** `sci_ep06_absolute_hot_hook.mp4`
 - **Slug:** `sci_ep06_absolute_hot`
 - **Title:** `The Exact Temperature Where Physics Completely Breaks (10^32 K)`
-- **Spoken hook:** `Heat plasma to the Planck temperature — absolute hot — and physics itself hits a ceiling.`
-- **Status:** Prompt ready (Spaghetti-process rewrite) — pending render → QC → schedule
+- **Spoken hook:** `This is the exact temperature where physics itself stops making sense.`
+- **Shot mode:** `ltx_multishot` + `join_style=continue` (one locked take)
+- **Status:** Prompt ready v2 (plain VO, no em dashes, continue) — pending re-render → QC
 - **Description:**
 ```
-Heat something to 10^32 K and the concept of temperature stops working.
+Imagine heating something with no limit. Push far enough and heat starts warping space, then temperature itself stops making sense.
 
 One threshold. One law. One image.
 
