@@ -29,8 +29,9 @@ Cinematic locked close-up of rain rivulets racing down the shop window glass wit
 
 ## s4_ep02_taiyaki_griddle
 - **Overlay:** Still sizzling.
-- **YouTube title:** After Hours Japan | Taiyaki griddle still hot at 1AM
-- **Description:** Fish-shaped cakes still sizzling on the iron molds after midnight.
+- **YouTube title:** After Hours Japan | Square griddle cakes still hot at 1AM
+- **Description:** Square griddle cakes still sizzling on the iron after midnight.
+- **Note:** Packaging renamed — render shows square griddle cakes (not fish taiyaki). Slug unchanged.
 
 ### Shot 1
 

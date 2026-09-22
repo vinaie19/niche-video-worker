@@ -22,17 +22,14 @@ Shared hashtags (already included in every description):
 ### Fri 11 Sep 2026 — s2_ep01 izakaya
 - **File:** `s2_ep01_izakaya_lantern_hook.mp4`
 - **Title:** `After Hours Japan | Still Warm | Izakaya After Hours`
-- **Status:** Live
 
 ### Sat 12 Sep 2026 — s2_ep02 sento
 - **File:** `s2_ep02_sento_steam_hook.mp4`
 - **Title:** `After Hours Japan | Sento after everyone went home`
-- **Status:** Live
 
 ### Sun 13 Sep 2026 — s2_ep04 taxi stand
 - **File:** `s2_ep04_taxi_stand_rain_hook.mp4`
 - **Title:** `After Hours Japan | Rain at an empty taxi stand`
-- **Status:** Live
 
 ### SKIP — s2_ep05 temple
 - **File:** `s2_ep05_temple_incense_hook.mp4`
@@ -42,12 +39,10 @@ Shared hashtags (already included in every description):
 ### ~Mon 14 Sep 2026 — s2_ep06 ferry
 - **File:** `s2_ep06_ferry_waiting_hook.mp4`
 - **Title:** `After Hours Japan | Ferry terminal with nobody waiting`
-- **Status:** Live
 
 ### Tue 15 Sep 2026 — s2_ep07 arcade
 - **File:** `s2_ep07_arcade_glow_hook.mp4`
 - **Title:** `After Hours Japan | Empty arcade still running at night`
-- **Status:** Live (posted early; took the old Wed 16 slot)
 
 ### SKIP — s2_ep03 bookstore
 - **File:** `s2_ep03_bookstore_lamp_hook.mp4`
@@ -169,7 +164,7 @@ Direction only — finish backlog before restoring generation.
 - **File:** `s4_ep01_ramen_steam_rain_hook.mp4`
 - **Overlay:** `Still steaming.`
 - **Title:** `After Hours Japan | Late night ramen still steaming in the rain`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** Keeper — upload
 - **Description:**
 ```
 Late night ramen still steaming while the rain keeps the street empty.
@@ -182,22 +177,23 @@ Empty places after midnight in Japan.
 ### s4_ep02_taiyaki_griddle
 - **File:** `s4_ep02_taiyaki_griddle_hook.mp4`
 - **Overlay:** `Still sizzling.`
-- **Title:** `After Hours Japan | Taiyaki griddle still hot at 1AM`
-- **Status:** Prompt ready — pending render → QC
+- **Title:** `After Hours Japan | Square griddle cakes still hot at 1AM`
+- **Status:** Keeper — renamed (square griddle cakes, not fish taiyaki)
 - **Description:**
 ```
-Fish-shaped cakes still sizzling on the iron molds after midnight.
+Square griddle cakes still sizzling on the iron after midnight.
 
 Empty places after midnight in Japan.
 
 #AfterHoursJapan #japan #asmr #aesthetic #liminal #nightwalk #shorts
 ```
 
+
 ### s4_ep03_convenience_oden
 - **File:** `s4_ep03_convenience_oden_hook.mp4`
 - **Overlay:** `Still simmering.`
 - **Title:** `After Hours Japan | Conbini oden pot that never sleeps`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** REJECT — AI gibberish storefront text
 - **Description:**
 ```
 The convenience-store oden pot keeps simmering under fluorescent light.
@@ -211,7 +207,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep04_yakitori_grill_drip_hook.mp4`
 - **Overlay:** `Fat still drips.`
 - **Title:** `After Hours Japan | Yakitori coals still glowing after last call`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** Keeper — upload
 - **Description:**
 ```
 Skewers over charcoal — fat still drips into the coals after last call.
@@ -225,7 +221,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep05_udon_noodle_steam_hook.mp4`
 - **Overlay:** `Still boiling.`
 - **Title:** `After Hours Japan | Udon pot still boiling at midnight`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** Optional maybe
 - **Description:**
 ```
 Thick udon noodles lifted from water that never quite stops boiling.
@@ -239,7 +235,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep06_hotpot_solo_booth_hook.mp4`
 - **Overlay:** `Table for one.`
 - **Title:** `After Hours Japan | Solo hotpot booth still bubbling at 2AM`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** Keeper — upload
 - **Description:**
 ```
 A one-person hotpot keeps bubbling in an empty booth.
@@ -253,7 +249,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep07_rain_gutter_alley_hook.mp4`
 - **Overlay:** `Still raining.`
 - **Title:** `After Hours Japan | Rain gutter alley that never dries`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** Optional maybe
 - **Description:**
 ```
 Rainwater keeps streaming down a narrow Tokyo alley drain.
@@ -267,7 +263,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep08_vending_condensation_hook.mp4`
 - **Overlay:** `Glass still fogged.`
 - **Title:** `After Hours Japan | Vending machine fogged up in the rain`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** REJECT — empty void + garbled can text
 - **Description:**
 ```
 A glowing drink machine stands alone, glass fogged with cold condensation.
@@ -281,7 +277,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep09_dumpling_steamer_hook.mp4`
 - **Overlay:** `Lids still venting.`
 - **Title:** `After Hours Japan | Dumpling steamers still venting at night`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** Keeper — upload (hand OK)
 - **Description:**
 ```
 Stacked bamboo steamers keep venting over the burner after the crowd is gone.
@@ -295,7 +291,7 @@ Empty places after midnight in Japan.
 - **File:** `s4_ep10_okonomiyaki_griddle_hook.mp4`
 - **Overlay:** `Still on the iron.`
 - **Title:** `After Hours Japan | Okonomiyaki still sizzling on the iron`
-- **Status:** Prompt ready — pending render → QC
+- **Status:** REJECT — final-shot sausage lattice morph
 - **Description:**
 ```
 Okonomiyaki keeps sizzling on the flat-top after the last order.
