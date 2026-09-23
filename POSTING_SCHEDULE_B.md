@@ -141,11 +141,12 @@ One threshold. One law. One image.
 - **File:** `sci_ep07_chandrasekhar_hook.mp4`
 - **Slug:** `sci_ep07_chandrasekhar`
 - **Title:** `The Exact Mass That Causes a White Dwarf Collapse (1.44 M☉)`
-- **Spoken hook:** `At the Chandrasekhar limit—1.44 solar masses—a white dwarf cannot hold itself up.`
-- **Status:** Pending
+- **Spoken hook:** `This tiny dead star is the size of Earth, but it weighs almost as much as the Sun.`
+- **Shot mode:** `multi_cut` (4 SAME solid white-dwarf shots, cracked crust / bright core; Spaghetti path)
+- **Status:** Prompt ready v2 (plain VO, solid white dwarf) — awaiting stills QC (no RunPod until approved)
 - **Description:**
 ```
-The physical limit where atomic electrons can no longer support a dying star against gravity.
+A dead star the size of Earth. Keep adding mass and it cracks, then past one exact weight, 1.44 Suns, it caves in and explodes.
 
 One threshold. One law. One image.
 

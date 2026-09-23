@@ -351,7 +351,33 @@ exec python3 -u /workspace/handler.py
     comfy_url = _wait_for_running_url(pod_id)
     return pod_id, comfy_url
 
-def _save_render_manifest(rendered_urls, path="./temp_clips/render_manifest.json"):
+def _env_flag(name):
+    return (os.getenv(name) or "").strip().lower() in ("1", "true", "yes")
+
+
+def _only_shot():
+    """ONLY_SHOT / SHOT_INDEX = 1-based shot to re-render alone (None = all shots)."""
+    raw = (os.getenv("ONLY_SHOT") or os.getenv("SHOT_INDEX") or "").strip()
+    if not raw:
+        return None
+    try:
+        n = int(raw)
+    except ValueError:
+        raise SystemExit(f"ONLY_SHOT/SHOT_INDEX must be a 1-based int, got {raw!r}")
+    if n < 1:
+        raise SystemExit(f"ONLY_SHOT/SHOT_INDEX must be >= 1, got {n}")
+    return n
+
+
+def _save_render_manifest(rendered_urls, path=None):
+    # Single-shot re-renders get their own manifest so the full-run one is not clobbered.
+    if path is None:
+        only = _only_shot()
+        path = (
+            f"./temp_clips/render_manifest_shot_{only}.json"
+            if only
+            else "./temp_clips/render_manifest.json"
+        )
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w") as f:
         json.dump(rendered_urls, f, indent=2)
@@ -485,6 +511,12 @@ def render_video_shots(comfy_url, vid, manifest):
     join_style = normalize_join_style(vid.get("join_style"), shot_mode)
     urls = []
 
+    only = _only_shot()
+    if only and is_multishot_mode(shot_mode):
+        raise SystemExit(
+            f"ONLY_SHOT={only} not supported for {vid_id} shot_mode={shot_mode} (one-pass multishot)"
+        )
+
     if is_multishot_mode(shot_mode):
         # One native AV pass: chronological cut|continue prompt, continuous bed.
         shots = list(vid["shots"])
@@ -513,9 +545,20 @@ def render_video_shots(comfy_url, vid, manifest):
 
     prompts = vid["shots"]
     n = len(prompts)
-    print(f"\n🎬 Generate {vid_id} — {n} shot(s). Stitch after this short only.")
+    if only:
+        if only > n:
+            raise SystemExit(f"ONLY_SHOT={only} out of range for {vid_id} ({n} shots)")
+        indices = [only - 1]
+        print(
+            f"\n🎯 ONLY_SHOT={only}: rendering {vid_id} shot {only}/{n} ONLY "
+            f"(skipping shots {[i + 1 for i in range(n) if i != only - 1]})"
+        )
+    else:
+        indices = range(n)
+        print(f"\n🎬 Generate {vid_id} — {n} shot(s). Stitch after this short only.")
 
-    for idx, prompt in enumerate(prompts):
+    for idx in indices:
+        prompt = prompts[idx]
         entry = _normalize_shot_entry(prompt)
         frames_note = (
             f" frames={entry['num_frames']}"
@@ -626,7 +669,10 @@ def execute_batch(comfy_url, test_jobs):
         urls = render_video_shots(comfy_url, vid, manifest)
         manifest[vid_id] = urls
         _save_render_manifest(manifest)
-        if urls:
+        only = _only_shot()
+        if only:
+            _finish_only_shot(vid, only, urls)
+        elif urls:
             print(f"\n🎞️ Stitching {vid_id} ({len(urls)} clips) before next short...")
             download_and_stitch({vid_id: urls}, [vid])
         else:
@@ -637,8 +683,43 @@ def execute_batch(comfy_url, test_jobs):
     return manifest
 
 
-def download_and_stitch(rendered_urls, test_jobs):
-    """Download + concat + audio/title for the given video(s)."""
+def _finish_only_shot(vid, only, urls):
+    """Save the re-rendered clip as temp_clips/{vid}_shot_{N}.mp4 (old one → .prev.mp4).
+    Stitch is skipped unless RESTITCH_LOCAL=1, which concats the existing local
+    shot_1..N clips (with the new one in place) through the normal VO/audio path."""
+    vid_id = vid["video_id"]
+    if not urls:
+        print(f"⚠️ ONLY_SHOT={only}: no clip for {vid_id} — existing local clips untouched")
+        return
+    os.makedirs("./temp_clips", exist_ok=True)
+    path = f"./temp_clips/{vid_id}_shot_{only}.mp4"
+    if os.path.isfile(path):
+        prev = f"./temp_clips/{vid_id}_shot_{only}.prev.mp4"
+        os.replace(path, prev)
+        print(f"📦 Backed up old shot {only} → {prev}")
+    r = requests.get(urls[0], stream=True)
+    r.raise_for_status()
+    with open(path, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            f.write(chunk)
+    print(f"⬇️ ONLY_SHOT={only}: saved {path}")
+
+    if not _env_flag("RESTITCH_LOCAL") or _env_flag("SKIP_STITCH"):
+        print(f"⏭️ ONLY_SHOT set → skip stitch (RESTITCH_LOCAL=1 to rebuild final from local clips)")
+        return
+    n = len(vid["shots"])
+    local_paths = [f"./temp_clips/{vid_id}_shot_{i}.mp4" for i in range(1, n + 1)]
+    missing = [p for p in local_paths if not os.path.isfile(p)]
+    if missing:
+        print(f"⚠️ RESTITCH_LOCAL: missing local clips {missing} — skip stitch")
+        return
+    print(f"\n🎞️ RESTITCH_LOCAL: stitching {vid_id} from local shots 1..{n} (new shot {only})...")
+    download_and_stitch({vid_id: local_paths}, [vid], local=True)
+
+
+def download_and_stitch(rendered_urls, test_jobs, local=False):
+    """Download + concat + audio/title for the given video(s).
+    local=True: rendered_urls values are existing local shot paths (no download)."""
     from audio_post import add_ambient_and_title, add_voice_and_captions
     from ltx_multishot import is_multishot_mode
 
@@ -660,15 +741,15 @@ def download_and_stitch(rendered_urls, test_jobs):
         output_video = f"./final_videos/{vid_id}_complete.mp4"
 
         # One-pass multishot / continuous already returns a single AV clip.
-        if is_multishot_mode(mode_by_id.get(vid_id)) or len(urls) == 1:
+        if not local and (is_multishot_mode(mode_by_id.get(vid_id)) or len(urls) == 1):
             r = requests.get(urls[0], stream=True)
             with open(silent_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
             print(f"⬇️ One-pass clip (keep LTX AV): {silent_path}")
         else:
-            local_paths = []
-            for idx, url in enumerate(urls):
+            local_paths = list(urls) if local else []
+            for idx, url in enumerate([] if local else urls):
                 path = f"./temp_clips/{vid_id}_shot_{idx+1}.mp4"
                 r = requests.get(url, stream=True)
                 with open(path, "wb") as f:
@@ -869,6 +950,10 @@ def run_one_engine(engine):
     print(
         f"🧪 CHANNEL={ch} engine={eng} | jobs={[j['video_id'] for j in jobs]}"
     )
+    only = _only_shot()
+    if only:
+        stitch = "RESTITCH_LOCAL (local shots 1..N)" if _env_flag("RESTITCH_LOCAL") and not _env_flag("SKIP_STITCH") else "SKIP"
+        print(f"🎯 ONLY_SHOT={only} → render shot {only} only; stitch={stitch}")
 
     pod_id = None
     try:

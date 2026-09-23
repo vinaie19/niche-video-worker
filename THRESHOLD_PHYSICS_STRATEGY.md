@@ -168,9 +168,9 @@ Generic “inside a black hole”, bare “speed of light”, multiverse theory 
 ### Ep 07 — Chandrasekhar Limit
 
 - **Title:** `The Exact Mass That Causes a White Dwarf Collapse (1.44 M☉)`
-- **Spoken hook:** Cross 1.44 solar masses, and electron degeneracy pressure fails completely.
+- **Spoken hook:** This tiny dead star is the size of Earth, but it weighs almost as much as the Sun.
 - **Description:** The physical limit where atomic electrons can no longer support a dying star against gravity.
-- **Frame 1:** Glowing white dwarf imploding then blasting into an expanding shockwave.
+- **Frame 1:** SAME solid white dwarf, rigid round blue-white crust with sharp circular silhouette, a thin wisp of companion gas starting to trickle on. (Arc: stable → crust cracks → shrinks and caves in → bursts with solid core + sharp debris; never soft blob / hollow ring.)
 
 ### Ep 08 — Metallic Hydrogen (400 GPa)
 

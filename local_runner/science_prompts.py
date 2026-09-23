@@ -412,63 +412,101 @@ _EP06_BEATS = [
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 145,
+        # 2026-09-23: I2V v1 drifted to oval/egg + soft swirling blob center ~0:25.
+        # Lock rigid circular solid sphere every frame; lensing kept off the rim.
         "shot": (
-            "Cinematic locked extreme close-up of the SAME plasma sphere, core now "
-            "violet-white and impossibly bright like a collapsing star, surface rippling "
-            "in continuous plasma waves, strong gravitational lensing visibly warping the "
-            "black void around it, circular silhouette still dominant and readable at "
-            "center even as light bends past its edge, final most extreme heat state, "
+            "Cinematic locked extreme close-up of the SAME solid plasma sphere, a rigid "
+            "perfectly round filled opaque ball, final most extreme heat state, surface "
+            "blazing violet-white and impossibly bright like a collapsing star, cracked "
+            "stellar photosphere with glowing violet-white fissures and bright seams "
+            "flickering across a solid surface, subtle plasma streamers at the rim, "
+            "sharp crisp perfectly circular silhouette holding the exact same round shape "
+            "and size in every frame from first to last, never stretching into an oval "
+            "or egg, the center stays a solid bright surface never a soft swirl, hole, "
+            "vortex or portal, faint gravitational lensing arcs only in the distant black "
+            "void behind it never touching or distorting the sphere outline, "
             "photoreal cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
 ]
 
 # --- Ep 07: Chandrasekhar Limit ---
+# 2026-09-23 v2: plain storytelling VO (no em dashes, no jargon opener), multi_cut
+# + SAME solid white dwarf with cracked crust / bright core (Spaghetti pattern).
+# Avoid Absolute Hot failure: no soft plasma blob, no hollow ring/portal/vortex.
 
 _EP07_BEATS = [
     {
-        "text": "At the Chandrasekhar limit—1.44 solar masses—\na white dwarf cannot hold itself up.",
+        "text": "This tiny dead star is the size of Earth,\n"
+            "but it weighs almost as much as the Sun.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot of a glowing white dwarf star, dense white-blue "
-            "disc in deep black void, subtle surface shimmer, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked wide shot of the SAME small solid white dwarf star, a rigid "
+            "perfectly round opaque ball of dense blue-white crust with fine hairline "
+            "surface texture and a faint bright glow at the limb, calm and stable, sharp "
+            "crisp circular silhouette centered against pure black void with a sparse "
+            "starfield, a thin wisp of glowing gas from a distant companion just starting "
+            "to trickle onto its surface, photoreal cinematic CGI, vertical 9:16, locked "
+            "camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
     {
-        "text": "Electron degeneracy pressure fights gravity—\nuntil that mass threshold is crossed.",
+        "text": "Keep piling on mass, and it squeezes tighter,\n"
+            "until the surface starts to crack.",
         "rate": "+0%",
-        "pause_ms": 300,
-        "num_frames": 169,
-        "shot": (
-            "Cinematic locked medium shot of a glowing white dwarf star rapidly "
-            "shrinking under severe gravitational strain, surface fracturing with "
-            "intense internal light, brighter core, "
-            f"{_SCI_SUFFIX}"
-        ),
-    },
-    {
-        "text": "Electrons can no longer support the star.\nCollapse runs away.",
-        "rate": "-4%",
-        "pause_ms": 300,
-        "num_frames": 145,
-        "shot": (
-            "Cinematic locked close-up of the star imploding into a blinding point then "
-            "blasting outward as an expanding supernova shockwave shell, "
-            f"{_SCI_SUFFIX}"
-        ),
-    },
-    {
-        "text": "The threshold is exact.\nOne mass line separates dwarf from detonation.",
-        "rate": "-12%",
-        "pause_ms": 200,
+        "pause_ms": 280,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked ultra-wide linger: expanding supernova remnant ring, "
-            "white-gold shock against void, quiet aftermath scale, "
-            f"{_SCI_SUFFIX}"
+            "Cinematic locked medium shot of the SAME solid white dwarf star, a steady "
+            "stream of glowing gas pouring onto its surface, the hard blue-white crust "
+            "splitting into sharp jagged fracture lines with blinding white-gold light "
+            "glowing up through the cracks from a bright core, crust plates clearly solid "
+            "and rigid, sharp crisp circular silhouette fully intact and the same round "
+            "shape every frame, not melting goo, not a soft blob, black void, photoreal "
+            "cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, "
+            "NO letters, NO logos, no watermarks"
+        ),
+    },
+    {
+        "text": "Cross one exact weight, and nothing inside can hold it up.\n"
+            "The whole star caves in.",
+        "rate": "-4%",
+        "pause_ms": 280,
+        "num_frames": 169,
+        # Collapse as a SOLID ball shrinking + shattering inward; ep06 shot4 lesson:
+        # never let the center read as a swirl, hole, vortex or portal.
+        "shot": (
+            "Cinematic locked close-up of the SAME solid white dwarf star rapidly "
+            "shrinking inward, cracked blue-white crust plates buckling and snapping "
+            "into sharp glowing fragments that fall toward a blazing white-hot solid "
+            "core, the star stays a rigid filled opaque sphere with a sharp crisp "
+            "circular silhouette in every frame, only smaller and brighter, the center "
+            "stays a solid bright surface never a soft swirl, hole, vortex or portal, "
+            "no lensing, no plasma blob, pure black void, photoreal cinematic CGI, "
+            "vertical 9:16, locked camera, no people, no faces, NO text, NO letters, "
+            "NO logos, no watermarks"
+        ),
+    },
+    {
+        "text": "That line is the Chandrasekhar limit, 1.44 Suns.\n"
+            "One step past it, the star explodes.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 145,
+        # Aftermath keeps the SAME object readable: solid core + sharp debris, NOT a
+        # hollow ring (ring/shell read as portal in ep06 QC).
+        "shot": (
+            "Cinematic locked ultra-wide linger of the SAME white dwarf star bursting "
+            "apart, a small blinding solid white-gold sphere still at the exact center "
+            "with a sharp circular edge, its cracked crust flung outward as distinct "
+            "sharp glowing rock-like shards and bright debris streaks, a wide expanding "
+            "cloud of filamentary white-gold and blue gas with crisp visible filament "
+            "edges filling the frame around it, not a ring, not a hollow circle, not a "
+            "hole, vortex or portal, not blurry smoke, quiet catastrophic aftermath "
+            "against deep black void, photoreal cinematic CGI, vertical 9:16, locked "
+            "camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
         ),
     },
 ]
