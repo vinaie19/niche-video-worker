@@ -437,76 +437,82 @@ _EP06_BEATS = [
 
 _EP07_BEATS = [
     {
-        "text": "This tiny dead star is the size of Earth,\n"
-            "but it weighs almost as much as the Sun.",
+        "text": "This dead star is only as big as Earth,\n"
+            "yet it weighs nearly as much as the Sun.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot of the SAME small solid white dwarf star, a rigid "
-            "perfectly round opaque ball of dense blue-white crust with fine hairline "
-            "surface texture and a faint bright glow at the limb, calm and stable, sharp "
-            "crisp circular silhouette centered against pure black void with a sparse "
-            "starfield, a thin wisp of glowing gas from a distant companion just starting "
-            "to trickle onto its surface, photoreal cinematic CGI, vertical 9:16, locked "
-            "camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
+            "Cinematic locked wide shot, one frozen moment: a single small solid white "
+            "dwarf star, a rigid perfectly round opaque ball of dense blue-white crust "
+            "with fine hairline surface texture and a thin bright glow at the limb, "
+            "perfectly circular silhouette, filled opaque disk, same center of frame, "
+            "occupying about one third of frame width, calm and stable, pure black void "
+            "with a sparse starfield, one thin wisp of glowing gas from a distant "
+            "companion star just touching its upper edge, photoreal cinematic CGI, "
+            "vertical 9:16, locked camera, no people, no faces, NO text, NO letters, "
+            "NO logos, no watermarks, not a soft blob, not a ring, not hollow"
         ),
     },
     {
-        "text": "Keep piling on mass, and it squeezes tighter,\n"
-            "until the surface starts to crack.",
+        "text": "Feed it more mass, and gravity squeezes it tighter,\n"
+            "until its surface starts to crack.",
         "rate": "+0%",
         "pause_ms": 280,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked medium shot of the SAME solid white dwarf star, a steady "
-            "stream of glowing gas pouring onto its surface, the hard blue-white crust "
-            "splitting into sharp jagged fracture lines with blinding white-gold light "
-            "glowing up through the cracks from a bright core, crust plates clearly solid "
-            "and rigid, sharp crisp circular silhouette fully intact and the same round "
-            "shape every frame, not melting goo, not a soft blob, black void, photoreal "
-            "cinematic CGI, vertical 9:16, locked camera, no people, no faces, NO text, "
-            "NO letters, NO logos, no watermarks"
+            "Cinematic locked medium shot, one frozen moment: the SAME solid white "
+            "dwarf star at the same size and same center of frame, perfectly circular "
+            "silhouette, filled opaque disk, a steady stream of glowing gas landing on "
+            "its upper edge, its hard blue-white crust already split by sharp jagged "
+            "fracture lines, blinding white-gold light glowing up through the cracks "
+            "from a bright solid core beneath, crust plates rigid and rock-like, round "
+            "edge fully intact, pure black void, photoreal cinematic CGI, vertical "
+            "9:16, locked camera, no people, no faces, NO text, NO letters, NO logos, "
+            "no watermarks, not melting goo, not a soft blob, not a ring, not hollow"
         ),
     },
     {
-        "text": "Cross one exact weight, and nothing inside can hold it up.\n"
+        "text": "Pass one exact weight, and nothing inside can push back anymore.\n"
             "The whole star caves in.",
         "rate": "-4%",
         "pause_ms": 280,
         "num_frames": 169,
-        # Collapse as a SOLID ball shrinking + shattering inward; ep06 shot4 lesson:
+        # Collapse as a SOLID ball already smaller; ep06 shot4 lesson:
         # never let the center read as a swirl, hole, vortex or portal.
         "shot": (
-            "Cinematic locked close-up of the SAME solid white dwarf star rapidly "
-            "shrinking inward, cracked blue-white crust plates buckling and snapping "
-            "into sharp glowing fragments that fall toward a blazing white-hot solid "
-            "core, the star stays a rigid filled opaque sphere with a sharp crisp "
-            "circular silhouette in every frame, only smaller and brighter, the center "
-            "stays a solid bright surface never a soft swirl, hole, vortex or portal, "
-            "no lensing, no plasma blob, pure black void, photoreal cinematic CGI, "
-            "vertical 9:16, locked camera, no people, no faces, NO text, NO letters, "
-            "NO logos, no watermarks"
+            "Cinematic locked close-up, one frozen moment: the SAME white dwarf star "
+            "already collapsed to a visibly smaller solid sphere at the same center of "
+            "frame, perfectly circular silhouette, filled opaque disk, blazing "
+            "white-hot solid surface, a thin shell of broken blue-white crust plates "
+            "caught mid-fall just outside its edge as sharp distinct glowing "
+            "fragments, bright evenly lit center with a solid surface all the way "
+            "across, pure black void, photoreal cinematic CGI, vertical 9:16, locked "
+            "camera, no people, no faces, NO text, NO letters, NO logos, no watermarks, "
+            "no swirl, no hole, no vortex, no portal, no lensing, no dark center, not "
+            "a plasma blob, not a ring"
         ),
     },
     {
-        "text": "That line is the Chandrasekhar limit, 1.44 Suns.\n"
-            "One step past it, the star explodes.",
+        "text": "That weight is the Chandrasekhar limit: 1.44 Suns.\n"
+            "Cross it, and the star blows itself apart.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 145,
         # Aftermath keeps the SAME object readable: solid core + sharp debris, NOT a
         # hollow ring (ring/shell read as portal in ep06 QC).
         "shot": (
-            "Cinematic locked ultra-wide linger of the SAME white dwarf star bursting "
-            "apart, a small blinding solid white-gold sphere still at the exact center "
-            "with a sharp circular edge, its cracked crust flung outward as distinct "
-            "sharp glowing rock-like shards and bright debris streaks, a wide expanding "
-            "cloud of filamentary white-gold and blue gas with crisp visible filament "
-            "edges filling the frame around it, not a ring, not a hollow circle, not a "
-            "hole, vortex or portal, not blurry smoke, quiet catastrophic aftermath "
-            "against deep black void, photoreal cinematic CGI, vertical 9:16, locked "
-            "camera, no people, no faces, NO text, NO letters, NO logos, no watermarks"
+            "Cinematic locked ultra-wide shot, one frozen moment just after the "
+            "explosion: a small blinding solid white-gold sphere at the exact center "
+            "of frame, perfectly circular silhouette, filled opaque disk, surrounded "
+            "by sharp glowing rock-like crust shards and bright debris streaks frozen "
+            "at many different distances from center, a cloud of filamentary "
+            "white-gold and blue gas with crisp filament edges filling the whole "
+            "frame, bright and dense near the core, never a clean outer edge, deep "
+            "black void, photoreal cinematic CGI, vertical 9:16, locked camera, no "
+            "people, no faces, NO text, NO letters, NO logos, no watermarks, not a "
+            "ring, not a hollow circle, no hole, no vortex, no portal, no dark "
+            "center, not blurry smoke"
         ),
     },
 ]
