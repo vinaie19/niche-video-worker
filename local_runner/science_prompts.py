@@ -7,6 +7,11 @@ Schedule: ../POSTING_SCHEDULE_B.md
 Run: CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sound_194db python run_test_batch.py
 """
 
+import os
+
+# Approved I2V first frames: i2v_stills/<video_id>/shot_N.png (auto-attached when present).
+_I2V_STILLS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "i2v_stills")
+
 _SCI_SUFFIX = (
     "photo-realistic cinematic CGI, vertical 9:16, locked camera, "
     "no people, no faces, NO text, NO letters, NO logos, no watermarks"
@@ -55,11 +60,20 @@ def _science_job(video_id, script, shots, num_frames, steps, script_beats=None):
                 entry["num_frames"] = int(b["num_frames"])
             if b.get("steps") is not None:
                 entry["steps"] = int(b["steps"])
+            for key in ("start_image", "start_image_url"):
+                if b.get(key):
+                    entry[key] = b[key]
             beat_shots.append(entry)
         if beat_shots:
             job["shots"] = beat_shots
     else:
         job["script"] = (script or "").strip()
+    for i, entry in enumerate(job["shots"]):
+        if not isinstance(entry, dict) or entry.get("start_image") or entry.get("start_image_url"):
+            continue
+        still = os.path.join(_I2V_STILLS_DIR, video_id, f"shot_{i + 1}.png")
+        if os.path.isfile(still):
+            job["shots"][i] = {**entry, "start_image": still}
     return job
 
 
