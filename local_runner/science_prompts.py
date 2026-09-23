@@ -431,117 +431,81 @@ _EP06_BEATS = [
 ]
 
 # --- Ep 07: Chandrasekhar Limit ---
-# 2026-09-23 v2: plain storytelling VO (no em dashes, no jargon opener), multi_cut
-# + SAME solid white dwarf with cracked crust / bright core (Spaghetti pattern).
-# Avoid Absolute Hot failure: no soft plasma blob, no hollow ring/portal/vortex.
+# 2026-09-23 v4: shot prompts rewritten as I2V MOTION prompts (were still-gen text).
+# Rules learned from ep06: the worker has no negative-prompt field (run_test_batch
+# _build_shot_payload), so every "NO vortex / NO portal / NO ring" token was fed to
+# T5 as a positive concept -- that is what summoned the swirl/portal failures. Bans
+# are now stated positively ("stays a solid opaque ball"). Identity, size and framing
+# are carried by the approved start_image, not by words. Still prompts live in
+# CHANDRASEKHAR_PROMPTS.md. VO: companion-star theft gives the story an agent.
 
 _EP07_BEATS = [
     {
-        "text": "This dead star is only as big as Earth,\n"
-            "yet it weighs nearly as much as the Sun.",
+        "text": "This dead star is only the size of Earth,\n"
+            "but it weighs almost as much as the Sun.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot, one frozen moment: a single small solid white "
-            "dwarf star, a rigid perfectly round opaque ball of dense blue-white crust "
-            "with fine hairline surface texture and a thin bright glow at the limb, "
-            "perfectly circular silhouette, filled opaque disk, same center of frame, "
-            "occupying about one third of frame width, calm and stable, pure black void "
-            "with a sparse starfield, one thin wisp of glowing gas from a distant "
-            "companion star just touching its upper edge, photoreal cinematic CGI, "
-            "vertical 9:16, locked camera, no people, no faces, NO text, NO letters, "
-            "NO logos, no watermarks, not a soft blob, not a ring, not hollow"
+            "A small dense white dwarf star hangs still in black space, its blue-white "
+            "crust finely cracked, a thin ribbon of glowing gas trailing in from off "
+            "frame and curling down onto its upper edge. Through the shot the ribbon "
+            "drifts and slowly feeds into the surface, the glow at the limb swells very "
+            "gently, and faint light ripples travel across the crust. The star holds as "
+            "a solid opaque ball, perfectly round and the same size from first frame to "
+            "last. Calm, heavy, patient. Locked camera, no camera movement, photoreal "
+            "cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks"
         ),
     },
     {
-        "text": "Feed it more mass, and gravity squeezes it tighter,\n"
-            "until its surface starts to crack.",
+        "text": "It is stealing gas from a neighbouring star,\n"
+            "and every gram it steals crushes it tighter.",
         "rate": "+0%",
         "pause_ms": 280,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked medium shot, one frozen moment: the SAME solid "
-            "blue-white white dwarf star as shot 1, same center of frame, the same "
-            "size or slightly smaller (the disk spans about two-thirds of the frame "
-            "width and never more), perfectly sharp circular silhouette, filled "
-            "opaque disk. A broad, diffuse curtain of pale blue-white gas arcs in "
-            "from off-frame at the lower left and upper right and pours onto the "
-            "star, spreading across a wide patch of its upper-left surface as a "
-            "low, flat glowing splash that hugs the crust. The mass lands on the "
-            "surface; it does not shoot out from it. The star's hard, rigid, "
-            "rock-like blue-white crust is split by sharp jagged fracture lines, "
-            "with cool white light glowing up through the cracks from a bright "
-            "solid core beneath. The crust plates are rigid and unbroken in shape, "
-            "the round edge fully intact, and the only light comes from the "
-            "surface, the cracks and the infall. At most one faint thin secondary "
-            "wisp near the edge, far dimmer than the infall. Pure black void, cool "
-            "blue-white palette throughout, photoreal cinematic CGI, vertical 9:16, "
-            "locked camera, no people, no faces, NO text, NO letters, NO logos, no "
-            "watermarks, NO polar jet, no beam, no light column, no pillar, no "
-            "bipolar outflow, no vertical shaft of light from the top or bottom of "
-            "the star, no gold, no orange, not melting goo, not a soft blob, not a "
-            "ring, not hollow, no halo"
+            "The same white dwarf fills the frame, its rigid blue-white crust broken "
+            "into plates by sharp fracture lines. Through the shot a pale blue sheet of "
+            "gas settles onto the upper left of the surface and spreads flat across the "
+            "crust, the fracture lines slowly widen, and cool white light rises brighter "
+            "through the cracks from the solid core beneath. The whole ball contracts a "
+            "little and stays an opaque sphere with a hard round edge. Pressure "
+            "building, nothing escaping. Locked camera, no camera movement, photoreal "
+            "cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks"
         ),
     },
     {
-        "text": "Pass one exact weight, and nothing inside can push back anymore.\n"
-            "The whole star caves in.",
+        "text": "Inside, electrons hold the whole star up.\n"
+            "Add too much weight and they give way, all at once.",
         "rate": "-4%",
         "pause_ms": 280,
         "num_frames": 169,
-        # Collapse as a SOLID ball already smaller; ep06 shot4 lesson:
-        # never let the center read as a swirl, hole, vortex or portal.
         "shot": (
-            "Cinematic locked close-up, one frozen moment: the SAME solid "
-            "blue-white white dwarf star, already collapsed, occupying ONLY about "
-            "one quarter to one third of the frame width (much smaller than a "
-            "full-frame star), same center of frame. Perfectly sharp circular "
-            "silhouette, filled opaque disk, blazing cool blue-white solid surface "
-            "evenly lit all the way across, cracked crust with fine jagged fracture "
-            "lines. Broken blue-white crust shards fall INWARD toward the surface "
-            "only — denser and larger near the sphere, thinning farther out, "
-            "asymmetrical lopsided cluster mainly on the upper-left and right, "
-            "lower half nearly empty. Each shard is a sharp angular rock-like "
-            "fragment elongated toward the center as if gravity is pulling it down "
-            "onto the crust; some shards are touching or striking the surface. "
-            "Irregular clumped spacing with large empty gaps; shards never trace a "
-            "circle around the edge. Pure black void, cool blue-white palette only, "
-            "photoreal cinematic CGI, vertical 9:16, locked camera, no people, no "
-            "faces, NO text, NO letters, NO logos, no watermarks. HARD BANS: NO "
-            "ring of shards, NO halo, NO orbit, NO evenly spaced perimeter debris, "
-            "NO doughnut, NO torus, NO portal, NO swirl, NO hole, NO vortex, NO "
-            "lensing, NO dark center, NO outward explosion streaks, NO motion blur "
-            "trails shooting away, NO gold, NO orange, not a plasma blob"
+            "The same white dwarf, smaller now and blazing, its cracked crust shearing "
+            "apart along one side. Through the shot angular crust shards peel away and "
+            "fall inward, striking the surface, while the whole sphere visibly shrinks "
+            "and its light climbs to a hard blue-white blaze. Every piece moves toward "
+            "the centre. The core stays a solid opaque ball, bright evenly across its "
+            "whole face, its edge staying sharp as it contracts. Fast, violent, "
+            "collapsing inward. Locked camera, no camera movement, photoreal cinematic "
+            "CGI, vertical 9:16, no people, no text, no logos, no watermarks"
         ),
     },
     {
-        "text": "That weight is the Chandrasekhar limit: 1.44 Suns.\n"
-            "Cross it, and the star blows itself apart.",
+        "text": "That breaking point is the Chandrasekhar limit, 1.44 Suns.\n"
+            "Cross it, and the star tears itself apart.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 145,
-        # Aftermath keeps the SAME object readable: solid core + sharp debris, NOT a
-        # hollow ring (ring/shell read as portal in ep06 QC).
         "shot": (
-            "Cinematic locked ultra-wide shot, one frozen moment just after the "
-            "explosion: a small, blinding, solid blue-white sphere at the exact "
-            "center of frame, about one sixth of the frame width, perfectly sharp "
-            "circular silhouette, filled opaque disk, the SAME star identity as "
-            "shot 1. Around it hang sharp, chunky, angular rock-like crust shards "
-            "in cool blue-white and silver. They are frozen at many different "
-            "distances from the center, tilted at random angles, and scattered "
-            "unevenly in clumps with empty gaps. They are discrete solid fragments, "
-            "not motion streaks. Lumpy, patchy clouds of filamentary pale-blue and "
-            "white gas with crisp, torn filament edges fill the frame unevenly: "
-            "bright and dense near the core, broken and asymmetrical farther out, "
-            "never a clean outer edge. Deep black void, strictly cool blue-white "
-            "and silver palette, photoreal cinematic CGI, vertical 9:16, locked "
-            "camera, no people, no faces, NO text, NO letters, NO logos, no "
-            "watermarks, NO radial streaks, NO speed lines, NO light tunnel, NO "
-            "starburst rays, NO warp-speed effect, NO vortex, NO swirl, no gold, no "
-            "amber, no orange, no warm tones, not a ring, not a hollow circle, no "
-            "hole, no portal, no dark center, not blurry smoke"
+            "A blinding blue-white core burns at the centre of a wide field of sharp "
+            "crust fragments and torn filaments of pale blue gas. Through the shot the "
+            "fragments and the gas drift slowly outward in every direction, the "
+            "filaments stretch and thin as they travel, and the core flares once and "
+            "then settles to a steady burn. The movement is slow and heavy, wreckage "
+            "coasting through vacuum long after the blast. Quiet catastrophic aftermath. "
+            "Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, "
+            "no people, no text, no logos, no watermarks"
         ),
     },
 ]
