@@ -1,0 +1,247 @@
+{
+  "11": {
+    "inputs": {
+      "clip_name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "LTX-2.5 Text Encoder"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "LTX-2.5 UNET"
+    }
+  },
+  "13": {
+    "inputs": {
+      "vae_name": "ltx-2.5-video-vae-bf16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX-2.5 Video VAE"
+    }
+  },
+  "14": {
+    "inputs": {
+      "vae_name": "ltx-2.5-audio-vae-bf16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX-2.5 Audio VAE"
+    }
+  },
+  "44": {
+    "inputs": {
+      "text": "placeholder prompt",
+      "clip": ["11", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt"
+    }
+  },
+  "93": {
+    "inputs": {
+      "text": "pc game, console game, video game, cartoon, childish, ugly, blurry, low quality, worst quality, deformed, text, watermark, logo, people, faces, humans",
+      "clip": ["11", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative Prompt"
+    }
+  },
+  "16": {
+    "inputs": {
+      "frame_rate": 24,
+      "positive": ["44", 0],
+      "negative": ["93", 0]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTX Conditioning"
+    }
+  },
+  "17": {
+    "inputs": {
+      "width": 1088,
+      "height": 1920,
+      "length": 97,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "LTX Empty Video Latent"
+    }
+  },
+  "18": {
+    "inputs": {
+      "frames_number": 97,
+      "frame_rate": 24,
+      "batch_size": 1,
+      "audio_vae": ["14", 0]
+    },
+    "class_type": "LTXVEmptyLatentAudio",
+    "_meta": {
+      "title": "LTX Empty Audio Latent"
+    }
+  },
+  "30": {
+    "inputs": {
+      "image": "start.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "I2V Start Frame"
+    }
+  },
+  "31": {
+    "inputs": {
+      "image": ["30", 0],
+      "img_compression": 18
+    },
+    "class_type": "LTXVPreprocess",
+    "_meta": {
+      "title": "LTX Preprocess Start Frame"
+    }
+  },
+  "32": {
+    "inputs": {
+      "vae": ["13", 0],
+      "image": ["31", 0],
+      "latent": ["17", 0],
+      "strength": 0.85,
+      "bypass": false
+    },
+    "class_type": "LTXVImgToVideoInplace",
+    "_meta": {
+      "title": "LTX Image To Video Inplace"
+    }
+  },
+  "19": {
+    "inputs": {
+      "video_latent": ["32", 0],
+      "audio_latent": ["18", 0]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTX Concat AV Latent"
+    }
+  },
+  "20": {
+    "inputs": {
+      "noise_seed": 888888
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "LTX Noise"
+    }
+  },
+  "21": {
+    "inputs": {
+      "sampler_name": "euler_ancestral_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "LTX Sampler Select"
+    }
+  },
+  "22": {
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "LTX Distilled Sigmas"
+    }
+  },
+  "23": {
+    "inputs": {
+      "model": ["12", 0],
+      "positive": ["16", 0],
+      "negative": ["16", 1],
+      "video_cfg": 1.0,
+      "audio_cfg": 1.0
+    },
+    "class_type": "LTXVDualCFGGuider",
+    "_meta": {
+      "title": "LTX Dual CFG Guider"
+    }
+  },
+  "24": {
+    "inputs": {
+      "noise": ["20", 0],
+      "guider": ["23", 0],
+      "sampler": ["21", 0],
+      "sigmas": ["22", 0],
+      "latent_image": ["19", 0]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "LTX Sampler"
+    }
+  },
+  "25": {
+    "inputs": {
+      "av_latent": ["24", 0]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTX Separate AV"
+    }
+  },
+  "26": {
+    "inputs": {
+      "samples": ["25", 0],
+      "vae": ["13", 0],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 4096,
+      "temporal_overlap": 8
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "LTX Video VAE Decode"
+    }
+  },
+  "27": {
+    "inputs": {
+      "samples": ["25", 1],
+      "audio_vae": ["14", 0]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTX Audio VAE Decode"
+    }
+  },
+  "28": {
+    "inputs": {
+      "images": ["26", 0],
+      "fps": 24,
+      "audio": ["27", 0]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "LTX Create Video"
+    }
+  },
+  "29": {
+    "inputs": {
+      "filename_prefix": "LTX25_I2V",
+      "format": "mp4",
+      "codec": "h264",
+      "video": ["28", 0]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "LTX Save Video"
+    }
+  }
+}

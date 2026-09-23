@@ -31,6 +31,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt \
 COPY handler.py /workspace/handler.py
 COPY setup.py /workspace/setup.py
 COPY workflow_ltx_t2v.json /workspace/workflow_ltx_t2v.json
+COPY workflow_ltx_i2v.json /workspace/workflow_ltx_i2v.json
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
 # Late layer: Triton/Gemma4 TE JIT needs a host C compiler (keeps torch layers cached)

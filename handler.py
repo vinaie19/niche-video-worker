@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import base64
 import requests
 import boto3
 import threading
@@ -28,6 +29,7 @@ VALID_FRAME_COUNTS = _build_valid_frame_counts()
 COMFY_HEADERS = {"Host": "127.0.0.1"}
 COMFY_URL = "http://127.0.0.1:8188"
 OUTPUT_DIR = "/comfyui/output"
+INPUT_DIR = "/comfyui/input"
 
 LTX_UNET_DISTILLED = "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors"
 LTX_UNET_DEV = "ltx-2.5-22b-dev-transformer-comfy-int8-convrot.safetensors"
@@ -193,8 +195,30 @@ def detect_ltx_models():
     }
 
 
-def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=None):
-    """Patch LTX-2.5 single-stage distilled AV T2V for vertical Shorts (~1088×1920)."""
+def save_start_image(job_id, start_image_url=None, start_image_b64=None):
+    """Download/decode an I2V first frame into /comfyui/input/. Returns the filename."""
+    os.makedirs(INPUT_DIR, exist_ok=True)
+    filename = f"{job_id}_start.png"
+    dest = os.path.join(INPUT_DIR, filename)
+    if start_image_url:
+        res = requests.get(start_image_url, timeout=60)
+        res.raise_for_status()
+        with open(dest, "wb") as f:
+            f.write(res.content)
+    elif start_image_b64:
+        raw = start_image_b64
+        if raw.startswith("data:"):
+            raw = raw.split(",", 1)[1]
+        with open(dest, "wb") as f:
+            f.write(base64.b64decode(raw))
+    else:
+        raise ValueError("save_start_image requires start_image_url or start_image_b64")
+    print(f"🖼️ Saved I2V start frame → {dest}")
+    return filename
+
+
+def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=None, start_image_filename=None):
+    """Patch LTX-2.5 single-stage distilled AV T2V/I2V for vertical Shorts (~1088×1920)."""
     if num_frames is None:
         num_frames = default_num_frames()
     else:
@@ -265,6 +289,9 @@ def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=Non
 
         if class_type == "CreateVideo":
             node["inputs"]["fps"] = fps
+
+        if class_type == "LoadImage" and start_image_filename:
+            node["inputs"]["image"] = start_image_filename
 
     print(
         f"🎚️ LTX-2.5 patch | {width}x{height} | frames={num_frames} "
@@ -445,10 +472,30 @@ def upload_to_r2(local_file_path, r2_key):
     return f"{os.getenv('R2_PUBLIC_URL_PREFIX')}/{r2_key}"
 
 
-def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None, steps=None):
-    """LTX-2.5 native AV T2V at ~1088×1920, then deliver exact 1080×1920."""
-    with open("/workspace/workflow_ltx_t2v.json", "r") as f:
+def execute_multi_cut(
+    job_id,
+    prompt_text,
+    video_id,
+    shot_index,
+    num_frames=None,
+    steps=None,
+    start_image_url=None,
+    start_image_b64=None,
+):
+    """LTX-2.5 native AV T2V (or I2V, when a start image is given) at ~1088×1920,
+    then deliver exact 1080×1920."""
+    is_i2v = bool(start_image_url or start_image_b64)
+    workflow_path = (
+        "/workspace/workflow_ltx_i2v.json" if is_i2v else "/workspace/workflow_ltx_t2v.json"
+    )
+    with open(workflow_path, "r") as f:
         workflow = json.load(f)
+
+    start_image_filename = None
+    if is_i2v:
+        start_image_filename = save_start_image(
+            job_id, start_image_url=start_image_url, start_image_b64=start_image_b64
+        )
 
     models = detect_ltx_models()
     if not models.get("unet"):
@@ -468,7 +515,12 @@ def execute_multi_cut(job_id, prompt_text, video_id, shot_index, num_frames=None
     )
 
     workflow = patch_ltx_workflow(
-        workflow, prompt_text, models, num_frames=num_frames, steps=steps
+        workflow,
+        prompt_text,
+        models,
+        num_frames=num_frames,
+        steps=steps,
+        start_image_filename=start_image_filename,
     )
     output_filename = submit_and_wait(workflow, timeout_s=2400)
     local_file_path = os.path.join(OUTPUT_DIR, output_filename)
@@ -506,6 +558,8 @@ def execute_render_async(
     num_frames=None,
     steps=None,
     join_style=None,
+    start_image_url=None,
+    start_image_b64=None,
 ):
     try:
         jobs[job_id]["status"] = "processing"
@@ -534,6 +588,8 @@ def execute_render_async(
             shot_index,
             num_frames=num_frames,
             steps=steps,
+            start_image_url=start_image_url,
+            start_image_b64=start_image_b64,
         )
         jobs[job_id]["shot_mode"] = mode
         if join_style:
@@ -596,6 +652,7 @@ def health_check():
                 "continue",
             ],
             "join_styles": ["cut", "continue"],
+            "i2v": True,
         }
     )
 
@@ -615,6 +672,8 @@ def handle_prompt():
         num_frames = int(num_frames)
     if steps is not None:
         steps = int(steps)
+    start_image_url = data.get("start_image_url")
+    start_image_b64 = data.get("start_image_b64")
 
     jobs[job_id] = {
         "status": "queued",
@@ -625,6 +684,7 @@ def handle_prompt():
         "chunks": chunks,
         "num_frames": num_frames,
         "steps": steps,
+        "i2v": bool(start_image_url or start_image_b64),
         "created_at": time.time(),
     }
 
@@ -641,6 +701,8 @@ def handle_prompt():
             num_frames,
             steps,
             join_style,
+            start_image_url,
+            start_image_b64,
         )
 
     threading.Thread(target=_start, daemon=True).start()
@@ -655,6 +717,7 @@ def handle_prompt():
             "chunks": chunks,
             "num_frames": num_frames,
             "steps": steps,
+            "i2v": bool(start_image_url or start_image_b64),
         }
     )
 

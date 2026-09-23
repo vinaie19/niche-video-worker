@@ -390,7 +390,7 @@ def wait_for_worker(comfy_url):
 
 
 def _normalize_shot_entry(shot):
-    """Accept a prompt string or {prompt|shot, num_frames?, steps?, chunks?, upscale?}."""
+    """Accept a prompt string or {prompt|shot, num_frames?, steps?, chunks?, upscale?, start_image?, start_image_url?}."""
     if isinstance(shot, dict):
         prompt = (shot.get("prompt") or shot.get("shot") or "").strip()
         if not prompt:
@@ -401,9 +401,31 @@ def _normalize_shot_entry(shot):
             "steps": shot.get("steps"),
             "chunks": shot.get("chunks"),
             "upscale": shot.get("upscale"),
+            "start_image": shot.get("start_image"),
+            "start_image_url": shot.get("start_image_url"),
         }
         return meta
-    return {"prompt": str(shot), "num_frames": None, "steps": None, "chunks": None, "upscale": None}
+    return {
+        "prompt": str(shot),
+        "num_frames": None,
+        "steps": None,
+        "chunks": None,
+        "upscale": None,
+        "start_image": None,
+        "start_image_url": None,
+    }
+
+
+def _upload_start_image(local_path, video_id, shot_index):
+    """Upload a local I2V first frame to R2 under stills/<video_id>/shot_N.png. Returns the public URL."""
+    if not os.path.isfile(local_path):
+        raise FileNotFoundError(f"start_image not found: {local_path}")
+    ext = os.path.splitext(local_path)[1] or ".png"
+    r2_key = f"stills/{video_id}/shot_{shot_index}{ext}"
+    s3_client.upload_file(local_path, os.getenv("R2_BUCKET_NAME"), r2_key)
+    url = f"{os.getenv('R2_PUBLIC_URL_PREFIX')}/{r2_key}"
+    print(f"🖼️ Uploaded start image {local_path} → {url}")
+    return url
 
 
 def _build_shot_payload(vid, idx, shot, shot_mode, join_style=None, override_prompt=None, override_frames=None):
@@ -416,6 +438,12 @@ def _build_shot_payload(vid, idx, shot, shot_mode, join_style=None, override_pro
         "chunks": entry["chunks"] if entry["chunks"] is not None else vid.get("chunks", 2),
         "upscale": entry["upscale"] if entry["upscale"] is not None else vid.get("upscale", True),
     }
+    if entry["start_image_url"]:
+        payload["start_image_url"] = entry["start_image_url"]
+    elif entry["start_image"]:
+        payload["start_image_url"] = _upload_start_image(
+            entry["start_image"], vid["video_id"], idx + 1
+        )
     if join_style:
         payload["join_style"] = join_style
     # Per-shot num_frames wins over job/env default (LTX uses 8k+1 frame grid).
