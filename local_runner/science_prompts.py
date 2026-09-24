@@ -511,50 +511,81 @@ _EP07_BEATS = [
 ]
 
 # --- Ep 08: Metallic Hydrogen ---
+# 2026-09-24 v2 retention rewrite: action-verb hook with 400 GPa in the first 8
+# spoken words, shot 1 shows gas turning to metal, threshold -> paradox -> law ->
+# lightning climax. Positive-only motion prompts. Pack: METALLIC_HYDROGEN_PROMPTS.md
 
 _EP08_BEATS = [
     {
-        "text": "This is the metallic hydrogen threshold:\ncompress gas to 4 million atmospheres, and it turns into metal.",
+        "text": "Squeeze hydrogen to 400 gigapascals,\n"
+            "and the lightest gas there is turns into liquid metal.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked descending POV through pitch-black Jovian storm clouds "
-            "toward a turbulent mirror-reflective liquid silver surface, "
-            f"{_SCI_SUFFIX}"
+            "A thick wall of pale grey hydrogen fog fills the upper two thirds of frame "
+            "above a small pool of mirror-bright liquid silver at the bottom. Through the "
+            "shot the fog is pressed straight down from above, its layers squeezing "
+            "tighter and darker as they sink, and where the fog touches the pool it turns "
+            "into shining liquid metal. The silver pool rises and spreads outward to both "
+            "edges until it fills the lower half, its surface flat and level like "
+            "mercury, reflecting the fog above. Fast, heavy, crushing downward. Locked "
+            "camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no "
+            "people, no text, no logos, no watermarks"
         ),
     },
     {
-        "text": "Deep inside a gas giant, pressure forces molecules so close\nelectrons delocalize.",
+        "text": "That is four million times the air on your skin.\n"
+            "An invisible gas becomes a mirror.",
         "rate": "+0%",
         "pause_ms": 300,
         "num_frames": 169,
         "shot": (
-            "Cinematic locked medium shot of translucent hydrogen gas layers crushing "
-            "downward into denser glowing bands, amber to silver transition, "
-            f"{_SCI_SUFFIX}"
+            "The SAME liquid silver sea fills the lower half of frame under a heavy "
+            "charcoal storm deck with faint brown-grey bands, a sharp level horizon "
+            "across the middle. Through the shot the last thin wisps of grey fog drift "
+            "down onto the metal and melt into it, and the reflection in the sea sharpens "
+            "until the storm clouds appear crisp and upside down in the silver, like a "
+            "flawless mirror. The cloud bands above crawl slowly left to right and their "
+            "reflection follows them exactly. The surface stays flat, level and perfectly "
+            "still. Calm, eerie, heavy. Locked camera, no camera movement, photoreal "
+            "cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks"
         ),
     },
     {
-        "text": "Gas becomes a liquid metallic sea—\nconductive, reflective, alien.",
+        "text": "Crush atoms close enough, and their electrons break free.\n"
+            "Free electrons are what make metal shine.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 145,
         "shot": (
-            "Cinematic locked close-up of a churning liquid metal ocean surface, "
-            "mirror reflections of storm light, mercury-like ripples, "
-            f"{_SCI_SUFFIX}"
+            "Close on the SAME liquid silver sea, the mercury-bright surface filling the "
+            "lower three quarters of frame, a strip of dark storm sky across the top. "
+            "Through the shot thousands of tiny bright white glints stream across the "
+            "metal from left to right like sparks flowing in a current, low ripples roll "
+            "the same way, and the whole surface grows steadily brighter until it gleams "
+            "like polished chrome. The metal stays one smooth opaque liquid sheet, flat "
+            "and level, the glints riding on top of it. Fast, alive, electric. Locked "
+            "camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no "
+            "people, no text, no logos, no watermarks"
         ),
     },
     {
-        "text": "The threshold is 400 gigapascals.\nPast it, hydrogen stops being a gas.",
+        "text": "Deep inside Jupiter,\n"
+            "this is real: an ocean of liquid metal wider than the Earth.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked wide linger: vast metallic hydrogen sea under dark cloud "
-            "deck, silver horizon curve, deep pressure gloom, "
-            f"{_SCI_SUFFIX}"
+            "Ultra-wide on the SAME liquid silver sea stretching to a gently curved "
+            "horizon in the lower third of frame, a vast charcoal storm deck with "
+            "brown-grey bands filling the sky above. Through the shot a single blue-white "
+            "lightning bolt strikes the center of the sea, and the entire mirror surface "
+            "flashes bright white all the way to the horizon, then fades back to silver. "
+            "One flat circular ripple spreads slowly outward from the strike point across "
+            "the metal. Cloud bands crawl slowly left to right. Enormous, quiet, final. "
+            "Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, "
+            "no people, no text, no logos, no watermarks"
         ),
     },
 ]

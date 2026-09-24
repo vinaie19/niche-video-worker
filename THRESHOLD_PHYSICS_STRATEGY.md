@@ -175,7 +175,7 @@ Generic “inside a black hole”, bare “speed of light”, multiverse theory 
 ### Ep 08 — Metallic Hydrogen (400 GPa)
 
 - **Title:** `The Exact Pressure That Turns Gas into Liquid Metal (400 GPa)`
-- **Spoken hook:** Compress hydrogen to 4 million atmospheres, and it turns into metal.
+- **Spoken hook:** Squeeze hydrogen to 400 gigapascals, and the lightest gas there is turns into liquid metal.
 - **Description:** Descending into the deep planetary core where extreme pressure forces gas into a liquid metallic sea.
 - **Frame 1:** Descent through pitch-black storms onto a turbulent mirror-reflective liquid silver surface.
 

@@ -143,7 +143,7 @@ One threshold. One law. One image.
 - **Title:** `The Exact Mass That Causes a White Dwarf Collapse (1.44 M☉)`
 - **Spoken hook:** `This tiny dead star is the size of Earth, but it weighs almost as much as the Sun.`
 - **Shot mode:** `multi_cut` (4 SAME solid white-dwarf shots, cracked crust / bright core; Spaghetti path)
-- **Status:** Prompt ready v2 (plain VO, solid white dwarf) — awaiting stills QC (no RunPod until approved)
+- **Status:** Prompt ready v2 (plain VO, solid white dwarf) — draft stills ready — awaiting stills QC before LTX (no RunPod until approved)
 - **Description:**
 ```
 A dead star the size of Earth. Keep adding mass and it cracks, then past one exact weight, 1.44 Suns, it caves in and explodes.
@@ -157,8 +157,9 @@ One threshold. One law. One image.
 - **File:** `sci_ep08_metallic_hydrogen_hook.mp4`
 - **Slug:** `sci_ep08_metallic_hydrogen`
 - **Title:** `The Exact Pressure That Turns Gas into Liquid Metal (400 GPa)`
-- **Spoken hook:** `This is the metallic hydrogen threshold: compress gas to 4 million atmospheres, and it turns into metal.`
-- **Status:** Pending
+- **Spoken hook:** `Squeeze hydrogen to 400 gigapascals, and the lightest gas there is turns into liquid metal.`
+- **Shot mode:** `multi_cut` (4 SAME metallic-hydrogen sea shots; Spaghetti path)
+- **Status:** Prompt ready v2 (retention rewrite: action hook, 400 GPa in first 8 spoken words, shot 1 shows gas turning to metal, lightning climax) — draft stills ready (1080x1920) — awaiting stills QC before LTX. Pack: `local_runner/METALLIC_HYDROGEN_PROMPTS.md`
 - **Description:**
 ```
 Descending into the deep planetary core where extreme pressure forces gas into a liquid metallic sea.
