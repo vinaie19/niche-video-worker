@@ -517,8 +517,8 @@ _EP07_BEATS = [
 
 _EP08_BEATS = [
     {
-        "text": "Squeeze hydrogen to 400 gigapascals,\n"
-            "and the lightest gas there is turns into liquid metal.",
+        "text": "Four hundred gigapascals.\n"
+            "Hydrogen, the lightest gas, becomes liquid metal.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -536,7 +536,7 @@ _EP08_BEATS = [
     },
     {
         "text": "That is four million times the air on your skin.\n"
-            "An invisible gas becomes a mirror.",
+            "An invisible cloud turns into a chrome sea.",
         "rate": "+0%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -553,8 +553,8 @@ _EP08_BEATS = [
         ),
     },
     {
-        "text": "Crush atoms close enough, and their electrons break free.\n"
-            "Free electrons are what make metal shine.",
+        "text": "Crush the atoms that close and electrons break free.\n"
+            "Those free electrons are why metal shines.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 145,
@@ -571,8 +571,8 @@ _EP08_BEATS = [
         ),
     },
     {
-        "text": "Deep inside Jupiter,\n"
-            "this is real: an ocean of liquid metal wider than the Earth.",
+        "text": "Deep in Jupiter this is not theory.\n"
+            "An ocean of liquid metal wider than Earth.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 153,

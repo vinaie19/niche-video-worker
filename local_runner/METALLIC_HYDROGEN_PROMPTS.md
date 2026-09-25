@@ -1,10 +1,10 @@
 # Metallic Hydrogen (sci_ep08) — v2 multi_cut + liquid metal sea
 
 **Title:** The Exact Pressure That Turns Gas into Liquid Metal (400 GPa)
-**Spoken hook:** Squeeze hydrogen to 400 gigapascals, and the lightest gas there is turns into liquid metal.
+**Spoken hook:** Four hundred gigapascals. Hydrogen, the lightest gas, becomes liquid metal.
 **Mode:** `multi_cut` (default) — four SAME metallic-hydrogen sea shots, Spaghetti path
-**VO words:** 62 (no em dashes)
-**First 8 spoken words:** Squeeze hydrogen to 400 gigapascals and the
+**VO words:** 59 (no em dashes)
+**First 8 spoken words:** Four hundred gigapascals Hydrogen the lightest gas
 **Status:** Prompt pack v2 + draft stills in `i2v_stills/sci_ep08_metallic_hydrogen/`. Awaiting your stills QC before LTX.
 
 ```bash
@@ -34,16 +34,16 @@ The SAME place in every shot:
 
 ## VO (full script)
 
-1. Squeeze hydrogen to 400 gigapascals, and the lightest gas there is turns into liquid metal.
-2. That is four million times the air on your skin. An invisible gas becomes a mirror.
-3. Crush atoms close enough, and their electrons break free. Free electrons are what make metal shine.
-4. Deep inside Jupiter, this is real: an ocean of liquid metal wider than the Earth.
+1. Four hundred gigapascals. Hydrogen, the lightest gas, becomes liquid metal.
+2. That is four million times the air on your skin. An invisible cloud turns into a chrome sea.
+3. Crush the atoms that close and electrons break free. Those free electrons are why metal shines.
+4. Deep in Jupiter this is not theory. An ocean of liquid metal wider than Earth.
 
 ---
 
 ## Beat 1 — Threshold (gas → metal)
 
-**VO:** Squeeze hydrogen to 400 gigapascals, and the lightest gas there is turns into liquid metal.
+**VO:** Four hundred gigapascals. Hydrogen, the lightest gas, becomes liquid metal.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: a thick wall of pale grey hydrogen fog fills the upper two thirds of frame above a small pool of mirror-bright liquid silver at the bottom. The fog presses against the silver and is already turning into shining liquid metal where they meet. The silver pool sits low, flat and level like mercury. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
@@ -55,7 +55,7 @@ A thick wall of pale grey hydrogen fog fills the upper two thirds of frame above
 
 ## Beat 2 — Paradox (invisible gas → mirror)
 
-**VO:** That is four million times the air on your skin. An invisible gas becomes a mirror.
+**VO:** That is four million times the air on your skin. An invisible cloud turns into a chrome sea.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: the SAME liquid silver sea fills the lower half of frame under a heavy charcoal storm deck with faint brown-grey bands, a sharp level horizon across the middle. Thin wisps of grey fog hang just above the metal. The storm clouds appear crisp and upside down in the silver, like a flawless mirror. The surface stays flat, level and perfectly still. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
@@ -67,7 +67,7 @@ The SAME liquid silver sea fills the lower half of frame under a heavy charcoal 
 
 ## Beat 3 — Law (free electrons shine)
 
-**VO:** Crush atoms close enough, and their electrons break free. Free electrons are what make metal shine.
+**VO:** Crush the atoms that close and electrons break free. Those free electrons are why metal shines.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: close on the SAME liquid silver sea, the mercury-bright surface filling the lower three quarters of frame, a strip of dark storm sky across the top. Thousands of tiny bright white glints sit across the metal like sparks frozen in a current. The metal is one smooth opaque liquid sheet, flat and level, gleaming like polished chrome. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
@@ -79,7 +79,7 @@ Close on the SAME liquid silver sea, the mercury-bright surface filling the lowe
 
 ## Beat 4 — Climax (Jupiter-scale ocean + lightning)
 
-**VO:** Deep inside Jupiter, this is real: an ocean of liquid metal wider than the Earth.
+**VO:** Deep in Jupiter this is not theory. An ocean of liquid metal wider than Earth.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: ultra-wide on the SAME liquid silver sea stretching to a gently curved horizon in the lower third of frame, a vast charcoal storm deck with brown-grey bands filling the sky above. A single blue-white lightning bolt is frozen mid-strike into the center of the sea, with a bright white flash reflection on the metal and one flat circular ripple just starting at the strike point. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
