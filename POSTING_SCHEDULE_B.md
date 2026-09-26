@@ -157,9 +157,9 @@ One threshold. One law. One image.
 - **File:** `sci_ep08_metallic_hydrogen_hook.mp4`
 - **Slug:** `sci_ep08_metallic_hydrogen`
 - **Title:** `The Exact Pressure That Turns Gas into Liquid Metal (400 GPa)`
-- **Spoken hook:** `Squeeze hydrogen to 400 gigapascals, and the lightest gas there is turns into liquid metal.`
+- **Spoken hook:** `Hydrogen is the lightest gas there is, but crush it hard enough and it turns into liquid metal.`
 - **Shot mode:** `multi_cut` (4 SAME metallic-hydrogen sea shots; Spaghetti path)
-- **Status:** Prompt ready v2 (retention rewrite: action hook, 400 GPa in first 8 spoken words, shot 1 shows gas turning to metal, lightning climax) — draft stills ready (1080x1920) — awaiting stills QC before LTX. Pack: `local_runner/METALLIC_HYDROGEN_PROMPTS.md`
+- **Status:** v3 VO locked (Chandrasekhar-shaped: paradox → law → 400 GPa → Jupiter). Stills FULL SET LOCK v12i — LTX clear. Pack: `local_runner/METALLIC_HYDROGEN_PROMPTS.md`. Source VO: `local_runner/science_prompts.py` `_EP08_BEATS`.
 - **Description:**
 ```
 Descending into the deep planetary core where extreme pressure forces gas into a liquid metallic sea.
@@ -174,7 +174,33 @@ One threshold. One law. One image.
 - **Slug:** `sci_ep09_solar_escape`
 - **Title:** `The Exact Speed Needed to Escape the Sun (617.5 km/s)`
 - **Spoken hook:** `Below solar escape velocity—617 kilometers a second—the Sun traps you.`
-- **Status:** Pending
+- **Status:** ✅ RENDERED & PROMOTED 2026-09-26 — `final_videos/ready/sci_ep09_solar_escape_hook.mp4` (28.1s, 1080x1920, 0 decode errors).
+  Subject is a **plasma ember**, not a spacecraft. Prior vehicle-based passes were rejected: subject identity broke
+  (shot 1 dart vs shots 2-4 chrome rocket), scale swung across cuts, and shot 2 showed an exhaust plume against the
+  VO line "No more thrust". Root cause: locking a hard-surface vehicle across 4 cuts with stacked negations
+  ("engines hard OFF", "never", "zero exhaust") — diffusion ignores negations in a positive prompt.
+  A luminous phenomenon has no rigid geometry to drift, matching every episode that has worked here.
+  Shot 3 took a second pass: "towering coronal arches" made LTX build one frame-filling symmetric arch that closed
+  into a glowing oval (read as a portal), blew out exposure, and flipped the ember to horizontal travel. Reworded to
+  pin the corona low on the bottom edge, keep black dominant, and lock the same lower-left→upper-right diagonal.
+  Rendered pure **T2V** — I2V stills deleted.
+  **VO v3 (2026-09-26, retention rewrite):** the old beat 3 spent 21% of runtime restating the number from beat 1
+  and the formula's 10-22s MECHANISM slot was never filled. Beat 3 now delivers the mechanism — escape velocity is
+  617.5 km/s at the photosphere but only ~42 km/s from Earth's orbit, because you start deep in the gravity well.
+  Beat 2 carries the ballistic/mass-independent rule. Rates descend +0/-4/-8/-12%. 61 words, 29.7s, 3.2s tail linger.
+  Register deliberately kept clipped/declarative per strategy section 1 — storytelling VO considered and declined.
+  **VO v5 (final, comprehension pass):** cold-open orientation was the blocker — the script never named its own
+  premise. Fixes: beat 1 now says "escaping its gravity from the surface" (names the topic AND anchors where the
+  number applies, so beat 3's 42 km/s reads as a revelation, not a contradiction); beat 3 reworded from the jargon
+  "the Sun's well" to "Farther out, the pull weakens ... that number drops to"; beat 4's dangling "Clear it" (no
+  antecedent within 20s) became "Reach that speed". "forty two" spelled without a hyphen so the caption does not
+  wrap as "forty / -two". 67 words, 32.0s, 3.2s tail linger, 0 decode errors.
+  **Captions now show NUMERALS (617.5 km/s, 42 km/s) while the VO speaks the words** — per strategy section 2
+  ("numbers highlighted"). Required a pipeline change: added a `caption_text` key on a beat that overrides the
+  burned caption while TTS still speaks `text`. Two edits in `local_runner/audio_post.py` —
+  `create_subtitles_from_beats` reads `caption_text or text`, and `normalize_script_beats` had to be taught to
+  PRESERVE the key (it previously rebuilt each beat with only text/rate/pitch/pause_ms and silently dropped it).
+  This is reusable: any episode can now set `caption_text` per beat. Worth back-applying to ep01-ep08.
 - **Description:**
 ```
 The solar escape-velocity threshold — below it, gravity wins; above it, you leave the star’s grip.

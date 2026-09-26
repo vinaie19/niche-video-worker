@@ -1,11 +1,11 @@
 # Metallic Hydrogen (sci_ep08) — v2 multi_cut + liquid metal sea
 
 **Title:** The Exact Pressure That Turns Gas into Liquid Metal (400 GPa)
-**Spoken hook:** Four hundred gigapascals. Hydrogen, the lightest gas, becomes liquid metal.
+**Spoken hook:** Hydrogen is the lightest gas there is, but crush it hard enough and it turns into liquid metal.
 **Mode:** `multi_cut` (default) — four SAME metallic-hydrogen sea shots, Spaghetti path
-**VO words:** 59 (no em dashes)
-**First 8 spoken words:** Four hundred gigapascals Hydrogen the lightest gas
-**Status:** Prompt pack v2 + draft stills in `i2v_stills/sci_ep08_metallic_hydrogen/`. Awaiting your stills QC before LTX.
+**VO words:** ~70 (Chandrasekhar-shaped; no em dashes)
+**First 8 spoken words:** Hydrogen is the lightest gas there is
+**Status:** v3 VO locked to Chandrasekhar arc (paradox → law → 400 GPa → Jupiter stakes). Stills FULL SET LOCK v12i. LTX clear. Pack stills in `i2v_stills/sci_ep08_metallic_hydrogen/`.
 
 ```bash
 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep08_metallic_hydrogen ./venv/bin/python run_test_batch.py
@@ -32,18 +32,18 @@ The SAME place in every shot:
 - **Palette:** cool silver + charcoal; white-blue only for lightning in shot 4.
 - **Camera:** locked, eye level just above the surface, vertical 9:16, 1080x1920.
 
-## VO (full script)
+## VO (full script) — v3 Chandrasekhar-shaped
 
-1. Four hundred gigapascals. Hydrogen, the lightest gas, becomes liquid metal.
-2. That is four million times the air on your skin. An invisible cloud turns into a chrome sea.
-3. Crush the atoms that close and electrons break free. Those free electrons are why metal shines.
-4. Deep in Jupiter this is not theory. An ocean of liquid metal wider than Earth.
+1. Hydrogen is the lightest gas there is, but crush it hard enough and it turns into liquid metal.
+2. Force the atoms that close and their electrons break free. Those free electrons are why metal shines.
+3. That breaking point is four hundred gigapascals, four million times the air on your skin.
+4. Cross it, and an invisible cloud becomes a chrome sea. Deep in Jupiter, that ocean is wider than Earth.
 
 ---
 
 ## Beat 1 — Threshold (gas → metal)
 
-**VO:** Four hundred gigapascals. Hydrogen, the lightest gas, becomes liquid metal.
+**VO:** Hydrogen is the lightest gas there is, but crush it hard enough and it turns into liquid metal.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: a thick wall of pale grey hydrogen fog fills the upper two thirds of frame above a small pool of mirror-bright liquid silver at the bottom. The fog presses against the silver and is already turning into shining liquid metal where they meet. The silver pool sits low, flat and level like mercury. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
@@ -55,7 +55,7 @@ A thick wall of pale grey hydrogen fog fills the upper two thirds of frame above
 
 ## Beat 2 — Paradox (invisible gas → mirror)
 
-**VO:** That is four million times the air on your skin. An invisible cloud turns into a chrome sea.
+**VO:** Force the atoms that close and their electrons break free. Those free electrons are why metal shines.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: the SAME liquid silver sea fills the lower half of frame under a heavy charcoal storm deck with faint brown-grey bands, a sharp level horizon across the middle. Thin wisps of grey fog hang just above the metal. The storm clouds appear crisp and upside down in the silver, like a flawless mirror. The surface stays flat, level and perfectly still. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
@@ -67,7 +67,7 @@ The SAME liquid silver sea fills the lower half of frame under a heavy charcoal 
 
 ## Beat 3 — Law (free electrons shine)
 
-**VO:** Crush the atoms that close and electrons break free. Those free electrons are why metal shines.
+**VO:** That breaking point is four hundred gigapascals, four million times the air on your skin.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: close on the SAME liquid silver sea, the mercury-bright surface filling the lower three quarters of frame, a strip of dark storm sky across the top. Thousands of tiny bright white glints sit across the metal like sparks frozen in a current. The metal is one smooth opaque liquid sheet, flat and level, gleaming like polished chrome. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks
@@ -79,7 +79,7 @@ Close on the SAME liquid silver sea, the mercury-bright surface filling the lowe
 
 ## Beat 4 — Climax (Jupiter-scale ocean + lightning)
 
-**VO:** Deep in Jupiter this is not theory. An ocean of liquid metal wider than Earth.
+**VO:** Cross it, and an invisible cloud becomes a chrome sea. Deep in Jupiter, that ocean is wider than Earth.
 
 **Still prompt:**
 Cinematic locked shot, One frozen moment: ultra-wide on the SAME liquid silver sea stretching to a gently curved horizon in the lower third of frame, a vast charcoal storm deck with brown-grey bands filling the sky above. A single blue-white lightning bolt is frozen mid-strike into the center of the sea, with a bright white flash reflection on the metal and one flat circular ripple just starting at the strike point. Cool silver and charcoal palette only. Locked camera, no camera movement, photoreal cinematic CGI, vertical 9:16, no people, no text, no logos, no watermarks

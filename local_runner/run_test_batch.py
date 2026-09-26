@@ -35,6 +35,18 @@ GPU_FALLBACKS = [
     ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition", 96),
+    # 2026-09-26: widened. Blackwell 96GB capacity in EU-RO-1 runs dry and the
+    # acquire loop stalls for hours. Everything below is >=64GB, so it inherits
+    # the same FORCE_OFFLOAD=false + LTX_TE_DEVICE=default path as the Blackwells.
+    ("NVIDIA H100 PCIe", 80),
+    ("NVIDIA H100 80GB HBM3", 80),
+    ("NVIDIA H100 NVL", 94),
+    ("NVIDIA A100 80GB PCIe", 80),
+    ("NVIDIA A100-SXM4-80GB", 80),
+    ("NVIDIA H200", 141),
+    # 48GB last resort: drops to offload + CPU text encode (slower, still renders).
+    ("NVIDIA L40S", 48),
+    ("NVIDIA RTX A6000", 48),
 ]
 
 

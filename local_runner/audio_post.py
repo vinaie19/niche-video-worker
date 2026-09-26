@@ -234,14 +234,19 @@ def normalize_script_beats(
             if not text:
                 continue
             pause = raw.get("pause_ms", raw.get("pause_after", 0))
-            out.append(
-                {
-                    "text": text,
-                    "rate": _normalize_rate(raw.get("rate", rate0)),
-                    "pitch": _normalize_pitch(raw.get("pitch", pitch0)),
-                    "pause_ms": max(0, int(pause or 0)),
-                }
-            )
+            beat = {
+                "text": text,
+                "rate": _normalize_rate(raw.get("rate", rate0)),
+                "pitch": _normalize_pitch(raw.get("pitch", pitch0)),
+                "pause_ms": max(0, int(pause or 0)),
+            }
+            # Carry the caption override through: TTS always speaks "text", but the
+            # burned caption uses "caption_text" when set, so the VO can say
+            # "six hundred seventeen point five" while the screen reads "617.5 km/s".
+            caption_text = (raw.get("caption_text") or "").strip()
+            if caption_text:
+                beat["caption_text"] = caption_text
+            out.append(beat)
         if not out:
             raise ValueError("script_beats produced no speakable text")
         return out
@@ -573,9 +578,14 @@ def create_subtitles_from_beats(
         if not os.path.isfile(wav):
             raise FileNotFoundError(f"Missing beat wav for captions: {wav}")
         dur = _probe_duration(wav)
+        # "caption_text" lets a beat show different text than it speaks, so the VO
+        # can say "six hundred seventeen point five" while the caption reads "617.5
+        # km/s" (strategy: numbers highlighted). Falls back to "text" when unset.
         lines = [
             ln.strip()
-            for ln in str(b.get("text") or "").replace("\r", "").split("\n")
+            for ln in str(b.get("caption_text") or b.get("text") or "")
+            .replace("\r", "")
+            .split("\n")
             if ln.strip()
         ]
         if not lines:

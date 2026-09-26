@@ -511,14 +511,15 @@ _EP07_BEATS = [
 ]
 
 # --- Ep 08: Metallic Hydrogen ---
-# 2026-09-24 v2 retention rewrite: action-verb hook with 400 GPa in the first 8
-# spoken words, shot 1 shows gas turning to metal, threshold -> paradox -> law ->
-# lightning climax. Positive-only motion prompts. Pack: METALLIC_HYDROGEN_PROMPTS.md
+# 2026-09-25 v3 VO: Chandrasekhar-shaped arc (paradox -> law -> named limit+number
+# -> stakes). Title keeps Exact-Pressure (400 GPa). Number lands late like ep07,
+# not in the first spoken line. Motion prompts unchanged (stills LOCK v12i).
+# Pack: METALLIC_HYDROGEN_PROMPTS.md
 
 _EP08_BEATS = [
     {
-        "text": "Four hundred gigapascals.\n"
-            "Hydrogen, the lightest gas, becomes liquid metal.",
+        "text": "Hydrogen is the lightest gas there is,\n"
+            "but crush it hard enough and it turns into liquid metal.",
         "rate": "-8%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -535,8 +536,8 @@ _EP08_BEATS = [
         ),
     },
     {
-        "text": "That is four million times the air on your skin.\n"
-            "An invisible cloud turns into a chrome sea.",
+        "text": "Force the atoms that close and their electrons break free.\n"
+            "Those free electrons are why metal shines.",
         "rate": "+0%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -553,8 +554,8 @@ _EP08_BEATS = [
         ),
     },
     {
-        "text": "Crush the atoms that close and electrons break free.\n"
-            "Those free electrons are why metal shines.",
+        "text": "That breaking point is four hundred gigapascals,\n"
+            "four million times the air on your skin.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 145,
@@ -571,8 +572,8 @@ _EP08_BEATS = [
         ),
     },
     {
-        "text": "Deep in Jupiter this is not theory.\n"
-            "An ocean of liquid metal wider than Earth.",
+        "text": "Cross it, and an invisible cloud becomes a chrome sea.\n"
+            "Deep in Jupiter, that ocean is wider than Earth.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 153,
@@ -594,53 +595,73 @@ _EP08_BEATS = [
 
 _EP09_BEATS = [
     {
-        "text": "Below solar escape velocity—617 kilometers a second—\nthe Sun traps you.",
-        "rate": "-8%",
+        # VO Pass lock — EP09_VO_BEATS.md (do not rewrite without VO QA)
+        # VISUAL REWRITE 2026-09-26: subject is a PLASMA EMBER, not a spacecraft.
+        # Prior vehicle-based passes failed: hard-surface identity + scale drifted
+        # every shot and stacked negations ("engines OFF", "never") were ignored.
+        # A luminous phenomenon has no rigid geometry to drift, so it holds.
+        "text": "The Sun will not let you leave. Escaping its gravity from the surface takes six hundred seventeen point five kilometers a second.",
+        # VO speaks the words; caption shows the numeral (strategy: numbers highlighted).
+        "caption_text": "The Sun will not let you leave. Escaping its gravity from the surface takes 617.5 km/s.",
+        "rate": "+0%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot of a small metallic probe accelerating away from "
-            "a massive solar flare arc into deep space, white-gold sun limb dominating, "
+            "Cinematic locked wide shot of a colossal white-gold Sun photosphere limb filling the left "
+            "and lower frame, granulation cells boiling, deep black space to the right; "
+            "a single small brilliant white-hot ember of plasma lifts off the limb and drifts steadily "
+            "outbound into the void, trailing a short soft glowing wake that fades within a body length, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "Escape velocity is the speed to climb out of a gravity well\nwithout further thrust.",
-        "rate": "+0%",
+        "text": "One push, then coasting — no engine, no matter your mass.",
+        "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked medium shot of curved gravitational path lines around the "
-            "Sun, probe on a steep outbound trajectory, corona flicker, "
+            "Cinematic locked medium shot of the same small white-hot plasma ember coasting up a steep "
+            "outbound arc through deep black space, its thin luminous gold trail thinning and cooling behind it; "
+            "a dominant white-gold Sun limb with thick bright corona anchors the bottom of the frame, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "From the solar surface, that number is about 617.5 kilometers a second.",
-        "rate": "-4%",
+        "text": "Farther out, the pull weakens — from Earth's orbit, that number drops to forty two kilometers a second.",
+        "caption_text": "Farther out, the pull weakens — from Earth's orbit, that number drops to 42 km/s.",
+        "rate": "-8%",
         "pause_ms": 300,
         "num_frames": 145,
         "shot": (
-            "Cinematic locked close-up of the probe punching through bright coronal "
-            "loops, heat shimmer, velocity streak, "
+            # 2026-09-26 shot-3 fix: "towering arches" made LTX build ONE frame-filling
+            # symmetric arch that closed into a glowing oval (read as a portal, not corona),
+            # blew out the exposure, and flipped the ember to horizontal travel.
+            # Fix: corona pushed to a distant band at the bottom edge, black kept dominant,
+            # ember held small on the same upward diagonal as shots 1-2.
+            "Cinematic locked medium-wide shot of vast deep black space filling most of the frame, "
+            "a curved white-gold Sun limb with a few small distant coronal loops resting low along the "
+            "bottom edge of frame, the same small white-hot plasma ember racing outbound along a steep "
+            "diagonal from lower-left toward upper-right, its compact pinpoint-bright core trailing a "
+            "long thin luminous gold velocity streak stretched far behind it into the darkness, the "
+            "streak sharp and elongated while the ember itself stays small and dense against the "
+            "surrounding black, the Sun limb and its loops occupying only the lower edge of frame with "
+            "open black space dominating everything above and around the ember's path, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "Below the limit, gravity wins.\nAbove it, you leave the star's grip.",
+        "text": "Reach that speed, and the Sun shrinks behind you forever. Fall short, and it pulls you back.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 153,
         "shot": (
-            "Cinematic locked ultra-wide linger: tiny probe clear of the Sun, flare "
-            "receding, deep black void ahead, "
+            "Cinematic locked ultra-wide linger on vast deep black void; the same plasma ember, now a small "
+            "steady cool-white point of light, drifts free toward the upper right with almost no motion; "
+            "the white-gold Sun and its flare recede and dim in the lower left, quiet heavy freedom, "
             f"{_SCI_SUFFIX}"
         ),
     },
 ]
-
-# --- Ep 10: Eddington Luminosity ---
-
 _EP10_BEATS = [
     {
         "text": "Above the Eddington limit,\nradiation pressure tears a star apart.",
@@ -812,6 +833,11 @@ def build_science_jobs(num_frames, steps):
 
 
 science_ltx_jobs = build_science_jobs(num_frames=129, steps=8)
+
+# ep09 solar escape: keep LTX bed quiet under VO (ep08 lesson)
+for _j in science_ltx_jobs:
+    if _j.get("video_id") == "sci_ep09_solar_escape":
+        _j["ambient_volume"] = 0.10
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
