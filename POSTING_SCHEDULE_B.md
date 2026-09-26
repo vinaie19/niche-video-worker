@@ -210,6 +210,33 @@ One threshold. One law. One image.
 #ThresholdPhysics #physics #science #space #universe
 ```
 
+### Mon 28 Sep 2026 — ep13 Earth → black hole *(SWAP, analytics-driven)*
+- **File:** `sci_ep13_earth_black_hole_hook.mp4`
+- **Slug:** `sci_ep13_earth_black_hole`
+- **Title:** `The Exact Size Earth Must Shrink to Become a Black Hole (8.87 mm)`
+- **Spoken hook:** `Crush Earth into a black hole, and it fits in eight point eight seven millimetres.`
+- **Why this jumped the queue:** built against the first analytics pull. Stayed% and AVD% are
+  independent levers and nothing has had both (ep07 hook 69.2% / ep09 loop 107.1%). This targets
+  both: a universally recognizable subject for the hook, and ep09's dark-quiet-into-bright ending
+  for the loop. Earth is also the most forwardable subject yet — shares are the biggest multiplier
+  and only ep07 has earned any. **ep10 Eddington is NOT dropped**, it keeps its place in the queue.
+- **Physics (verified):** r_s = 2GM/c². Earth → 8.870 mm RADIUS, so the horizon is 17.74 mm across
+  — a marble, NOT a pea. Earth radius / r_s = 718,255,480. A 70 kg human → 1.04e-25 m.
+- **Status:** Prompts + VO locked (2 review rounds). Pure T2V, no stills. Numeral captions via
+  `caption_text`. Pending render → QC → schedule.
+- **Pin comment — PICK ONE AT UPLOAD:** safe default `Which limit should we cross next?` OR the
+  higher-engagement `Every mass has a Schwarzschild radius — drop your weight in kilograms below
+  and I'll tell you how small you'd have to get.` (the second drives replies but COMMITS you to
+  answering them; unanswered it reads worse than not asking).
+- **Description:**
+```
+Compress Earth's entire mass into 8.87 millimetres and its gravity becomes inescapable — the exact threshold where a planet becomes a black hole.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #universe
+```
+
 ### Mon 28 Sep 2026 — ep10 Eddington
 - **File:** `sci_ep10_eddington_hook.mp4`
 - **Slug:** `sci_ep10_eddington`
@@ -259,17 +286,25 @@ One threshold. One law. One image.
 
 ## Analytics log
 
+> **Reading this table:** view counts are CONFOUNDED by channel age — ep01/ep04 were early posts to a
+> cold channel, so their low views are not a quality signal (ep01 has a 75.5% AVD). Judge on the two
+> retention levers instead, which move independently:
+> **Stayed %** = the first-2s hook (best: ep07 69.2% · worst: ep04 25.0%).
+> **AVD %** = whether the ending loops (best: ep09 107.1% — re-watches are what drove its 1,185 views).
+> Target for every new episode: **ep07's hook + ep09's loop.** Nothing has had both yet.
+> Shares are the biggest distribution multiplier and only ep07 earned any (7); drama is what gets forwarded.
+
 | Date | Short | Stayed to watch | Engaged views | APV | Viewed vs swiped | Subs Δ | Agent review | Notes |
 |------|-------|-----------------|---------------|-----|------------------|--------|--------------|-------|
-| 19 Sep | ep01 | | | | | | | |
-| 20 Sep | ep02 | | | | | | | |
+| 19 Sep | ep01 | 40.0% | 8 views | 75.5% (22s) | — | | | 194 dB. Good AVD, tiny views — channel had no audience yet. NOT a quality signal. |
+| 20 Sep | ep02 | 40.3% | 290 views | 73.7% (16s) | — | | | Roche limit. Weak hook (40.3%) — opening did not stop the swipe. |
 | 21 Sep | ep03 | | | | | | | |
-| 22 Sep | ep04 | | | | | | | |
-| 23 Sep | ep05 | | | | | | | |
+| 22 Sep | ep04 | 25.0% | 12 views | 62.3% (15s) | — | | | 0 K. WORST hook on channel (25%). Abstract topic, no visual payoff in first 2s. |
+| 23 Sep | ep05 | 64.1% | 444 views | 72.5% (20s) | — | | | Spaghettification. Strong hook — evocative named concept. |
 | 24 Sep | ep06 | | | | | | | |
-| 25 Sep | ep07 | | | | | | | |
+| 25 Sep | ep07 | **69.2%** | 889 views | 78.3% (24s) | — | | | White dwarf 1.44 M☉. BEST HOOK (69.2%) and the ONLY video with shares (7). Drama = forwardable. |
 | 26 Sep | ep08 | | | | | | | |
-| 27 Sep | ep09 | | | | | | | |
+| 27 Sep | ep09 | 52.9% | 1185 views | **107.1% (34s)** | — | | | BEST VIEWS. Won on LOOP not hook: AVD>100% = re-watches. Dark/quiet ending vs bright opening. |
 | 28 Sep | ep10 | | | | | | | |
 | 29 Sep | ep11 | | | | | | | |
 | 30 Sep | ep12 | | | | | | | |

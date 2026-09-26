@@ -808,6 +808,79 @@ _EP12_BEATS = [
 ]
 
 
+# --- Ep 13: Earth -> Black Hole (Schwarzschild radius) — SWAP, off original Top 12 ---
+# Built 2026-09-26 against real channel analytics (see POSTING_SCHEDULE_B.md):
+#   Two independent levers — Stayed% (first-2s hook; best ep07 69.2%) and AVD% (loop;
+#   best ep09 107.1%). Nothing has had both. This targets both.
+# Physics: r_s = 2GM/c^2. Earth (5.9722e24 kg) -> 8.870 mm RADIUS (horizon 17.74 mm
+#   across — a marble, NOT a pea). Earth radius / r_s = 718,255,480. Human 70 kg
+#   -> r_s = 1.04e-25 m, genuinely smaller than an atom (~1e-10 m).
+# LTX staging: Earth appears in SHOT 1 ONLY. Shots 2-4 are phenomena, because a
+#   recognizable solid object re-rendered across a cut is what destroyed three ep09
+#   passes (a dart probe became a chrome rocket). Shot 2 is a plural SWARM, not a
+#   sphere — a lone sphere tempts LTX to paint another Earth-like orb.
+# num_frames run long on purpose: the stitch TRIMS to the VO beat (lossless) whereas
+#   stretching adds slow-motion. ep09 needed 1.43x stretch; render long, trim down.
+_EP13_BEATS = [
+    {
+        "text": "Crush Earth into a black hole, and it fits in eight point eight seven millimetres.",
+        "caption_text": "Crush Earth into a black hole, and it fits in 8.87 mm.",
+        "rate": "+0%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked wide shot of a blue and white planet filling most of the frame, "
+            "slow-moving swirls of white cloud turning across its curve, silent pinpricks of "
+            "lightning flickering inside the clouds on its dark night side, deep black space "
+            "at the frame edges, faint distant stars, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        # "you" planted here so beat 4's pivot to the viewer reads as payoff, not detour.
+        "text": "Nothing is removed. No mass is lost. Every atom you stand on is still there.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked medium shot of a loose swarm of glowing rock fragments collapsing "
+            "inward on itself low in the frame, bright amber fracture light flaring between the "
+            "compressing pieces, the swarm drawing tighter and denser as it falls together, "
+            "deep black space surrounding it on all sides, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Squeeze any mass inside its critical radius, and even light itself cannot climb back out.",
+        "rate": "-8%",
+        "pause_ms": 300,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked medium shot of a small dense sphere of white-hot light sitting low "
+            "in the frame, its surface smooth and tight, thin arcs of distant starlight bending "
+            "smoothly around its edge into a faint bright ring, scattered faint stars, deep black "
+            "space dominating the frame, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        # Dark, quiet, near-empty ending cutting back to shot 1's bright full-frame Earth:
+        # this is the mechanic that produced ep09's 107.1% AVD.
+        "text": "Every mass has this radius. Earth's is a marble. Yours is smaller than an atom.",
+        "caption_text": "Every mass has this radius. Earth's is a marble. Yours is \u224810\u207b\u00b2\u2075 m.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked ultra-wide linger on vast uninterrupted black space, a single tiny "
+            "dim point of white light drifting almost imperceptibly in the lower third of the "
+            "frame, a few faint distant stars barely visible, quiet and empty, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+
 # Primary queue (Top 12)
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
@@ -819,6 +892,9 @@ _EPISODES = [
     ("sci_ep07_chandrasekhar", _beats_script(_EP07_BEATS), _beats_shots(_EP07_BEATS), _EP07_BEATS),
     ("sci_ep08_metallic_hydrogen", _beats_script(_EP08_BEATS), _beats_shots(_EP08_BEATS), _EP08_BEATS),
     ("sci_ep09_solar_escape", _beats_script(_EP09_BEATS), _beats_shots(_EP09_BEATS), _EP09_BEATS),
+    # SWAP 2026-09-26: Earth->black hole jumps ahead of Eddington (analytics-driven).
+    # Eddington is NOT dropped — it keeps its place in the queue below.
+    ("sci_ep13_earth_black_hole", _beats_script(_EP13_BEATS), _beats_shots(_EP13_BEATS), _EP13_BEATS),
     ("sci_ep10_eddington", _beats_script(_EP10_BEATS), _beats_shots(_EP10_BEATS), _EP10_BEATS),
     ("sci_ep11_vacuum_decay", _beats_script(_EP11_BEATS), _beats_shots(_EP11_BEATS), _EP11_BEATS),
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
@@ -850,6 +926,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep07_chandrasekhar": "ltx",
     "sci_ep08_metallic_hydrogen": "ltx",
     "sci_ep09_solar_escape": "ltx",
+    "sci_ep13_earth_black_hole": "ltx",
     "sci_ep10_eddington": "ltx",
     "sci_ep11_vacuum_decay": "ltx",
     "sci_ep12_neutron_drip": "ltx",
