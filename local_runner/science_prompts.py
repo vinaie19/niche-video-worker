@@ -915,7 +915,7 @@ _EP14_BEATS = [
     {
         # Earth stays in the VO only — a second recognizable solid object on screen
         # would reopen the identity-drift risk, and ep13 just used Earth.
-        "text": "Earth completes one turn a day; this pulsar beats that sixty two million times over.",
+        "text": "Earth turns once a day. This pulsar beats that sixty two million times over.",
         "caption_text": "Earth: 1 turn a day. This: 62 million times faster.",
         "rate": "-4%",
         "pause_ms": 300,
@@ -929,8 +929,8 @@ _EP14_BEATS = [
         ),
     },
     {
-        "text": "Packed into a sphere the width of a city, its edge nears a fifth of light speed.",
-        "caption_text": "City-sized. Edge speed: ~20% of light.",
+        "text": "Collapse conserves spin — a skater pulling in their arms spins faster — its edge nears a fifth of light speed.",
+        "caption_text": "Collapse conserves spin. Edge: ~20% of light.",
         "rate": "-8%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -943,8 +943,8 @@ _EP14_BEATS = [
         ),
     },
     {
-        "text": "Only gravity holds it together — one full turn every one point four milliseconds.",
-        "caption_text": "One full turn: 1.4 ms.",
+        "text": "Only gravity holds it together — spin fast enough, and the star tears itself apart.",
+        "caption_text": "Spin fast enough and it tears apart.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 169,
