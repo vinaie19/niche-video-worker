@@ -829,10 +829,10 @@ _EP13_BEATS = [
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot of a blue and white planet filling most of the frame, "
-            "slow-moving swirls of white cloud turning across its curve, silent pinpricks of "
-            "lightning flickering inside the clouds on its dark night side, deep black space "
-            "at the frame edges, faint distant stars, "
+            "Cinematic locked wide shot of a perfectly round spherical blue and white planet "
+            "filling most of the frame, thick white cloud bands churning and rolling visibly "
+            "across its surface, bright silent lightning flashes pulsing inside the clouds along "
+            "its dark night side, the planet turning steadily, deep black space at the edges, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -843,10 +843,10 @@ _EP13_BEATS = [
         "pause_ms": 300,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked medium shot of a loose swarm of glowing rock fragments collapsing "
-            "inward on itself low in the frame, bright amber fracture light flaring between the "
-            "compressing pieces, the swarm drawing tighter and denser as it falls together, "
-            "deep black space surrounding it on all sides, "
+            "Cinematic locked medium shot of a loose swarm of glowing rock fragments rushing "
+            "inward toward a common centre, the gaps between them visibly closing as they fall "
+            "together, bright amber fracture light flaring brighter as they compress, dust and "
+            "sparks streaming inward behind them, deep black space surrounding on all sides, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -856,10 +856,10 @@ _EP13_BEATS = [
         "pause_ms": 300,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked medium shot of a small dense sphere of white-hot light sitting low "
-            "in the frame, its surface smooth and tight, thin arcs of distant starlight bending "
-            "smoothly around its edge into a faint bright ring, scattered faint stars, deep black "
-            "space dominating the frame, "
+            "Cinematic locked medium shot of a small brilliant white sphere low in the frame, thin "
+            "arcs of distant starlight visibly bending and sliding around its edge into a bright "
+            "thin ring that shimmers and shifts, faint distant stars drifting slowly past behind "
+            "it, deep black space dominating the frame, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -872,9 +872,87 @@ _EP13_BEATS = [
         "pause_ms": 200,
         "num_frames": 169,
         "shot": (
-            "Cinematic locked ultra-wide linger on vast uninterrupted black space, a single tiny "
-            "dim point of white light drifting almost imperceptibly in the lower third of the "
-            "frame, a few faint distant stars barely visible, quiet and empty, "
+            "Cinematic locked shot of a small bright white sphere shrinking steadily into the "
+            "distance at the centre of the frame, growing smaller and dimmer as it recedes, "
+            "faint distant stars becoming visible around it as it fades, black space filling "
+            "the frame, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+
+# --- Ep 14: Fastest-spinning pulsar PSR J1748-2446ad (716 Hz) — analytics-driven ---
+# Chosen because BOTH retention levers come free from the subject itself:
+#   HOOK  — a strobing pulsar is in motion at frame zero (ep13's weakness is a calm
+#           static Earth; the 25%-stayed worst-ever opened on something inert).
+#   LOOP  — rotation is inherently loopable: the end state IS the start state.
+# Physics (verified): 716 Hz spin = one rotation every 1.397 ms. Earth turns once per
+#   24 h, so this is ~6.19e7x faster (~62 million). Neutron star ~20-32 km across.
+#   Equatorial speed is RADIUS-DEPENDENT (15% c at 10 km, 18% at 12 km, 24% at 16 km)
+#   and the radius is model-dependent — so the VO hedges "nears a fifth of light
+#   speed" rather than asserting a false precision. 716 Hz is the exact figure.
+# EVERY shot says "clockwise": four clips are generated independently and nothing
+#   else enforces a shared rotation handedness. Without it the match-cut loop breaks
+#   at the seam — which is the whole reason this episode was picked.
+# Rates DESCEND +0 -> -12%: the quiet heavy close is what produced ep09's 107.1% AVD.
+_EP14_BEATS = [
+    {
+        "text": "This star spins seven hundred sixteen times every second. Nothing solid should survive that.",
+        "caption_text": "This star spins 716 times a second. Nothing solid survives that.",
+        "rate": "+0%",
+        "pause_ms": 350,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic locked extreme close-up of a blinding white-hot neutron star low in the "
+            "left of the frame, its surface roiling and convulsing as molten plasma arcs tear "
+            "across it, a razor-thin beam of light whipping outward and sweeping clockwise across "
+            "the upper frame in rapid strobing flashes, each pass leaving a sharp bright "
+            "after-streak, deep black space filling the rest of the frame, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        # Earth stays in the VO only — a second recognizable solid object on screen
+        # would reopen the identity-drift risk, and ep13 just used Earth.
+        "text": "Earth completes one turn a day; this pulsar beats that sixty two million times over.",
+        "caption_text": "Earth: 1 turn a day. This: 62 million times faster.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium-wide shot of the white-hot neutron star filling the lower "
+            "half of the frame, its surface churning and flaring as it turns, twin thick beams "
+            "of light sweeping clockwise past the camera in fast continuous strobing pulses, "
+            "each sweep washing bright light across the whole frame, black space above it, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Packed into a sphere the width of a city, its edge nears a fifth of light speed.",
+        "caption_text": "City-sized. Edge speed: ~20% of light.",
+        "rate": "-8%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of the neutron star glowing deep orange-red low in the "
+            "frame, thin bright streaks of light whipping clockwise past its edge one after "
+            "another in a fast continuous strobe, the glow cooling and dimming as the streaks "
+            "pass, deep black space surrounding it, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Only gravity holds it together — one full turn every one point four milliseconds.",
+        "caption_text": "One full turn: 1.4 ms.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked extreme wide shot of the neutron star reduced to a single small "
+            "point of light low in the frame, its beam sweeping clockwise in a steady continuous "
+            "strobe, the point pulsing rhythmically and dimming further with each pulse, deep "
+            "black space filling the frame, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -895,6 +973,7 @@ _EPISODES = [
     # SWAP 2026-09-26: Earth->black hole jumps ahead of Eddington (analytics-driven).
     # Eddington is NOT dropped — it keeps its place in the queue below.
     ("sci_ep13_earth_black_hole", _beats_script(_EP13_BEATS), _beats_shots(_EP13_BEATS), _EP13_BEATS),
+    ("sci_ep14_pulsar_716hz", _beats_script(_EP14_BEATS), _beats_shots(_EP14_BEATS), _EP14_BEATS),
     ("sci_ep10_eddington", _beats_script(_EP10_BEATS), _beats_shots(_EP10_BEATS), _EP10_BEATS),
     ("sci_ep11_vacuum_decay", _beats_script(_EP11_BEATS), _beats_shots(_EP11_BEATS), _EP11_BEATS),
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
@@ -915,6 +994,17 @@ for _j in science_ltx_jobs:
     if _j.get("video_id") == "sci_ep09_solar_escape":
         _j["ambient_volume"] = 0.10
 
+# ep14: first episode on word-pop captions (strategy §2 "1-3 words/pop, numbers
+# highlighted"). Opt-in so ep01-ep13 keep the existing full-sentence "clean" style.
+for _j in science_ltx_jobs:
+    if _j.get("video_id") == "sci_ep14_pulsar_716hz":
+        _j["captions"] = "pop"
+        _j["caption_chunk_words"] = 3
+        # ep09 (107% AVD, best on channel) runs the LTX bed at 0.10; ep13 (53% AVD)
+        # inherited the 0.55 default — 5.5x louder. A loud bed competes with the VO
+        # and stops the tail reading as a quiet linger. Match the winner.
+        _j["ambient_volume"] = 0.10
+
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
     "sci_ep01_sound_194db": "ltx",
@@ -927,6 +1017,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep08_metallic_hydrogen": "ltx",
     "sci_ep09_solar_escape": "ltx",
     "sci_ep13_earth_black_hole": "ltx",
+    "sci_ep14_pulsar_716hz": "ltx",
     "sci_ep10_eddington": "ltx",
     "sci_ep11_vacuum_decay": "ltx",
     "sci_ep12_neutron_drip": "ltx",

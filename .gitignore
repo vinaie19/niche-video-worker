@@ -13,3 +13,12 @@ local_runner/ambient/*.mp3
 !local_runner/ambient/SOURCES.txt
 !local_runner/ambient/laundry_rain_bed.wav
 
+
+# Consolidated output: local_runner/final_videos is a symlink -> ../final_videos
+# (both paths now resolve to one folder). Ignore the link and the pre-merge backup.
+local_runner/final_videos
+local_runner/.final_videos_backup/
+local_runner/logs/
+local_runner/docs/
+*.bak
+*.prev.mp4

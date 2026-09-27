@@ -32,21 +32,14 @@ POD_NAME = os.getenv("RUNPOD_POD_NAME", "niche-ltx25-render")
 
 # LTX-2.5 @ 1088x1920 needs ~96GB — do not fall back to 32GB cards (OOM / useless offload).
 GPU_FALLBACKS = [
+    # Blackwell RTX PRO 6000 ONLY (96GB). Deliberately narrow: an A100 80GB was
+    # acquired once as a fallback and took 10+ min for a single shot versus ~3-5
+    # on a Blackwell, and the 48GB cards drop to FORCE_OFFLOAD=true + CPU text
+    # encode, which is slower still. Waiting for a Blackwell beats winning a slow
+    # card — the acquire loop retries forever, so scarcity costs time, not money.
     ("NVIDIA RTX PRO 6000 Blackwell Server Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Workstation Edition", 96),
     ("NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition", 96),
-    # 2026-09-26: widened. Blackwell 96GB capacity in EU-RO-1 runs dry and the
-    # acquire loop stalls for hours. Everything below is >=64GB, so it inherits
-    # the same FORCE_OFFLOAD=false + LTX_TE_DEVICE=default path as the Blackwells.
-    ("NVIDIA H100 PCIe", 80),
-    ("NVIDIA H100 80GB HBM3", 80),
-    ("NVIDIA H100 NVL", 94),
-    ("NVIDIA A100 80GB PCIe", 80),
-    ("NVIDIA A100-SXM4-80GB", 80),
-    ("NVIDIA H200", 141),
-    # 48GB last resort: drops to offload + CPU text encode (slower, still renders).
-    ("NVIDIA L40S", 48),
-    ("NVIDIA RTX A6000", 48),
 ]
 
 
@@ -868,6 +861,7 @@ def download_and_stitch(rendered_urls, test_jobs, local=False):
                     voice_rate=job.get("voice_rate"),
                     voice_pitch=job.get("voice_pitch"),
                     script_beats=script_beats,
+                    caption_chunk_words=job.get("caption_chunk_words"),
                 )
                 mode = (
                     f"voice + captions({caption_style})"

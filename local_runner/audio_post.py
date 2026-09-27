@@ -78,6 +78,16 @@ CAPTION_STYLES = {
         "OutlineColour=&H00000000&,BorderStyle=1,Outline=2,Shadow=0,"
         "Alignment=2,MarginV=56"
     ),
+    # Word-pop style: large + bold for 1-3 word chunks. Sits a little higher than
+    # "clean" so short bursts read as a beat rather than a subtitle.
+    "pop": (
+        # MarginV is in ASS script units (same space as "clean" at 56), NOT pixels.
+        # 300 pushed the text clean off the top of the frame — captions rendered
+        # nowhere. 110 sits above the lower third; 18 is ~1.6x "clean" for punch.
+        "FontName=DejaVu Sans,FontSize=18,Bold=1,PrimaryColour=&H00FFFFFF&,"
+        "OutlineColour=&H00000000&,BorderStyle=1,Outline=3,Shadow=0,"
+        "Alignment=2,MarginV=110"
+    ),
     "tiny": (
         "FontName=Arial,FontSize=8,PrimaryColour=&H00FFFFFF&,"
         "OutlineColour=&H80000000&,BorderStyle=1,Outline=1,Shadow=0,"
@@ -549,6 +559,62 @@ def clamp_srt_file(srt_path: str, max_duration_s: float, output_path: Optional[s
     return out
 
 
+_CAPTION_CONNECTORS = {"of", "a", "an", "the", "per", "to", "in", "at"}
+
+
+def _chunk_words(text: str, max_words: int = 3) -> list[str]:
+    """
+    Split a caption line into 1-max_words bursts for word-pop captions.
+
+    Keeps a number glued to the unit that follows it ("716 times", "8.87 mm")
+    so a figure never gets orphaned on its own cue — the number IS the payload
+    on this channel, and splitting it reads as a stutter.
+    """
+    words = [w for w in str(text or "").split() if w]
+    if not words:
+        return []
+    has_digit = lambda w: any(ch.isdigit() for ch in w)
+    out, i = [], 0
+    while i < len(words):
+        take = max_words
+        # A numeric word pulls its unit along with it, then closes the chunk, so a
+        # figure is never orphaned from what it measures. If the unit is a short
+        # connector ("20% OF light"), reach one word further so the idiom stays whole.
+        if has_digit(words[i]):
+            take = min(2, len(words) - i)
+            if (
+                take == 2
+                and words[i + 1].strip(".,:;").lower() in _CAPTION_CONNECTORS
+                and i + 2 < len(words)
+            ):
+                take = 3
+            out.append(" ".join(words[i:i + take]))
+            i += take
+            continue
+        chunk = words[i:i + take]
+        # do not swallow a following number into a plain chunk
+        for n, w in enumerate(chunk):
+            if n > 0 and has_digit(w):
+                chunk = chunk[:n]
+                break
+        out.append(" ".join(chunk))
+        i += len(chunk)
+    # Merge orphaned short function words ("in", "a", "of") backwards — a lone
+    # 2-letter cue flashing for 200ms reads as a stutter, not emphasis.
+    merged: list[str] = []
+    for ch in out:
+        if (
+            merged
+            and len(ch.split()) == 1
+            and len(ch) <= 3
+            and not any(c.isdigit() for c in ch)
+        ):
+            merged[-1] = merged[-1] + " " + ch
+        else:
+            merged.append(ch)
+    return merged
+
+
 def create_subtitles_from_beats(
     script_beats: list,
     work_dir: str,
@@ -556,9 +622,14 @@ def create_subtitles_from_beats(
     srt_path: str,
     default_rate: Optional[str] = None,
     default_pitch: Optional[str] = None,
+    chunk_words: Optional[int] = None,
 ) -> str:
     """
     Build SRT from Edge-TTS beat wav durations (exact VO timeline).
+
+    chunk_words: when set (e.g. 3), each caption line is split into bursts of at
+    most that many words and the beat's duration is shared across them by
+    character length — "word-pop" captions per strategy section 2.
 
     Prefer this over Whisper when script_beats exist — cues match narration
     lines and don't drift past the video.
@@ -588,6 +659,11 @@ def create_subtitles_from_beats(
             .split("\n")
             if ln.strip()
         ]
+        if lines and chunk_words and int(chunk_words) > 0:
+            chunked = []
+            for ln in lines:
+                chunked.extend(_chunk_words(ln, int(chunk_words)))
+            lines = chunked or lines
         if not lines:
             t += dur
             pause_ms = int(b.get("pause_ms") or 0)
@@ -1351,8 +1427,13 @@ def add_voice_and_captions(
     voice_rate: Optional[str] = None,
     voice_pitch: Optional[str] = None,
     script_beats: Optional[list] = None,
+    caption_chunk_words: Optional[int] = None,
 ) -> str:
-    """Full post pipeline: TTS (optional beats) → ambient bed → Whisper SRT → mux."""
+    """Full post pipeline: TTS (optional beats) → ambient bed → Whisper SRT → mux.
+
+    caption_chunk_words: set to e.g. 3 for word-pop captions (short bursts instead
+    of whole sentences). Pairs with caption_style="pop".
+    """
     if not output_path:
         raise ValueError("output_path is required")
     if not script_beats and (not script or not str(script).strip()):
@@ -1387,6 +1468,7 @@ def add_voice_and_captions(
                     srt_path=srt,
                     default_rate=voice_rate,
                     default_pitch=voice_pitch,
+                    chunk_words=caption_chunk_words,
                 )
                 used_beats = True
             except Exception as e:

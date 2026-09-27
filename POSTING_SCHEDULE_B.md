@@ -210,6 +210,30 @@ One threshold. One law. One image.
 #ThresholdPhysics #physics #science #space #universe
 ```
 
+### ep14 pulsar 716 Hz *(NEW — queued after ep13)*
+- **Slug:** `sci_ep14_pulsar_716hz`
+- **Title:** `The Exact Spin Rate That Breaks a Star (716 Hz)`
+- **Spoken hook:** `This star spins seven hundred sixteen times every second.`
+- **Why this subject:** the first concept where BOTH retention levers come free from the
+  subject itself. A strobing pulsar is in motion at frame zero (ep13's weak point is a calm
+  static Earth; the 25%-stayed worst-ever opened on something inert). And rotation is
+  inherently loopable — the end state IS the start state, which is what ep09's 107.1% AVD
+  needed. Chosen over the remaining slate: ep10 Eddington has no crisp number, ep11 vacuum
+  decay has NO number at all (breaks the "Exact [X]" formula), ep12 neutron drip is
+  microscopic — the category that produced the 25% and 40% hooks.
+- **Physics (verified):** PSR J1748−2446ad, 716 Hz = one rotation every 1.397 ms. Earth turns
+  once per 24 h → ~62 million times slower. Neutron star ~20–32 km across. Equatorial speed is
+  RADIUS-DEPENDENT (15% c at 10 km · 18% at 12 km · 24% at 16 km) and the radius is
+  model-dependent, so the VO hedges "nears a fifth of light speed". 716 Hz is the exact figure.
+- **Two fixes applied to the drafted script:** the rate curve was inverted (−12% on the hook,
+  +0% on the payoff) which would have made the video get faster and lighter toward the end,
+  attacking the quiet-close that drives the loop — restored to +0/−4/−8/−12. And the loop
+  depends on all four clips sharing a rotation handedness, but no shot prompt said so; every
+  shot now specifies **clockwise**. Earth was also removed from shot 2's visual (it stayed in
+  the VO) to avoid a second recognizable solid object and repetition with ep13.
+- **FIRST EPISODE ON WORD-POP CAPTIONS** — `captions="pop"`, `caption_chunk_words=3`.
+- **Status:** prompts + VO locked. Pure T2V. Pending render → QC → schedule.
+
 ### Mon 28 Sep 2026 — ep13 Earth → black hole *(SWAP, analytics-driven)*
 - **File:** `sci_ep13_earth_black_hole_hook.mp4`
 - **Slug:** `sci_ep13_earth_black_hole`
