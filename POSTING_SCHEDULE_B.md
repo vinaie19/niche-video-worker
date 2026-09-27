@@ -232,7 +232,24 @@ One threshold. One law. One image.
   shot now specifies **clockwise**. Earth was also removed from shot 2's visual (it stayed in
   the VO) to avoid a second recognizable solid object and repetition with ep13.
 - **FIRST EPISODE ON WORD-POP CAPTIONS** — `captions="pop"`, `caption_chunk_words=3`.
-- **Status:** prompts + VO locked. Pure T2V. Pending render → QC → schedule.
+- **Status:** ✅ RENDERED & POSTED 2026-09-27. 31.1s, 0 decode errors. Cost $1.05.
+- **Title used:** `The Fastest Anything Has Ever Spun (716 Hz)` — deliberately DROPPED the
+  "Exact [X]" pattern. The drafted title "The Exact Spin Rate That Breaks a Star" claimed
+  716 Hz is a breaking point; it is not (neutron-star break-up is ~1000-1500 Hz depending on
+  equation of state). 716 Hz is the fastest OBSERVED spin. Accuracy beat pattern consistency.
+- **FOUR variables changed vs ep13 — attribution will be ambiguous:**
+  1. Brightness arc 58→65→33→17, no cut over 45% (ep13 had -54% and -65% cliffs)
+  2. Word-pop captions (`captions="pop"`, chunk=3) — first episode ever to use them
+  3. `ambient_volume` 0.55 → 0.10, matching ep09 (107% AVD) instead of ep13 (53%)
+  4. VO rewritten so beat 3 delivers an actual MECHANISM (angular momentum / skater
+     analogy) instead of restating size+speed; beat 4 stopped re-serving 716 Hz as "1.4 ms"
+- **WHAT TO WATCH:**
+  - Stayed% — ep13 50.9%, best ever ep07 69.2%. Above ~60% means the dramatic hook worked.
+  - AVD% — ep13 53%, best ever ep09 107%. Above ~80% means the brightness arc worked.
+  - Shares — only ep07 has ever earned any (7). Any share count is signal.
+- **NEXT EPISODE RULE: change ONE variable.** Four at once was the right call for a video
+  that was already underperforming, but it makes this result unattributable. Hold the next
+  one to a single change so the data means something.
 
 ### Mon 28 Sep 2026 — ep13 Earth → black hole *(SWAP, analytics-driven)*
 - **File:** `sci_ep13_earth_black_hole_hook.mp4`
