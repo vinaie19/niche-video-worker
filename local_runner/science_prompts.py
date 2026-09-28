@@ -663,47 +663,69 @@ _EP09_BEATS = [
     },
 ]
 _EP10_BEATS = [
+    # Rebuilt 2026-09-28 against real analytics. THRESHOLD IS THE MASS CAP, not the
+    # Eddington luminosity: L_Edd is a RATIO (scales with M), and every episode that
+    # performed had a FIXED number (617.5 km/s, 716 Hz, 1.44 Mo, 8.87 mm). "300 suns"
+    # is chosen over the often-quoted 150 because it is hardest to falsify — if the
+    # true cap is lower, "nothing exceeds 300" is still true — and because R136a1
+    # (~196 Mo, Kalari 2022, heaviest known) must sit BELOW the wall for beat 4's
+    # open loop to work. "Suns" means MASS everywhere; no luminosity multiplier
+    # appears in the VO, which avoids the per-solar-mass qualifier entirely.
+    # THIS EPISODE CHANGES ONE VARIABLE vs ep14: THE ENDING. Everything else held.
     {
-        "text": "Above the Eddington limit,\nradiation pressure tears a star apart.",
-        "rate": "-8%",
+        "text": "There's a wall no star can grow past: three hundred suns of mass.",
+        "caption_text": "A wall no star passes: 300 suns.",
+        "rate": "+0%",
         "pause_ms": 350,
         "num_frames": 161,
         "shot": (
-            "Cinematic locked wide shot of a hyper-luminous blue giant star shedding "
-            "outer gas layers in violent glowing radial plumes, "
+            "Cinematic locked medium shot of a massive young star blazing at its core, streams "
+            "of infalling gas glowing brighter as they collide with the outward light and "
+            "scatter into flares that surge and break across its surface, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "Light itself carries momentum.\nToo much outward push, and gravity loses grip on the atmosphere.",
-        "rate": "+0%",
+        "text": "You'd think more falling gas makes a bigger star. Instead its own light shoves the gas away.",
+        "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 169,
         "shot": (
-            "Cinematic locked medium shot of stellar atmosphere lifting off in luminous "
-            "sheets against inward gravity, blue-white glare, "
+            "Cinematic locked medium shot of a brilliant star filling the lower half of the "
+            "frame and lighting the whole scene, dense filaments of glowing gas streaming "
+            "inward toward it and curving sharply away as they near its surface, driven back "
+            "outward in bright sweeping streams, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "That balance point is the maximum brightness\na star can sustain before it strips itself.",
-        "rate": "-4%",
+        "text": "A star's limit grows with mass, but brightness grows faster — the heaviest stars shove their extra gas away.",
+        "caption_text": "Brightness outruns gravity.",
+        "rate": "-8%",
         "pause_ms": 300,
-        "num_frames": 153,
+        "num_frames": 169,
         "shot": (
-            "Cinematic locked close-up of outer envelope ripping into glowing filaments "
-            "streaming into space, "
+            "Cinematic locked wide shot of shafts of light streaming outward through drifting "
+            "gas, sweeping loose streams of matter steadily away from a massive star that dims "
+            "low at the edge of the frame, "
             f"{_SCI_SUFFIX}"
         ),
     },
     {
-        "text": "Cross it, and the star blows its own skin into the void.",
+        # Fable targeted luma 19 but described "a star's surface pulsing in bright
+        # waves" — a surface filling frame renders BRIGHT, so cut 3->4 would have
+        # JUMPED UP and killed the loop this episode exists to test. Rewritten so the
+        # action ITSELF produces darkness: the star DIMS. Same trick as ep13 shot 4,
+        # where "shrinking into the distance" gave calm motion and darkness together.
+        "text": "Right now, the heaviest star ever found sits near two hundred suns — still short of the wall.",
+        "caption_text": "Heaviest known: ~200 suns. Still short.",
         "rate": "-12%",
         "pause_ms": 200,
-        "num_frames": 145,
+        "num_frames": 169,
         "shot": (
-            "Cinematic locked ultra-wide linger: stripped luminous core with expanding "
-            "shell of ejected gas, deep black surroundings, "
+            "Cinematic locked wide shot of a lone massive star far off in deep black space, its "
+            "glow steadily fading as thin streams of gas lift away from it and spread outward, "
+            "the darkness deepening around it as it dims, "
             f"{_SCI_SUFFIX}"
         ),
     },
@@ -997,7 +1019,7 @@ for _j in science_ltx_jobs:
 # ep14: first episode on word-pop captions (strategy §2 "1-3 words/pop, numbers
 # highlighted"). Opt-in so ep01-ep13 keep the existing full-sentence "clean" style.
 for _j in science_ltx_jobs:
-    if _j.get("video_id") == "sci_ep14_pulsar_716hz":
+    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington"):
         _j["captions"] = "pop"
         _j["caption_chunk_words"] = 3
         # ep09 (107% AVD, best on channel) runs the LTX bed at 0.10; ep13 (53% AVD)
