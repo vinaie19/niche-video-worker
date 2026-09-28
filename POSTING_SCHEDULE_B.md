@@ -332,7 +332,14 @@ One threshold. One law. One image.
 > retention levers instead, which move independently:
 > **Stayed %** = the first-2s hook (best: ep07 69.2% · worst: ep04 25.0%).
 > **AVD %** = whether the ending loops (best: ep09 107.1% — re-watches are what drove its 1,185 views).
-> Target for every new episode: **ep07's hook + ep09's loop.** Nothing has had both yet.
+> Target for every new episode: **ep07's hook + ep09's loop.**
+> **2026-09-28 RESULT — ep14 is the first to move BOTH.** vs ep13: views 262 -> 971 (3.7x),
+> stayed 48.9% -> 59.6% (+10.7pts), AVD 55.4% -> 92.1% (+36.7pts). Four variables changed at
+> once (brightness arc / word-pop captions / ambient 0.55->0.10 / mechanism-driven VO), so
+> strict attribution is impossible — but the biggest gain (AVD) landed exactly where the
+> brightness-arc fix was aimed, and `shot_qc.py` caught a -70% cliff + a frozen shot before
+> that render ever shipped. STILL SHORT: 92.1% vs ep09's 106.9%. Above 100% = replays.
+> NEXT TEST: hold everything constant, change ONLY the ending, and try to buy the loop.
 > Shares are the biggest distribution multiplier and only ep07 earned any (7); drama is what gets forwarded.
 
 | Date | Short | Stayed to watch | Engaged views | APV | Viewed vs swiped | Subs Δ | Agent review | Notes |
