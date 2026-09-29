@@ -22,3 +22,7 @@ local_runner/logs/
 local_runner/docs/
 *.bak
 *.prev.mp4
+
+# Generated shots/stills and voice cache stay local, not in git
+local_runner/i2v_stills/
+local_runner/vo_cache/
