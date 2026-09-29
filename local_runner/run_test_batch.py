@@ -421,7 +421,7 @@ def wait_for_worker(comfy_url):
 
 
 def _normalize_shot_entry(shot):
-    """Accept a prompt string or {prompt|shot, num_frames?, steps?, chunks?, upscale?, start_image?, start_image_url?}."""
+    """Accept a prompt string or {prompt|shot, num_frames?, steps?, chunks?, upscale?, start_image?, start_image_url?, negative_prompt?}."""
     if isinstance(shot, dict):
         prompt = (shot.get("prompt") or shot.get("shot") or "").strip()
         if not prompt:
@@ -434,6 +434,7 @@ def _normalize_shot_entry(shot):
             "upscale": shot.get("upscale"),
             "start_image": shot.get("start_image"),
             "start_image_url": shot.get("start_image_url"),
+            "negative_prompt": shot.get("negative_prompt"),
         }
         return meta
     return {
@@ -444,6 +445,7 @@ def _normalize_shot_entry(shot):
         "upscale": None,
         "start_image": None,
         "start_image_url": None,
+        "negative_prompt": None,
     }
 
 
@@ -492,6 +494,11 @@ def _build_shot_payload(vid, idx, shot, shot_mode, join_style=None, override_pro
         payload["steps"] = int(vid["steps"])
     elif os.getenv("LTX_STEPS"):
         payload["steps"] = int(os.getenv("LTX_STEPS"))
+    # Optional per-shot negative prompt
+    if entry.get("negative_prompt"):
+        payload["negative_prompt"] = entry["negative_prompt"]
+    elif vid.get("negative_prompt"):
+        payload["negative_prompt"] = vid["negative_prompt"]
     return payload
 
 

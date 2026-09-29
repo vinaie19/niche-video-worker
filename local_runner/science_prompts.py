@@ -674,7 +674,7 @@ _EP10_BEATS = [
     # THIS EPISODE CHANGES ONE VARIABLE vs ep14: THE ENDING. Everything else held.
     {
         "text": "There's a wall no star can grow past: three hundred suns of mass.",
-        "caption_text": "A wall no star passes: 300 suns.",
+        "caption_text": "There's a wall no star can grow past: 300 suns of mass.",
         "rate": "+0%",
         "pause_ms": 350,
         "num_frames": 161,
@@ -700,7 +700,6 @@ _EP10_BEATS = [
     },
     {
         "text": "A star's limit grows with mass, but brightness grows faster — the heaviest stars shove their extra gas away.",
-        "caption_text": "Brightness outruns gravity.",
         "rate": "-8%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -718,7 +717,7 @@ _EP10_BEATS = [
         # action ITSELF produces darkness: the star DIMS. Same trick as ep13 shot 4,
         # where "shrinking into the distance" gave calm motion and darkness together.
         "text": "Right now, the heaviest star ever found sits near two hundred suns — still short of the wall.",
-        "caption_text": "Heaviest known: ~200 suns. Still short.",
+        "caption_text": "Right now, the heaviest star ever found sits near 200 suns — still short of the wall.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 169,
@@ -921,7 +920,7 @@ _EP13_BEATS = [
 _EP14_BEATS = [
     {
         "text": "This star spins seven hundred sixteen times every second. Nothing solid should survive that.",
-        "caption_text": "This star spins 716 times a second. Nothing solid survives that.",
+        "caption_text": "This star spins 716 times every second. Nothing solid should survive that.",
         "rate": "+0%",
         "pause_ms": 350,
         "num_frames": 145,
@@ -938,7 +937,7 @@ _EP14_BEATS = [
         # Earth stays in the VO only — a second recognizable solid object on screen
         # would reopen the identity-drift risk, and ep13 just used Earth.
         "text": "Earth turns once a day. This pulsar beats that sixty two million times over.",
-        "caption_text": "Earth: 1 turn a day. This: 62 million times faster.",
+        "caption_text": "Earth turns once a day. This pulsar beats that 62 million times over.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -952,7 +951,6 @@ _EP14_BEATS = [
     },
     {
         "text": "Collapse conserves spin — a skater pulling in their arms spins faster — its edge nears a fifth of light speed.",
-        "caption_text": "Collapse conserves spin. Edge: ~20% of light.",
         "rate": "-8%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -966,7 +964,6 @@ _EP14_BEATS = [
     },
     {
         "text": "Only gravity holds it together — spin fast enough, and the star tears itself apart.",
-        "caption_text": "Spin fast enough and it tears apart.",
         "rate": "-12%",
         "pause_ms": 200,
         "num_frames": 169,
@@ -976,6 +973,161 @@ _EP14_BEATS = [
             "strobe, the point pulsing rhythmically and dimming further with each pulse, deep "
             "black space filling the frame, "
             f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+
+# --- Ep 15: Magnetar — first episode built on the REVISED hook rule ---
+# Two levers, from 10 published episodes:
+#   STAYED% <- opening style. Concrete image/object openings avg 57.5%; openings on
+#     a number/unit/technical term avg 34.0%. Beat 1 names a wallet and the Moon —
+#     zero technical units, nothing to learn first. The number lands at beat 3.
+#   AVD% <- whether something HAPPENS. ep10 (nothing happens) scored 51.7% AVD and
+#     was the worst cosmic result. Here atoms come apart at 1,000 km, and beat 4 is
+#     a real recorded event with a consequence.
+# Numbers pre-verified before drafting: field ~1e11 T; falls as 1/r^3; atoms distort
+#   at ~1,000 km; wipes a magnetic stripe at ~215,000 km (Earth-Moon is 384,400 km,
+#   so "halfway to the Moon" — NOT "farther than", an error I made and caught).
+#   SGR 1806-20 giant flare, 27 Dec 2004, ionised Earth's upper atmosphere; distance
+#   estimates 20,000-50,000 ly, hence "tens of thousands" rather than one figure.
+# VISUALS ARE ALL COSMIC. The draft rendered a credit card in shots 1 and 4; cosmic
+#   subjects average 660 views vs 15 for non-cosmic, and a card carries text/numbers
+#   that LTX would render despite the no-text suffix (it ignores negations).
+_EP15_BEATS = [
+    {
+        "text": "This star could wipe the card in your wallet from halfway to the Moon.",
+        "rate": "+0%",
+        "pause_ms": 350,
+        "num_frames": 161,
+        "shot": (
+            "Cinematic locked medium shot of a compact neutron star burning violet and white "
+            "low in the frame, tight jets of plasma tearing off it and whipping outward into "
+            "the surrounding darkness, its surface churning and pulsing, deep dark space "
+            "across the upper frame, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "It's a magnetar — a dead star with the strongest magnetic field in the universe.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked medium shot of the same blazing star sitting lower in the frame, "
+            "thick violet plasma threads erupting and twisting outward from it, streaming past "
+            "the camera and fading into the dark, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "That field fades fast with distance. Within a thousand kilometres, it warps the atoms in your body apart.",
+        "caption_text": "That field fades fast with distance. Within 1,000 kilometres, it warps the atoms in your body apart.",
+        "rate": "-8%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked wide shot of streaks of electric blue light sweeping outward from a "
+            "bright star low in the frame, passing through the frame and fading, faint matter "
+            "visibly stretching and pulling apart along each streak, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        # Draft ended on "only thirty of these are known" — an inventory fact, and it
+        # restated the hook. Replaced with the recorded 2004 event: a consequence,
+        # which is what AVD responds to.
+        "text": "In two thousand four, one flared — and lit our atmosphere from tens of thousands of light years away.",
+        "caption_text": "In 2004, one flared — and lit our atmosphere from tens of thousands of light years away.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic locked ultra-wide shot of a single bright flare front expanding outward "
+            "across deep black space, spreading and thinning as it travels, dimming steadily as "
+            "it disperses, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
+
+# --- Ep 08N: Neutron Star (20 km) ---
+# 2026-09-29: "Part 2" of ep07 (same star still). Title:
+#   The Exact Size a Collapsed Star Crushes Down To (20 km)
+# I2V first frames: i2v_stills/sci_ep08_neutron_star/shot_1..4.png (shot_4 == shot_1
+# == end_frame.png so the last frame loops back to the hook). end_frame.png is NOT
+# wired: the worker has no end-keyframe input. Negatives are also NOT wired: the
+# worker has no negative-prompt field (see ep07 note), so they are kept here only
+# for reference and must not be pasted into the positive prompts:
+#   all shots: portal, ring, hollow center, halo, lens flare, jets, beams, explosion,
+#              expanding, breaking apart, motion blur, text, second star
+#   shot 2 +:  spoon melting, spoon bending, liquid spilling, steam, fire
+# Beat windows 0-5s / 5-12s / 12-22s / 22-30s -> num_frames on the 8k+1 grid @24fps.
+# v2 (2026-09-29, no GPU): shots 1 and 4 replaced by locally animated clips
+# (temp_clips/sci_ep08_neutron_star_shot_{1,4}_local.mp4, LTX grew the star); new
+# beat-1 hook + beat-4 loop line; "SIZE OF A CITY" overlay burned on shot 1 at
+# assembly. Output: final_videos/sci_ep08_neutron_star_complete_v2.mp4.
+
+_EP08N_BEATS = [
+    {
+        # v2: TTS speaks one line (a "\n" in "text" makes Edge-TTS pause ~0.9s and
+        # pushes the line past shot 1); the caption keeps the two-line break.
+        "text": "This star is the size of a city, and it's heavier than the Sun.",
+        "caption_text": "This star is the size of a city,\n"
+            "and it's heavier than the Sun.",
+        "rate": "+0%",
+        # v2: pause sized so vo_delay + VO + pause = 4.65s -> shot 1 stays 5.0s
+        # (4.65 + 0.35 crossfade) and the line finishes inside shot 1.
+        "pause_ms": 182,
+        "num_frames": 121,
+        "shot": (
+            "A small, dense blue-white star with a cracked glowing surface hovers low over "
+            "a dark city with warm orange lights, seen from directly above. Its edge stays "
+            "sharp and solid. The cracks pulse slowly with light, and the city lights below "
+            "flicker faintly. Camera locked, very slow push in."
+        ),
+    },
+    {
+        "text": "A single teaspoon of it would weigh more\n"
+            "than every human on Earth combined.",
+        "rate": "+0%",
+        "pause_ms": 280,
+        "num_frames": 169,
+        "shot": (
+            "A metal teaspoon rests still on a black background, its bowl filled with "
+            "glowing blue-white star material with a cracked surface. Bright seams of light "
+            "pulse slowly across the material. The spoon does not move or bend. Camera "
+            "locked, very slow push in."
+        ),
+    },
+    {
+        "text": "The squeeze crushes every atom until it turns into neutrons,\n"
+            "packed tighter than anything except a black hole.",
+        "rate": "-4%",
+        # v3: pause 0 and the ~0.9s Edge-TTS trailing silence trimmed from this beat's
+        # wav at assembly (cut at 6.68s), so beat 4 follows after ~0.28s, not ~1.5s.
+        "pause_ms": 0,
+        "num_frames": 241,
+        "shot": (
+            "A small blue-white star with a cracked surface sits alone on a black "
+            "background. It tightens slightly and grows brighter, and its surface cracks "
+            "close up as it is squeezed from all sides. Its outline stays a sharp, solid "
+            "circle. Camera locked."
+        ),
+    },
+    {
+        "text": "Some of them spin hundreds of times every second.\n"
+            "So what's left when a star dies?\n"
+            "This star is the size of a city...",
+        "rate": "-8%",
+        "pause_ms": 200,
+        "num_frames": 193,
+        "shot": (
+            "A small blue-white star with a cracked glowing surface hovers over a dark city "
+            "with warm orange lights, seen from directly above. The cracked surface turns "
+            "slowly and steadily, and a faint pulse of light repeats. The star stays in the "
+            "same position with a sharp, solid outline. Camera locked, no zoom."
         ),
     },
 ]
@@ -996,9 +1148,11 @@ _EPISODES = [
     # Eddington is NOT dropped — it keeps its place in the queue below.
     ("sci_ep13_earth_black_hole", _beats_script(_EP13_BEATS), _beats_shots(_EP13_BEATS), _EP13_BEATS),
     ("sci_ep14_pulsar_716hz", _beats_script(_EP14_BEATS), _beats_shots(_EP14_BEATS), _EP14_BEATS),
+    ("sci_ep15_magnetar", _beats_script(_EP15_BEATS), _beats_shots(_EP15_BEATS), _EP15_BEATS),
     ("sci_ep10_eddington", _beats_script(_EP10_BEATS), _beats_shots(_EP10_BEATS), _EP10_BEATS),
     ("sci_ep11_vacuum_decay", _beats_script(_EP11_BEATS), _beats_shots(_EP11_BEATS), _EP11_BEATS),
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
+    ("sci_ep08_neutron_star", _beats_script(_EP08N_BEATS), _beats_shots(_EP08N_BEATS), _EP08N_BEATS),
 ]
 
 
@@ -1013,15 +1167,24 @@ science_ltx_jobs = build_science_jobs(num_frames=129, steps=8)
 
 # ep09 solar escape: keep LTX bed quiet under VO (ep08 lesson)
 for _j in science_ltx_jobs:
-    if _j.get("video_id") == "sci_ep09_solar_escape":
+    if _j.get("video_id") in ("sci_ep09_solar_escape", "sci_ep08_neutron_star"):
         _j["ambient_volume"] = 0.10
 
 # ep14: first episode on word-pop captions (strategy §2 "1-3 words/pop, numbers
 # highlighted"). Opt-in so ep01-ep13 keep the existing full-sentence "clean" style.
 for _j in science_ltx_jobs:
+    if _j.get("video_id") == "sci_ep15_magnetar":
+        # Subject sits low in frame in all 4 shots (the prompts say so, to stop
+        # blow-out), so bottom captions land on top of it. Anchor to the top instead.
+        _j["captions"] = "clean_high"
+        _j["ambient_volume"] = 0.10
     if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington"):
-        _j["captions"] = "pop"
-        _j["caption_chunk_words"] = 3
+        # Word-pop reverted 2026-09-28. ep09 (full-sentence "clean") holds the best
+        # AVD on the channel at 107%; ep14, the only episode to ship word-pop, came
+        # in at 92.1%. Confounded, but not encouraging — and the style reads as
+        # confusing on playback. Keep caption_text so numerals still render as
+        # "8.87 mm" instead of spelled out; only the chunking is dropped.
+        _j["captions"] = "clean"
         # ep09 (107% AVD, best on channel) runs the LTX bed at 0.10; ep13 (53% AVD)
         # inherited the 0.55 default — 5.5x louder. A loud bed competes with the VO
         # and stops the tail reading as a quiet linger. Match the winner.
@@ -1040,9 +1203,11 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep09_solar_escape": "ltx",
     "sci_ep13_earth_black_hole": "ltx",
     "sci_ep14_pulsar_716hz": "ltx",
+    "sci_ep15_magnetar": "ltx",
     "sci_ep10_eddington": "ltx",
     "sci_ep11_vacuum_decay": "ltx",
     "sci_ep12_neutron_drip": "ltx",
+    "sci_ep08_neutron_star": "ltx",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",

@@ -169,6 +169,14 @@ One threshold. One law. One image.
 #ThresholdPhysics #physics #science #space #universe
 ```
 
+### ep08N neutron star 20 km *(NEW — Part 2 of ep07, same star)*
+- **File:** `sci_ep08_neutron_star_complete_v3.mp4` (v3 = v2 minus the 1.2s dead air before beat 4; v1/v2 kept)
+- **Slug:** `sci_ep08_neutron_star`
+- **Title:** `The Exact Size a Collapsed Star Crushes Down To (20 km)`
+- **Spoken hook:** `This star is the size of a city, and it's heavier than the Sun.` (on-screen: SIZE OF A CITY)
+- **Shot mode:** `multi_cut` (city+star / teaspoon / star on black / city+star loop back to hook)
+- **Status:** Stills QC passed (built locally, no image API; `i2v_stills/sci_ep08_neutron_star/SOURCES.md`). One LTX render 2026-09-29; v2 reassembled with no GPU (shots 1+4 animated locally, new hook/loop VO); v3 trims beat 3's trailing silence (27.6s). Source VO: `local_runner/science_prompts.py` `_EP08N_BEATS`.
+
 ### Sun 27 Sep 2026 — ep09 solar escape *(swap)*
 - **File:** `sci_ep09_solar_escape_hook.mp4`
 - **Slug:** `sci_ep09_solar_escape`

@@ -50,9 +50,36 @@ Related docs:
 00:28–00:30 | LOOP       | Last beat feeds the opening paradox (optional)
 ```
 
+> ### ⚠️ HOOK RULE REVISED 2026-09-28 — from 10 published episodes
+> The original rule below said the hook is a "hard numeric / named threshold".
+> **The data says the opposite.** Ranked by Stayed-to-watch:
+>
+> | Opens with | Mean stayed |
+> |---|---|
+> | a CONCRETE image / object / action | **57.5%** (n=6) |
+> | a NUMBER, UNIT, or TECHNICAL TERM | **34.0%** (n=4) |
+>
+> A 23.5-point gap. Every opening that leads with a unit or jargon is in the bottom
+> four: "At absolute zero — zero kelvin" (25%), "At the 194-decibel sound barrier"
+> (25%), "Cross the Roche limit" (40.3%), "There's a wall... 300 suns of mass" (45.7%).
+> The best hook on the channel — 68.5% — contains **no number at all**:
+> *"This dead star is only the size of Earth, but it weighs almost as much as the Sun."*
+> Two familiar objects held against each other.
+>
+> **THE NUMBER IS NOT THE HOOK. THE NUMBER IS THE PAYOFF.** Open on something a
+> person can picture without being taught anything; land the figure at 3-6s.
+> Familiar-object units (Earth, the Sun, a mountain) are fine — technical units
+> (kelvin, decibels, solar masses, hertz) are what kill it.
+>
+> **Two levers, two causes** (this model fits all 10 episodes):
+> STAYED% is driven by the OPENING STYLE. AVD% is driven by whether something
+> HAPPENS at the threshold. ep07 had a concrete opening but a static subject
+> (68.5% stay / 77.6% AVD). ep09 had a weaker opening but a real event and a loop
+> (52.9% / 106.9%). ep10 had neither (45.7% / 51.7%).
+
 **Rules**
 
-- Stakes in the **first 8 spoken words**
+- ~~Stakes in the **first 8 spoken words**~~ → **Open on a concrete image; number lands by ~6s**
 - Audio + motion start at **frame ~0** (no dead 0.5s)
 - Script cap: **~55–65 words** for a ~30s Short
 - Reveal: **threshold early**, **consequence late**

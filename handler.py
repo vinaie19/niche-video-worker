@@ -217,7 +217,7 @@ def save_start_image(job_id, start_image_url=None, start_image_b64=None):
     return filename
 
 
-def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=None, start_image_filename=None):
+def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=None, start_image_filename=None, negative_prompt=None):
     """Patch LTX-2.5 single-stage distilled AV T2V/I2V for vertical Shorts (~1088×1920)."""
     if num_frames is None:
         num_frames = default_num_frames()
@@ -240,6 +240,8 @@ def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=Non
     video_vae = models.get("video_vae")
     audio_vae = models.get("audio_vae")
     te_device = default_ltx_te_device()
+
+    default_negative = "pc game, console game, video game, cartoon, childish, ugly, blurry, low quality, worst quality, deformed, text, watermark, logo, people, faces, humans"
 
     for node in workflow.values():
         class_type = node.get("class_type")
@@ -267,6 +269,11 @@ def patch_ltx_workflow(workflow, prompt_text, models, num_frames=None, steps=Non
             title == "Positive Prompt" or "Positive" in title
         ):
             node["inputs"]["text"] = prompt_text
+
+        if class_type == "CLIPTextEncode" and (
+            title == "Negative Prompt" or "Negative" in title
+        ):
+            node["inputs"]["text"] = negative_prompt or default_negative
 
         if class_type == "EmptyLTXVLatentVideo":
             node["inputs"]["width"] = width
@@ -481,6 +488,7 @@ def execute_multi_cut(
     steps=None,
     start_image_url=None,
     start_image_b64=None,
+    negative_prompt=None,
 ):
     """LTX-2.5 native AV T2V (or I2V, when a start image is given) at ~1088×1920,
     then deliver exact 1080×1920."""
@@ -521,6 +529,7 @@ def execute_multi_cut(
         num_frames=num_frames,
         steps=steps,
         start_image_filename=start_image_filename,
+        negative_prompt=negative_prompt,
     )
     output_filename = submit_and_wait(workflow, timeout_s=2400)
     local_file_path = os.path.join(OUTPUT_DIR, output_filename)
@@ -560,6 +569,7 @@ def execute_render_async(
     join_style=None,
     start_image_url=None,
     start_image_b64=None,
+    negative_prompt=None,
 ):
     try:
         jobs[job_id]["status"] = "processing"
@@ -590,6 +600,7 @@ def execute_render_async(
             steps=steps,
             start_image_url=start_image_url,
             start_image_b64=start_image_b64,
+            negative_prompt=negative_prompt,
         )
         jobs[job_id]["shot_mode"] = mode
         if join_style:
@@ -674,6 +685,7 @@ def handle_prompt():
         steps = int(steps)
     start_image_url = data.get("start_image_url")
     start_image_b64 = data.get("start_image_b64")
+    negative_prompt = data.get("negative_prompt")
 
     jobs[job_id] = {
         "status": "queued",
@@ -703,6 +715,7 @@ def handle_prompt():
             join_style,
             start_image_url,
             start_image_b64,
+            negative_prompt,
         )
 
     threading.Thread(target=_start, daemon=True).start()

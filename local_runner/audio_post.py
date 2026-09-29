@@ -68,6 +68,19 @@ CAPTION_STYLES = {
         "OutlineColour=&H00000000&,BorderStyle=1,Outline=1,Shadow=0,"
         "Alignment=2,MarginV=56"
     ),
+    # Raised captions, for shots whose SUBJECT sits low in frame — prompts saying
+    # "low in the frame" (needed to stop LTX blowing out a shot) put the star
+    # exactly where normal bottom captions live. On ep15 subject brightness peaked
+    # at 60-90% height while captions sat at 68-80%: direct collision.
+    # NOTE: Alignment=8 (top-anchored) SILENTLY IGNORES MarginV in this libass
+    # build — 10/25/40/56 all rendered identically, mid-frame. Only Alignment=2
+    # (bottom-anchored) responds, so raise the text with a large MarginV instead.
+    # 175 measured as the clean gap above the subject; 220 sits too near the top.
+    "clean_high": (
+        "FontName=Arial,FontSize=11,PrimaryColour=&H00FFFFFF&,"
+        "OutlineColour=&H00000000&,BorderStyle=1,Outline=1,Shadow=0,"
+        "Alignment=2,MarginV=175"
+    ),
     "boxed": (
         "FontName=Arial,FontSize=10,PrimaryColour=&H00FFFFFF&,"
         "OutlineColour=&H00000000&,BackColour=&H80000000&,BorderStyle=3,"
@@ -84,7 +97,7 @@ CAPTION_STYLES = {
         # MarginV is in ASS script units (same space as "clean" at 56), NOT pixels.
         # 300 pushed the text clean off the top of the frame — captions rendered
         # nowhere. 110 sits above the lower third; 18 is ~1.6x "clean" for punch.
-        "FontName=DejaVu Sans,FontSize=18,Bold=1,PrimaryColour=&H00FFFFFF&,"
+        "FontName=DejaVu Sans,FontSize=16,Bold=1,PrimaryColour=&H00FFFFFF&,"
         "OutlineColour=&H00000000&,BorderStyle=1,Outline=3,Shadow=0,"
         "Alignment=2,MarginV=110"
     ),
@@ -319,7 +332,8 @@ async def _synthesize_voice(
 ) -> None:
     import edge_tts
 
-    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
+    clean_text = re.sub(r'\s+', ' ', text).strip()
+    communicate = edge_tts.Communicate(clean_text, voice, rate=rate, pitch=pitch)
     await communicate.save(output_mp3)
 
 
@@ -393,6 +407,27 @@ def _concat_wavs(wav_paths: list[str], output_wav: str) -> str:
     return output_wav
 
 
+def _trim_trailing_silence(wav_path: str, tail_duration_ms: float = 150) -> str:
+    """Trim trailing silence, keeping tail_duration_ms of silence as buffer. Returns trimmed path."""
+    tail_s = max(0.01, tail_duration_ms / 1000.0)
+    trimmed = wav_path.replace('.wav', '_trimmed.wav')
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            wav_path,
+            "-af",
+            f"areverse,silenceremove=start_periods=1:start_duration=0.1:start_threshold=-40dB,areverse,apad=pad_dur={tail_s}",
+            trimmed,
+        ],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["mv", "-f", trimmed, wav_path], check=True)
+    return wav_path
+
+
 def generate_voiceover(
     script: Optional[str] = None,
     output_mp3: Optional[str] = None,
@@ -452,6 +487,7 @@ def generate_voiceover(
             if not os.path.isfile(mp3_i) or os.path.getsize(mp3_i) < 100:
                 raise RuntimeError(f"Edge-TTS empty beat {i}: {mp3_i}")
             _mp3_to_wav(mp3_i, wav_i)
+            _trim_trailing_silence(wav_i)
             wav_parts.append(wav_i)
             if b["pause_ms"] > 0:
                 sil = os.path.join(seg_dir, f"{stem}_pause{i}.wav")
@@ -562,6 +598,52 @@ def clamp_srt_file(srt_path: str, max_duration_s: float, output_path: Optional[s
 _CAPTION_CONNECTORS = {"of", "a", "an", "the", "per", "to", "in", "at"}
 
 
+_CAPTION_MAX_CHARS = 20   # a 3-word chunk of LONG words ("Brightness outruns
+                          # gravity." = 27 chars) wraps to two lines, which defeats
+                          # word-pop entirely — it then occupies the same footprint
+                          # as a full sentence. Cap width as well as word count.
+
+
+_NUMWORDS = {"zero","one","two","three","four","five","six","seven","eight","nine",
+             "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen",
+             "seventeen","eighteen","nineteen","twenty","thirty","forty","fifty",
+             "sixty","seventy","eighty","ninety","hundred","thousand","million",
+             "billion","trillion","point","fifth","half","quarter","per","cent"}
+
+
+def validate_caption_text(beats: list) -> list[str]:
+    """
+    caption_text exists ONLY to swap spoken number-words for numerals
+    ("three hundred" -> "300"). It is NOT a summary field.
+
+    Shipped twice before this guard existed: an episode whose VO said "A star's
+    limit grows with mass, but brightness grows faster - the heaviest stars shove
+    their extra gas away" burned the caption "Brightness outruns gravity." The
+    viewer reads one sentence while hearing a different one, and the two channels
+    fight instead of reinforcing. Returns a list of human-readable problems.
+    """
+    def content(t):
+        w = re.findall(r"[a-z']+", (t or "").lower())
+        return [x for x in w if x not in _NUMWORDS]
+
+    problems = []
+    for i, b in enumerate(beats, 1):
+        cap = (b.get("caption_text") or "").strip()
+        if not cap:
+            continue
+        vo_w, cap_w = content(b.get("text")), content(cap)
+        added = [w for w in cap_w if w not in vo_w]
+        dropped = [w for w in vo_w if w not in cap_w]
+        if added:
+            problems.append(f"beat {i}: caption adds words not spoken: {added}")
+        if vo_w and len(dropped) / len(vo_w) > 0.34:
+            problems.append(
+                f"beat {i}: caption drops {len(dropped)}/{len(vo_w)} spoken words "
+                f"({len(dropped)/len(vo_w)*100:.0f}%) - it is paraphrasing, not transcribing"
+            )
+    return problems
+
+
 def _chunk_words(text: str, max_words: int = 3) -> list[str]:
     """
     Split a caption line into 1-max_words bursts for word-pop captions.
@@ -599,6 +681,27 @@ def _chunk_words(text: str, max_words: int = 3) -> list[str]:
                 break
         out.append(" ".join(chunk))
         i += len(chunk)
+    # Split any chunk that is too WIDE, even if it is within the word limit.
+    widened: list[str] = []
+    for ch in out:
+        if len(ch) <= _CAPTION_MAX_CHARS:
+            widened.append(ch)
+            continue
+        ws = ch.split()
+        if len(ws) == 1:
+            widened.append(ch)          # one long word: nothing to split on
+            continue
+        cur = ""
+        for w in ws:
+            cand = (cur + " " + w).strip()
+            if cur and len(cand) > _CAPTION_MAX_CHARS:
+                widened.append(cur)
+                cur = w
+            else:
+                cur = cand
+        if cur:
+            widened.append(cur)
+    out = widened
     # Merge orphaned short function words ("in", "a", "of") backwards — a lone
     # 2-letter cue flashing for 200ms reads as a stutter, not emphasis.
     merged: list[str] = []
