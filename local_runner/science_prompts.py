@@ -1133,6 +1133,91 @@ _EP08N_BEATS = [
 ]
 
 
+# --- Ep 17: Sun as a black hole (zero-GPU still build: fetch_still_assets.py + still_video.py) ---
+# Physics: r_s = 2GM/c^2 = 2.95 km for 1 solar mass -> 5.9 km across, so "six kilometres wide".
+#   6 km at 72 km/h = 5 min, hence "drive across in five minutes". Orbits depend only on the
+#   central mass, so Earth's orbit and year are unchanged; it just loses sunlight and freezes.
+# Hook/close follow the YouTube review (2026-10-19): scenario + number in the first sentence,
+#   and the close names the "vacuum cleaner" myth it overturns.
+# Picture: real Sun (shot 1) shrinks to a dot (shot 2) over a night city, Earth slides past
+#   the black hole (shot 3), then goes dark (shot 4) so the bright Sun opening loops.
+_EP17_BH = {"color": "black", "x": 0.5, "y": 0.40, "width": 0.07, "glow": (255, 150, 60, 150)}
+_EP17_BEATS = [
+    {
+        "text": "If the Sun collapsed into a black hole right now, it would be just six kilometres wide.",
+        "caption_text": "If the Sun collapsed into a black hole right now, it would be just 6 km wide.",
+        "rate": "+0%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "The full disc of the Sun fills the frame against black space, its glowing surface "
+            "churning with bright loops of plasma, slow steady motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+        "still": {
+            "image": "starfield",
+            "layers": [{"image": "sun.jpg", "x": 0.5, "y": 0.42, "width": 0.98, "circle": True}],
+            "move": "push_in", "zoom": 0.08, "pulse": 0.04,
+        },
+    },
+    {
+        "text": "All of its mass, squeezed into a ball you could drive across in five minutes.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 121,
+        "shot": (
+            "The Sun shrinks rapidly into a tiny black sphere with a faint orange glow, hovering "
+            "above a dark city lit by warm orange street lights, seen from above, "
+            f"{_SCI_SUFFIX}"
+        ),
+        "still": {
+            "image": "starfield",
+            "layers": [{"image": "sun.jpg", "x": 0.5, "y": 0.42, "y_to": 0.40,
+                        "width": 0.98, "width_to": 0.07, "circle": True}],
+            "end": {"image": "city.jpg", "layers": [_EP17_BH]},
+            "end_at": (0.6, 0.95), "move": "hold",
+        },
+    },
+    {
+        "text": "Here's the strange part: Earth wouldn't fall in. Same mass, same pull, same orbit.",
+        "rate": "-8%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "A tiny black sphere with a faint orange glow sits in deep black space while a small "
+            "blue Earth glides past it on a wide steady orbit, "
+            f"{_SCI_SUFFIX}"
+        ),
+        "still": {
+            "image": "starfield",
+            "layers": [_EP17_BH, {"image": "earth.jpg", "x": 0.15, "x_to": 0.85, "y": 0.62,
+                                  "y_to": 0.58, "width": 0.16, "circle": True}],
+            "move": "hold",
+        },
+    },
+    {
+        "text": "We wouldn't get sucked in. We'd just keep circling it, freezing in the dark, forever.",
+        "rate": "-12%",
+        "pause_ms": 200,
+        "num_frames": 169,
+        "shot": (
+            "A small blue Earth drifts slowly through black space, its colours fading and "
+            "darkening until it is a dim silhouette, a faint orange glow far behind, "
+            f"{_SCI_SUFFIX}"
+        ),
+        "still": {
+            "image": "starfield",
+            "layers": [_EP17_BH, {"image": "earth.jpg", "x": 0.85, "x_to": 0.70, "y": 0.58,
+                                  "y_to": 0.55, "width": 0.16, "width_to": 0.12, "circle": True}],
+            "end": {"image": "starfield",
+                    "layers": [_EP17_BH, {"image": "earth.jpg", "x": 0.85, "x_to": 0.70, "y": 0.58,
+                                          "y_to": 0.55, "width": 0.16, "width_to": 0.12,
+                                          "circle": True, "brightness": 0.15}]},
+            "end_at": (0.15, 0.85), "move": "pull_out", "zoom": 0.06,
+        },
+    },
+]
+
 # Primary queue (Top 12)
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
@@ -1153,6 +1238,7 @@ _EPISODES = [
     ("sci_ep11_vacuum_decay", _beats_script(_EP11_BEATS), _beats_shots(_EP11_BEATS), _EP11_BEATS),
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
     ("sci_ep08_neutron_star", _beats_script(_EP08N_BEATS), _beats_shots(_EP08N_BEATS), _EP08N_BEATS),
+    ("sci_ep17_sun_black_hole", _beats_script(_EP17_BEATS), _beats_shots(_EP17_BEATS), _EP17_BEATS),
 ]
 
 
@@ -1208,6 +1294,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep11_vacuum_decay": "ltx",
     "sci_ep12_neutron_drip": "ltx",
     "sci_ep08_neutron_star": "ltx",
+    "sci_ep17_sun_black_hole": "ltx",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",

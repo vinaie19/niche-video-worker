@@ -259,6 +259,25 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep17 Sun as a black hole *(NEW — first planned zero-GPU still build)*
+- **Slug:** `sci_ep17_sun_black_hole`
+- **Title:** `What If the Sun Turned Into a Black Hole? (6 km Wide)`
+- **Spoken hook:** `If the Sun collapsed into a black hole right now, it would be just six kilometres wide.`
+- **Why:** familiar anchor (Sun, Earth) + hard number + an evergreen search question, and the
+  "Earth wouldn't fall in" twist at the midpoint. Script tightened per YouTube review 2026-10-19.
+- **Physics:** r_s = 2.95 km for 1 M☉ → 5.9 km across. Orbits depend only on mass → Earth's orbit unchanged.
+- **Build ($0):** `VIDEO_ID=sci_ep17_sun_black_hole python fetch_still_assets.py` (NASA images from
+  Wikimedia, PD only) → `CHANNEL=b VIDEO_ID=sci_ep17_sun_black_hole python still_video.py`
+- **Status:** script + still specs ready; pending first laptop build → QC
+- **Description:**
+```
+What would happen if the Sun turned into a black hole? It would shrink to just 6 km wide, and Earth would keep orbiting exactly as before, just in the dark.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #universe
+```
+
 ### Mon 28 Sep 2026 — ep13 Earth → black hole *(SWAP, analytics-driven)*
 - **File:** `sci_ep13_earth_black_hole_hook.mp4`
 - **Slug:** `sci_ep13_earth_black_hole`

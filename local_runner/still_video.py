@@ -18,7 +18,9 @@ beat["still"] keys (all optional):
   image        path, or "starfield"; relative paths resolve against i2v_stills/<video_id>/, then i2v_stills/
   layers       [{"image": path, "x": 0.5, "y": 0.42, "width": 0.46}]  centre x/y and width as
                fractions of frame; PNG alpha respected, or "circle": true to cut a round mask;
-               {"color": "black", "width": 0.3} with no image draws a solid disc
+               {"color": "black", "width": 0.3} with no image draws a solid disc;
+               width_to / x_to / y_to animate across the shot (shrink, slide);
+               "brightness": 0.3 dims a layer; "glow": "orange" adds a soft halo behind it
   end          {"image": ..., "layers": [...]}  composition to crossfade into across the shot
   end_at       (start, finish) fractions of the shot for that crossfade, default (0.35, 0.75)
   move         push_in | pull_out | pan_left | pan_right | pan_up | pan_down | hold (push_in)
@@ -108,17 +110,38 @@ def _cover(img, w, h):
     return img.crop((left, top, left + w, top + h))
 
 
-def compose(spec, video_id, w, h):
-    """Background image (or starfield) plus positioned layers -> RGB image of w x h."""
-    src = spec.get("image") or "starfield"
+@functools.lru_cache(maxsize=16)
+def _background(src, video_id, w, h, seed):
     if src == "starfield":
-        base = starfield(w, h, seed=int(spec.get("seed", 7)))
-    else:
-        base = _cover(Image.open(_resolve(src, video_id)).convert("RGB"), w, h)
+        return starfield(w, h, seed=seed)
+    return _cover(Image.open(_resolve(src, video_id)).convert("RGB"), w, h)
+
+
+@functools.lru_cache(maxsize=16)
+def _layer_source(path, video_id):
+    return Image.open(_resolve(path, video_id)).convert("RGBA")
+
+
+def _lerp(layer, key, t, default):
+    """Layer value at progress t: key interpolates toward key_to when present."""
+    v0 = float(layer.get(key, default))
+    return v0 + (float(layer[f"{key}_to"]) - v0) * t if f"{key}_to" in layer else v0
+
+
+def is_animated(spec):
+    return any(k.endswith("_to") for layer in spec.get("layers") or [] for k in layer)
+
+
+def compose(spec, video_id, w, h, t=0.0):
+    """Background image (or starfield) plus positioned layers -> RGB image of w x h.
+
+    t (0-1, already eased) drives any layer width_to / x_to / y_to animation.
+    """
+    base = _background(spec.get("image") or "starfield", video_id, w, h, int(spec.get("seed", 7))).copy()
     for layer in spec.get("layers") or []:
-        lw = max(1, round(w * float(layer.get("width", 0.4))))
+        lw = max(1, round(w * _lerp(layer, "width", t, 0.4)))
         if layer.get("image"):
-            im = Image.open(_resolve(layer["image"], video_id)).convert("RGBA")
+            im = _layer_source(layer["image"], video_id)
             im = im.resize((lw, max(1, round(im.height * lw / im.width))), Image.LANCZOS)
         else:  # solid disc, e.g. {"color": "black", "circle": true} for a black hole
             im = Image.new("RGBA", (lw, lw), layer.get("color", "black"))
@@ -130,7 +153,17 @@ def compose(spec, video_id, w, h):
             mask = Image.new("L", im.size, 0)
             ImageDraw.Draw(mask).ellipse((0, 0, im.width - 1, im.height - 1), fill=255)
             im.putalpha(ImageChops.multiply(im.getchannel("A"), mask.filter(ImageFilter.GaussianBlur(2))))
-        cx, cy = float(layer.get("x", 0.5)) * w, float(layer.get("y", 0.5)) * h
+        if "brightness" in layer:
+            alpha = im.getchannel("A")
+            im = ImageEnhance.Brightness(im.convert("RGB")).enhance(float(layer["brightness"])).convert("RGBA")
+            im.putalpha(alpha)
+        cx, cy = _lerp(layer, "x", t, 0.5) * w, _lerp(layer, "y", t, 0.5) * h
+        if layer.get("glow"):  # soft halo behind the layer, e.g. "orange" around a black hole
+            r = im.width * 0.9
+            halo = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            ImageDraw.Draw(halo).ellipse((cx - r, cy - r, cx + r, cy + r), fill=layer["glow"])
+            halo = halo.filter(ImageFilter.GaussianBlur(max(2, im.width * 0.35)))
+            base = Image.alpha_composite(base.convert("RGBA"), halo).convert("RGB")
         base.paste(im, (round(cx - im.width / 2), round(cy - im.height / 2)), im)
     return base
 
@@ -166,8 +199,10 @@ def _crop_box(move, zoom, t, sw, sh):
 def render_shot(spec, video_id, duration_s, out_path):
     """Write one silent H.264 shot of duration_s from a still spec."""
     sw, sh = round(W * SRC_SCALE), round(H * SRC_SCALE)
+    end_spec = spec.get("end")
     start = compose(spec, video_id, sw, sh)
-    end = compose(spec["end"], video_id, sw, sh) if spec.get("end") else None
+    end = compose(end_spec, video_id, sw, sh) if end_spec else None
+    animated = is_animated(spec) or (end_spec is not None and is_animated(end_spec))
     e0, e1 = spec.get("end_at", (0.35, 0.75))
     move, zoom = spec.get("move", "push_in"), float(spec.get("zoom", 0.10))
     pulse, pulse_hz = float(spec.get("pulse", 0.0)), float(spec.get("pulse_hz", 0.5))
@@ -182,6 +217,10 @@ def render_shot(spec, video_id, duration_s, out_path):
     try:
         for i in range(n):
             t = i / max(1, n - 1)
+            if animated:  # layers move/resize, so recompose this frame
+                start = compose(spec, video_id, sw, sh, _ease(t))
+                if end_spec is not None:
+                    end = compose(end_spec, video_id, sw, sh, _ease(t))
             frame = start
             if end is not None:
                 a = _ease(min(1.0, max(0.0, (t - e0) / max(1e-6, e1 - e0))))
