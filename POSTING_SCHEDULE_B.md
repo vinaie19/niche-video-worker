@@ -424,3 +424,16 @@ CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep01_sound_194db python run_test_batch.py
 ```
 
 Then: local QC → YouTube AI review (prompt above) → `./promote_to_ready.sh <slug>` → schedule 12:00 IST.
+
+**Zero-GPU option (no RunPod):** build the same episode from still images on the laptop.
+Same VO, captions and crossfades; each beat is a still with a slow camera move. Uses
+`i2v_stills/<slug>/shot_N.png` if present, else a `still` spec on the beat, else a starfield.
+Output is `final_videos/<slug>_still_complete.mp4` (never overwrites an LTX render).
+
+```bash
+cd local_runner
+CHANNEL=b VIDEO_ID=sci_ep08_metallic_hydrogen python still_video.py
+```
+
+ep16 (2.5 Suns, 53.4% stayed) and ep08N v2/v3 (20 km) were made this way and held up
+against LTX episodes, so it suits familiar-object comparisons (star vs city, planet vs star).
