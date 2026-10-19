@@ -24,7 +24,7 @@ ASSETS = {
     "sci_ep17_sun_black_hole": [
         ("sun.jpg", "Sun Atmospheric Imaging Assembly Solar Dynamics Observatory 20100819"),
         ("earth.jpg", "The Earth seen from Apollo 17"),
-        ("city.jpg", "ISS072-E-445670 city lights Almaty"),
+        ("city.jpg", "Chicago Illinois pictured at night from the International Space Station iss075e0099858"),
     ],
 }
 

@@ -1192,7 +1192,8 @@ _EP17_BEATS = [
             "image": "starfield",
             "layers": [_EP17_BH, {"image": "earth.jpg", "x": 0.15, "x_to": 0.85, "y": 0.62,
                                   "y_to": 0.58, "width": 0.16, "circle": True}],
-            "move": "hold",
+            # slow push so shot_qc doesn't read the small orbiting Earth as a frozen shot
+            "move": "push_in", "zoom": 0.06,
         },
     },
     {
@@ -1209,11 +1210,9 @@ _EP17_BEATS = [
             "image": "starfield",
             "layers": [_EP17_BH, {"image": "earth.jpg", "x": 0.85, "x_to": 0.70, "y": 0.58,
                                   "y_to": 0.55, "width": 0.16, "width_to": 0.12, "circle": True}],
-            "end": {"image": "starfield",
-                    "layers": [_EP17_BH, {"image": "earth.jpg", "x": 0.85, "x_to": 0.70, "y": 0.58,
-                                          "y_to": 0.55, "width": 0.16, "width_to": 0.12,
-                                          "circle": True, "brightness": 0.15}]},
-            "end_at": (0.15, 0.85), "move": "pull_out", "zoom": 0.06,
+            # fade the whole frame to black (oversized black disc covers it) for the quiet linger
+            "end": {"image": "starfield", "layers": [{"color": "black", "width": 3.0}]},
+            "end_at": (0.35, 0.92), "move": "pull_out", "zoom": 0.06,
         },
     },
 ]
