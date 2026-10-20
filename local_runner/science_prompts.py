@@ -1224,12 +1224,14 @@ _EP17_BEATS = [
 #   - Earth is the familiar anchor; all visuals cosmic
 #   - last beat ends on the spoken number, short pause, no linger, so it loops
 # Every shot moves Earth left-to-right so the cut from beat 4 back to beat 1 reads continuous.
-# Physics: orbital speed 29.8 km/s; fastest rifle rounds ~1-1.7 km/s; Sun ~230 km/s around the
-#   Milky Way. We feel acceleration, not speed, and Earth's orbit is nearly constant.
+# Physics: orbital speed 29.8 km/s (beat 1 takes ~3.5s to say -> ~100 km travelled); Sun ~230 km/s
+#   around the Milky Way. We feel acceleration, not speed, and Earth's orbit is nearly constant.
+# Script v2 (2026-10-20, after first render): story arc (you -> question -> bigger number)
+#   instead of four stacked facts. Re-voiced over the same LTX clips, no re-render.
 _EP18_BEATS = [
     {
-        "text": "This planet moves thirty kilometres every second, and you're riding on it.",
-        "caption_text": "This planet moves 30 km every second, and you're riding on it.",
+        "text": "This planet moves thirty kilometres every second, and you're on it right now.",
+        "caption_text": "This planet moves 30 km every second, and you're on it right now.",
         "rate": "+0%",
         "pause_ms": 250,
         "num_frames": 121,
@@ -1241,8 +1243,8 @@ _EP18_BEATS = [
         ),
     },
     {
-        "text": "That's twenty times faster than a rifle bullet, and you can't feel a thing.",
-        "caption_text": "That's 20 times faster than a rifle bullet, and you can't feel a thing.",
+        "text": "In the time it took me to say that, you just travelled a hundred kilometres.",
+        "caption_text": "In the time it took me to say that, you just travelled 100 km.",
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 121,
@@ -1254,7 +1256,7 @@ _EP18_BEATS = [
         ),
     },
     {
-        "text": "You never feel speed, only changes in speed. And Earth's path is so smooth, there's nothing to feel.",
+        "text": "So why does it feel like you're standing still? Because you only feel speed when it changes, and Earth never brakes.",
         "rate": "-8%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -1266,8 +1268,8 @@ _EP18_BEATS = [
         ),
     },
     {
-        "text": "And the Sun is dragging all of us around the galaxy at two hundred and thirty kilometres a second.",
-        "caption_text": "And the Sun is dragging all of us around the galaxy at 230 km a second.",
+        "text": "And that's not even the fast part. The Sun is dragging us around the galaxy at two hundred and thirty kilometres a second.",
+        "caption_text": "And that's not even the fast part. The Sun is dragging us around the galaxy at 230 km a second.",
         "rate": "-12%",
         "pause_ms": 150,
         "num_frames": 169,

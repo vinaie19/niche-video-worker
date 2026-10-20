@@ -262,7 +262,7 @@ One threshold. One law. One image.
 ### ep18 How fast is Earth moving? *(NEW — full LTX, built on the ep17 lessons)*
 - **Slug:** `sci_ep18_earth_speed`
 - **Title:** `How Fast Is Earth Moving Through Space? (30 km/s)`
-- **Spoken hook:** `This planet moves thirty kilometres every second, and you're riding on it.`
+- **Spoken hook:** `This planet moves thirty kilometres every second, and you're on it right now.`
 - **Why:** ep17 (stills, number at word 14, quiet tail) held 38.8% stayed. This one has LTX motion
   from frame 0, a "This [thing]" opener with the number by word 6, Earth as the anchor, and ends on
   the spoken "230 km a second" with no linger so it loops.
@@ -273,7 +273,7 @@ One threshold. One law. One image.
 - **Status:** script + LTX prompts ready; pending render → QC
 - **Description:**
 ```
-How fast is Earth moving through space? About 30 km every second around the Sun, roughly 20 times faster than a rifle bullet, and the Sun carries us around the galaxy at about 230 km/s.
+How fast is Earth moving through space? About 30 km every second around the Sun, so you travel about 100 km in the time it takes to say it. We can't feel it because only changes in speed are felt. And the Sun carries us around the galaxy at about 230 km/s.
 
 One threshold. One law. One image.
 
