@@ -869,6 +869,7 @@ def download_and_stitch(rendered_urls, test_jobs, local=False):
                     voice_pitch=job.get("voice_pitch"),
                     script_beats=script_beats,
                     caption_chunk_words=job.get("caption_chunk_words"),
+                    caption_phrases=job.get("caption_phrases"),
                 )
                 mode = (
                     f"voice + captions({caption_style})"

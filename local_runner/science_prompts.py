@@ -1232,6 +1232,7 @@ _EP18_BEATS = [
     {
         "text": "This planet moves thirty kilometres every second, and you're on it right now.",
         "caption_text": "This planet moves 30 km every second, and you're on it right now.",
+        "phrases": ["This planet moves", "30 km every second,", "and you're on it", "right now."],
         "rate": "+0%",
         "pause_ms": 250,
         "num_frames": 121,
@@ -1245,6 +1246,7 @@ _EP18_BEATS = [
     {
         "text": "In the time it took me to say that, you just travelled a hundred kilometres.",
         "caption_text": "In the time it took me to say that, you just travelled 100 km.",
+        "phrases": ["In the time it took me", "to say that,", "you just travelled", "100 km."],
         "rate": "-4%",
         "pause_ms": 300,
         "num_frames": 121,
@@ -1257,6 +1259,7 @@ _EP18_BEATS = [
     },
     {
         "text": "So why does it feel like you're standing still? Because you only feel speed when it changes, and Earth never brakes.",
+        "phrases": ["So why does it feel", "like you're standing still?", "Because you only feel speed", "when it changes,", "and Earth never brakes."],
         "rate": "-8%",
         "pause_ms": 300,
         "num_frames": 169,
@@ -1270,6 +1273,7 @@ _EP18_BEATS = [
     {
         "text": "And that's not even the fast part. The Sun is dragging us around the galaxy at two hundred and thirty kilometres a second.",
         "caption_text": "And that's not even the fast part. The Sun is dragging us around the galaxy at 230 km a second.",
+        "phrases": ["And that's not even", "the fast part.", "The Sun is dragging us", "around the galaxy", "at 230 km a second."],
         "rate": "-12%",
         "pause_ms": 150,
         "num_frames": 169,
@@ -1340,6 +1344,13 @@ for _j in science_ltx_jobs:
         # inherited the 0.55 default — 5.5x louder. A loud bed competes with the VO
         # and stops the tail reading as a quiet linger. Match the winner.
         _j["ambient_volume"] = 0.10
+
+# ep18: story-paced phrase captions (opt-in; every other episode keeps whole-line cues).
+# ep17's whole sentences on screen let viewers read ahead of the VO and spoiled each
+# punchline; 3-5 word phrases appear as they are spoken, and the number alone opens.
+for _j in science_ltx_jobs:
+    if _j.get("video_id") == "sci_ep18_earth_speed":
+        _j["caption_phrases"] = {"max_words": 5, "hook": "30 KM/S", "hook_s": 1.5}
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {

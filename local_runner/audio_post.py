@@ -269,6 +269,8 @@ def normalize_script_beats(
             caption_text = (raw.get("caption_text") or "").strip()
             if caption_text:
                 beat["caption_text"] = caption_text
+            if raw.get("phrases"):
+                beat["phrases"] = list(raw["phrases"])
             out.append(beat)
         if not out:
             raise ValueError("script_beats produced no speakable text")
@@ -801,6 +803,145 @@ def nearest_ltx_frames(seconds: float, fps: float = 24.0) -> int:
     n = max(17, int(round(float(seconds) * float(fps))))
     k = max(2, round((n - 1) / 8.0))
     return 8 * k + 1
+
+
+def _phrase_units(text: str) -> list[str]:
+    """Words of a caption line, with a number glued to the unit after it ("30 km")."""
+    words = [w for w in str(text or "").split() if w]
+    units, i = [], 0
+    while i < len(words):
+        w = words[i]
+        if any(ch.isdigit() for ch in w) and not w[-1] in ",.?!:;" and i + 1 < len(words):
+            units.append(f"{w} {words[i + 1]}")
+            i += 2
+        else:
+            units.append(w)
+            i += 1
+    return units
+
+
+def _split_phrases(text: str, max_words: int = 5) -> list[list[int]]:
+    """Group a line's units into phrases of <= max_words, breaking at punctuation
+    first and then into evenly sized chunks. Returns unit-index lists."""
+    units = _phrase_units(text)
+    clauses, cur = [], []
+    for i, u in enumerate(units):
+        cur.append(i)
+        if u[-1] in ",.?!:;":
+            clauses.append(cur)
+            cur = []
+    if cur:
+        clauses.append(cur)
+    phrases = []
+    for cl in clauses:
+        n = -(-len(cl) // max_words)
+        size = -(-len(cl) // n)
+        phrases.extend(cl[k:k + size] for k in range(0, len(cl), size))
+    return phrases
+
+
+def _norm_token(w: str) -> str:
+    w = re.sub(r"[^a-z0-9]", "", w.lower())
+    return {"kilometres": "km", "kilometers": "km", "kilometre": "km", "kilometer": "km"}.get(w, w)
+
+
+def create_phrase_subtitles(
+    script_beats: list,
+    work_dir: str,
+    stem: str,
+    srt_path: str,
+    max_words: int = 5,
+    hook: Optional[str] = None,
+    hook_s: float = 1.5,
+    default_rate: Optional[str] = None,
+    default_pitch: Optional[str] = None,
+) -> str:
+    """
+    Story-paced captions: 3-5 word phrases that appear the moment they are spoken.
+
+    Word start times come from Whisper word timestamps on each beat wav (offset onto
+    the same beat timeline create_subtitles_from_beats uses); the text comes from
+    caption_text so numbers stay as digits. Each phrase holds until the next one.
+    A beat's optional "phrases" list sets the breaks by hand; otherwise lines split at
+    punctuation into chunks of <= max_words.
+    hook: optional big text (e.g. "30 KM/S") shown alone for the first hook_s seconds.
+    """
+    import difflib
+
+    global _whisper_model
+    _ensure_deps()
+    import whisper
+
+    if _whisper_model is None:
+        _whisper_model = whisper.load_model(WHISPER_MODEL)
+    beats = normalize_script_beats(
+        script_beats=script_beats, default_rate=default_rate, default_pitch=default_pitch
+    )
+    if not beats:
+        raise ValueError("script_beats empty — cannot build phrase captions")
+
+    cues: list[list] = []  # [start, end, text]
+    t = 0.0
+    for i, b in enumerate(beats, start=1):
+        wav = os.path.join(work_dir, f"{stem}_beat{i}.wav")
+        if not os.path.isfile(wav):
+            raise FileNotFoundError(f"Missing beat wav for captions: {wav}")
+        dur = _probe_duration(wav)
+        text = " ".join(str(b.get("caption_text") or b.get("text") or "").split())
+        res = _whisper_model.transcribe(wav, word_timestamps=True, language="en")
+        heard = [(float(w["start"]), w["word"]) for seg in res.get("segments") or [] for w in seg["words"]]
+        units = _phrase_units(text)
+        # Unit -> first spoken word time. A unit like "30 km" matches on its first token.
+        cap_tokens = [_norm_token(u.split()[0]) for u in units]
+        heard_tokens = [_norm_token(w) for _, w in heard]
+        starts: list[Optional[float]] = [None] * len(units)
+        sm = difflib.SequenceMatcher(a=cap_tokens, b=heard_tokens, autojunk=False)
+        for blk in sm.get_matching_blocks():
+            for k in range(blk.size):
+                starts[blk.a + k] = heard[blk.b + k][0]
+        if b.get("phrases"):
+            # Hand-written breaks read like speech; they must spell out caption_text exactly.
+            groups, k = [], 0
+            for ph_text in b["phrases"]:
+                n = len(_phrase_units(ph_text))
+                groups.append(list(range(k, k + n)))
+                k += n
+            if " ".join(b["phrases"]).split() != text.split():
+                raise ValueError(f"beat {i} phrases do not match its caption text")
+        else:
+            groups = _split_phrases(text, max_words)
+        for ph in groups:
+            known = [starts[j] for j in ph if starts[j] is not None]
+            if known:
+                st = min(known)
+            else:  # unmatched phrase: place it by its position in the line
+                st = dur * ph[0] / max(1, len(units))
+            cues.append([t + min(st, dur), None, " ".join(units[j] for j in ph)])
+        beat_end = t + dur
+        # Phrases hold until the next one starts; the beat's last phrase holds to beat end.
+        t = beat_end + max(0, int(b.get("pause_ms") or 0)) / 1000.0
+        cues[-1][1] = beat_end
+    for k in range(len(cues) - 1):
+        if cues[k][1] is None:
+            cues[k][1] = cues[k + 1][0]
+    cues.sort(key=lambda c: c[0])
+
+    if hook:
+        # Hook owns the opening: drop phrases that finish inside it, delay the one it overlaps.
+        kept = []
+        for st, en, tx in cues:
+            if en <= hook_s:
+                continue
+            kept.append([max(st, hook_s), en, tx])
+        # ffmpeg's SRT reader drops ASS {\\fs..} overrides but maps <font>/<b> tags.
+        cues = [[0.0, hook_s, f'<font size="30" color="#FFB048"><b>{hook}</b></font>']] + kept
+
+    os.makedirs(os.path.dirname(os.path.abspath(srt_path)) or ".", exist_ok=True)
+    with open(srt_path, "w", encoding="utf-8") as f:
+        for i, (start, end, text) in enumerate(cues, start=1):
+            f.write(f"{i}\n{_srt_timestamp(start)} --> {_srt_timestamp(end)}\n{text}\n\n")
+    print(f"📝 Phrase captions ({len(cues)} cues, <= {max_words} words, hook={hook!r}) → {srt_path}")
+    return srt_path
 
 
 def beat_shot_durations_s(
@@ -1531,6 +1672,7 @@ def add_voice_and_captions(
     voice_pitch: Optional[str] = None,
     script_beats: Optional[list] = None,
     caption_chunk_words: Optional[int] = None,
+    caption_phrases: Optional[dict] = None,
 ) -> str:
     """Full post pipeline: TTS (optional beats) → ambient bed → Whisper SRT → mux.
 
@@ -1562,7 +1704,20 @@ def add_voice_and_captions(
     )
     if burn_captions:
         used_beats = False
-        if script_beats:
+        if script_beats and caption_phrases:
+            create_phrase_subtitles(
+                script_beats,
+                work_dir=work_dir,
+                stem=f"{stem}_voice",
+                srt_path=srt,
+                max_words=int(caption_phrases.get("max_words", 5)),
+                hook=caption_phrases.get("hook"),
+                hook_s=float(caption_phrases.get("hook_s", 1.5)),
+                default_rate=voice_rate,
+                default_pitch=voice_pitch,
+            )
+            used_beats = True
+        elif script_beats:
             try:
                 create_subtitles_from_beats(
                     script_beats,
