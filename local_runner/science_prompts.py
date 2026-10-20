@@ -1217,6 +1217,69 @@ _EP17_BEATS = [
     },
 ]
 
+# --- Ep 18: How fast is Earth moving? (30 km/s) — first episode on the ep17 lessons ---
+# ep17 (stills, number at word 14, 2.5s tail + fade to black) held 38.8% stayed. Fixes here:
+#   - full LTX motion from frame 0 (motion openers avg ~67% stayed vs ~47% for stills)
+#   - "This [thing]..." opener with the number by word 6 (ep07 74.6%, ep14 59.6% shape)
+#   - Earth is the familiar anchor; all visuals cosmic
+#   - last beat ends on the spoken number, short pause, no linger, so it loops
+# Every shot moves Earth left-to-right so the cut from beat 4 back to beat 1 reads continuous.
+# Physics: orbital speed 29.8 km/s; fastest rifle rounds ~1-1.7 km/s; Sun ~230 km/s around the
+#   Milky Way. We feel acceleration, not speed, and Earth's orbit is nearly constant.
+_EP18_BEATS = [
+    {
+        "text": "This planet moves thirty kilometres every second, and you're riding on it.",
+        "caption_text": "This planet moves 30 km every second, and you're riding on it.",
+        "rate": "+0%",
+        "pause_ms": 250,
+        "num_frames": 121,
+        "shot": (
+            "Cinematic tracking shot of the blue Earth already racing left to right across black "
+            "space from the very first frame, bright streaks of stars rushing past behind it, "
+            "thin blue light trailing off the planet's edge, fast continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "That's twenty times faster than a rifle bullet, and you can't feel a thing.",
+        "caption_text": "That's 20 times faster than a rifle bullet, and you can't feel a thing.",
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 121,
+        "shot": (
+            "Cinematic close shot along the curve of the blue Earth's night side sweeping left to "
+            "right, city lights and swirling white clouds gliding smoothly, star streaks rushing "
+            "past above the thin glowing atmosphere, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "You never feel speed, only changes in speed. And Earth's path is so smooth, there's nothing to feel.",
+        "rate": "-8%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic wide shot of a small blue Earth gliding left to right along a long, smooth, "
+            "faintly glowing curved orbit around a bright yellow Sun at the far left of the frame, "
+            "steady continuous motion, deep black space, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "And the Sun is dragging all of us around the galaxy at two hundred and thirty kilometres a second.",
+        "caption_text": "And the Sun is dragging all of us around the galaxy at 230 km a second.",
+        "rate": "-12%",
+        "pause_ms": 150,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic ultra-wide shot of a vast glowing spiral galaxy turning slowly, a single "
+            "bright yellow star in one outer arm sweeping left to right along the arm, star "
+            "streaks rushing past in the foreground, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
 # Primary queue (Top 12)
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
@@ -1238,6 +1301,7 @@ _EPISODES = [
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
     ("sci_ep08_neutron_star", _beats_script(_EP08N_BEATS), _beats_shots(_EP08N_BEATS), _EP08N_BEATS),
     ("sci_ep17_sun_black_hole", _beats_script(_EP17_BEATS), _beats_shots(_EP17_BEATS), _EP17_BEATS),
+    ("sci_ep18_earth_speed", _beats_script(_EP18_BEATS), _beats_shots(_EP18_BEATS), _EP18_BEATS),
 ]
 
 
@@ -1263,7 +1327,7 @@ for _j in science_ltx_jobs:
         # blow-out), so bottom captions land on top of it. Anchor to the top instead.
         _j["captions"] = "clean_high"
         _j["ambient_volume"] = 0.10
-    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington"):
+    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed"):
         # Word-pop reverted 2026-09-28. ep09 (full-sentence "clean") holds the best
         # AVD on the channel at 107%; ep14, the only episode to ship word-pop, came
         # in at 92.1%. Confounded, but not encouraging — and the style reads as
@@ -1294,6 +1358,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep12_neutron_drip": "ltx",
     "sci_ep08_neutron_star": "ltx",
     "sci_ep17_sun_black_hole": "ltx",
+    "sci_ep18_earth_speed": "ltx",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",

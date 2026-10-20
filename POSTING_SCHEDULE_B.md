@@ -259,6 +259,27 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep18 How fast is Earth moving? *(NEW — full LTX, built on the ep17 lessons)*
+- **Slug:** `sci_ep18_earth_speed`
+- **Title:** `How Fast Is Earth Moving Through Space? (30 km/s)`
+- **Spoken hook:** `This planet moves thirty kilometres every second, and you're riding on it.`
+- **Why:** ep17 (stills, number at word 14, quiet tail) held 38.8% stayed. This one has LTX motion
+  from frame 0, a "This [thing]" opener with the number by word 6, Earth as the anchor, and ends on
+  the spoken "230 km a second" with no linger so it loops.
+- **Physics:** orbital speed 29.8 km/s; fast rifle rounds ~1-1.7 km/s (≈20x slower); we feel
+  acceleration, not speed; the Sun circles the Milky Way at ~230 km/s.
+- **Build (RunPod, ~$1):** `cd local_runner && CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep18_earth_speed python run_test_batch.py`
+- **Playlist:** Exact Limits. **Related video:** solar escape (km/s follow-up).
+- **Status:** script + LTX prompts ready; pending render → QC
+- **Description:**
+```
+How fast is Earth moving through space? About 30 km every second around the Sun, roughly 20 times faster than a rifle bullet, and the Sun carries us around the galaxy at about 230 km/s.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #universe
+```
+
 ### ep17 Sun as a black hole *(NEW — first planned zero-GPU still build)*
 - **Slug:** `sci_ep17_sun_black_hole`
 - **Title:** `What If the Sun Turned Into a Black Hole? (6 km Wide)`
