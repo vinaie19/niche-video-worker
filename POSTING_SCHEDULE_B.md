@@ -259,6 +259,27 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep19 TON 618 *(NEW — built on the YouTube agent's answers, 2026-10-22)*
+- **Slug:** `sci_ep19_ton618`
+- **Title:** `The Black Hole That Weighs 66 Billion Suns (TON 618)`
+- **Spoken hook:** `This black hole weighs sixty six billion Suns.` (big "66 BILLION SUNS" alone for 1.5s)
+- **Why:** "This [extreme object] + number" openers hold 62-70% on this channel; "you"/question
+  openers lose (ep18 40.5%). "ton 618" is a real search term. Keeps ep18's story pacing and
+  phrase captions (110% APV).
+- **Physics:** ~6.6e10 M☉ → horizon ~2,600 AU across ≈ 43x Neptune's orbit; light ~15 days to cross.
+- **Build:** first-shot check `ONLY_SHOT=1 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep19_ton618 python run_test_batch.py`,
+  then the full render without ONLY_SHOT.
+- **Playlist:** Space at Impossible Scale (supermassive, not a stellar death, so not Dead stars). **Related video:** Saturn star. **Post:** 4-6 PM IST (Fri-Sun best).
+- **Pinned comment:** `Which monster in space should we cover next?`
+- **Description:**
+```
+How big can a black hole get? TON 618, one of the largest known, weighs about 66 billion times the mass of the Sun, and its edge is over 40 times wider than Neptune's orbit. Even light takes more than two weeks to cross it.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #blackhole
+```
+
 ### ep18 How fast is Earth moving? *(NEW — full LTX, built on the ep17 lessons)*
 - **Slug:** `sci_ep18_earth_speed`
 - **Title:** `How Fast Is Earth Moving Through Space? (30 km/s)`

@@ -1286,6 +1286,75 @@ _EP18_BEATS = [
     },
 ]
 
+# --- Ep 19: TON 618 — built on the YouTube agent's answers (2026-10-22) ---
+# "This [extreme object] + huge number" openers hold 62-70% stayed (white dwarf, card magnetar,
+#   Saturn star); "you"/question openers lose (ep18 40.5%, ep17 36%). "ton 618" is a real
+#   search term into the channel. Keeps ep18's story pacing + phrase captions (110% APV).
+# Shot 1 must be bright and already moving at frame 0 (ep18's small, darkening Earth was the
+#   weak point). Check shot 1 alone (ONLY_SHOT=1) before rendering the rest.
+# Physics: TON 618 ~6.6e10 solar masses (Shemmer et al. 2004; some newer estimates ~4e10).
+#   r_s = 2.95 km x 6.6e10 = 1.95e11 km -> ~2,600 AU across = ~43x Neptune's orbit (60 AU
+#   across); light crossing time ~15 days. It is a quasar, so it is actively accreting.
+_EP19_BEATS = [
+    {
+        "text": "This black hole weighs sixty six billion Suns.",
+        "caption_text": "This black hole weighs 66 billion Suns.",
+        "phrases": ["This black hole", "weighs 66 billion Suns."],
+        "rate": "+0%",
+        "pause_ms": 250,
+        "num_frames": 97,
+        "shot": (
+            "Cinematic fast push-in from the very first frame toward a colossal black hole, "
+            "its blazing orange-white accretion disk filling the frame and whirling around a "
+            "perfectly black centre, hot glowing gas streaming inward, bright light bending around "
+            "the dark shadow, rapid continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Put our whole Solar System beside it, and every planet's orbit is a speck at its edge.",
+        "phrases": ["Put our whole Solar System", "beside it,", "and every planet's orbit", "is a speck at its edge."],
+        "rate": "-4%",
+        "pause_ms": 300,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic slow pull-back revealing a tiny bright yellow star circled by faint thin "
+            "glowing orbit rings, a minuscule speck beside the vast curved black edge of a giant "
+            "black hole that fills the rest of the frame, its fiery orange disk glowing along the "
+            "rim, steady continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Its edge spans over forty times Neptune's orbit, so wide that even light takes over two weeks just to cross it.",
+        "caption_text": "Its edge spans over 40 times Neptune's orbit, so wide that even light takes over two weeks just to cross it.",
+        "phrases": ["Its edge spans over", "40 times Neptune's orbit,", "so wide that even light", "takes over two weeks", "just to cross it."],
+        "rate": "-8%",
+        "pause_ms": 300,
+        "num_frames": 169,
+        "shot": (
+            "Cinematic wide shot of a single thin bright beam of white light crawling slowly across "
+            "the enormous dark curved shadow of a giant black hole, the glowing orange accretion "
+            "disk swirling along the rim, deep black space, steady continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "It's called TON six eighteen, and it's still feeding.",
+        "caption_text": "It's called TON 618, and it's still feeding.",
+        "phrases": ["It's called TON 618,", "and it's still feeding."],
+        "rate": "-12%",
+        "pause_ms": 150,
+        "num_frames": 121,
+        "shot": (
+            "Cinematic close shot of a bright star being stretched into a long glowing ribbon of "
+            "gas and pulled into the blazing orange-white accretion disk of a colossal black hole, "
+            "the disk flaring brighter as it feeds, fast continuous swirling motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
 # Primary queue (Top 12)
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
@@ -1307,7 +1376,7 @@ _EPISODES = [
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
     ("sci_ep08_neutron_star", _beats_script(_EP08N_BEATS), _beats_shots(_EP08N_BEATS), _EP08N_BEATS),
     ("sci_ep17_sun_black_hole", _beats_script(_EP17_BEATS), _beats_shots(_EP17_BEATS), _EP17_BEATS),
-    ("sci_ep18_earth_speed", _beats_script(_EP18_BEATS), _beats_shots(_EP18_BEATS), _EP18_BEATS),
+    ("sci_ep18_earth_speed", _beats_script(_EP18_BEATS), _beats_shots(_EP18_BEATS), _EP18_BEATS),    ("sci_ep19_ton618", _beats_script(_EP19_BEATS), _beats_shots(_EP19_BEATS), _EP19_BEATS),
 ]
 
 
@@ -1333,7 +1402,7 @@ for _j in science_ltx_jobs:
         # blow-out), so bottom captions land on top of it. Anchor to the top instead.
         _j["captions"] = "clean_high"
         _j["ambient_volume"] = 0.10
-    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed"):
+    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed", "sci_ep19_ton618"):
         # Word-pop reverted 2026-09-28. ep09 (full-sentence "clean") holds the best
         # AVD on the channel at 107%; ep14, the only episode to ship word-pop, came
         # in at 92.1%. Confounded, but not encouraging — and the style reads as
@@ -1351,6 +1420,8 @@ for _j in science_ltx_jobs:
 for _j in science_ltx_jobs:
     if _j.get("video_id") == "sci_ep18_earth_speed":
         _j["caption_phrases"] = {"max_words": 5, "hook": "30 KM/S", "hook_s": 1.5}
+    if _j.get("video_id") == "sci_ep19_ton618":
+        _j["caption_phrases"] = {"max_words": 5, "hook": "66 BILLION SUNS", "hook_s": 1.5}
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
@@ -1372,6 +1443,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep08_neutron_star": "ltx",
     "sci_ep17_sun_black_hole": "ltx",
     "sci_ep18_earth_speed": "ltx",
+    "sci_ep19_ton618": "ltx",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",
