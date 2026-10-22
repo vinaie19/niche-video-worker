@@ -1421,7 +1421,11 @@ for _j in science_ltx_jobs:
     if _j.get("video_id") == "sci_ep18_earth_speed":
         _j["caption_phrases"] = {"max_words": 5, "hook": "30 KM/S", "hook_s": 1.5}
     if _j.get("video_id") == "sci_ep19_ton618":
-        _j["caption_phrases"] = {"max_words": 5, "hook": "66 BILLION SUNS", "hook_s": 1.5}
+        # The disk fills the lower frame bright white-orange: hook goes inside the black
+        # shadow at mid-frame, and phrase captions get a heavy outline + shadow.
+        _j["caption_phrases"] = {"max_words": 5, "hook": "66 BILLION\nSUNS", "hook_s": 1.5,
+                                 "hook_pos": "center", "hook_size": 22}
+        _j["captions"] = "clean_heavy"
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {

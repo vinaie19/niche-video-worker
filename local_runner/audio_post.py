@@ -81,6 +81,13 @@ CAPTION_STYLES = {
         "OutlineColour=&H00000000&,BorderStyle=1,Outline=1,Shadow=0,"
         "Alignment=2,MarginV=175"
     ),
+    # Bold text, thick outline + drop shadow: for footage bright right where captions
+    # sit (ep19's accretion disk fills the lower frame white-orange).
+    "clean_heavy": (
+        "FontName=Arial,FontSize=11,Bold=1,PrimaryColour=&H00FFFFFF&,"
+        "OutlineColour=&H00000000&,BackColour=&HA0000000&,BorderStyle=1,"
+        "Outline=2.5,Shadow=1.5,Alignment=2,MarginV=56"
+    ),
     "boxed": (
         "FontName=Arial,FontSize=10,PrimaryColour=&H00FFFFFF&,"
         "OutlineColour=&H00000000&,BackColour=&H80000000&,BorderStyle=3,"
@@ -853,6 +860,8 @@ def create_phrase_subtitles(
     max_words: int = 5,
     hook: Optional[str] = None,
     hook_s: float = 1.5,
+    hook_pos: str = "bottom",
+    hook_size: int = 30,
     default_rate: Optional[str] = None,
     default_pitch: Optional[str] = None,
 ) -> str:
@@ -864,7 +873,9 @@ def create_phrase_subtitles(
     caption_text so numbers stay as digits. Each phrase holds until the next one.
     A beat's optional "phrases" list sets the breaks by hand; otherwise lines split at
     punctuation into chunks of <= max_words.
-    hook: optional big text (e.g. "30 KM/S") shown alone for the first hook_s seconds.
+    hook: optional big text (e.g. "30 KM/S") shown alone for the first hook_s seconds;
+    hook_pos="center" puts it mid-frame ("\\n" in hook breaks the line), hook_size is
+    its font size in caption units.
     """
     import difflib
 
@@ -934,7 +945,9 @@ def create_phrase_subtitles(
                 continue
             kept.append([max(st, hook_s), en, tx])
         # ffmpeg's SRT reader drops ASS {\\fs..} overrides but maps <font>/<b> tags.
-        cues = [[0.0, hook_s, f'<font size="30" color="#FFB048"><b>{hook}</b></font>']] + kept
+        # ffmpeg's SRT reader keeps {\\anN} position tags (an5 = centre of frame).
+        pos = "{\\an5}" if hook_pos == "center" else ""
+        cues = [[0.0, hook_s, f'{pos}<font size="{int(hook_size)}" color="#FFB048"><b>{hook}</b></font>']] + kept
 
     os.makedirs(os.path.dirname(os.path.abspath(srt_path)) or ".", exist_ok=True)
     with open(srt_path, "w", encoding="utf-8") as f:
@@ -1713,6 +1726,8 @@ def add_voice_and_captions(
                 max_words=int(caption_phrases.get("max_words", 5)),
                 hook=caption_phrases.get("hook"),
                 hook_s=float(caption_phrases.get("hook_s", 1.5)),
+                hook_pos=caption_phrases.get("hook_pos", "bottom"),
+                hook_size=int(caption_phrases.get("hook_size", 30)),
                 default_rate=voice_rate,
                 default_pitch=voice_pitch,
             )
