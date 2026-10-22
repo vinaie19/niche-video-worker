@@ -1300,7 +1300,7 @@ _EP19_BEATS = [
         "text": "This black hole weighs sixty six billion Suns.",
         "caption_text": "This black hole weighs 66 billion Suns.",
         "phrases": ["This black hole", "weighs 66 billion Suns."],
-        "rate": "+0%",
+        "rate": "+6%",
         "pause_ms": 250,
         "num_frames": 97,
         "shot": (
@@ -1314,8 +1314,8 @@ _EP19_BEATS = [
     {
         "text": "Put our whole Solar System beside it, and every planet's orbit is a speck at its edge.",
         "phrases": ["Put our whole Solar System", "beside it,", "and every planet's orbit", "is a speck at its edge."],
-        "rate": "-4%",
-        "pause_ms": 300,
+        "rate": "-2%",
+        "pause_ms": 350,
         "num_frames": 145,
         "shot": (
             "Cinematic slow pull-back revealing a tiny bright yellow star circled by faint thin "
@@ -1329,8 +1329,8 @@ _EP19_BEATS = [
         "text": "Its edge spans over forty times Neptune's orbit, so wide that even light takes over two weeks just to cross it.",
         "caption_text": "Its edge spans over 40 times Neptune's orbit, so wide that even light takes over two weeks just to cross it.",
         "phrases": ["Its edge spans over", "40 times Neptune's orbit,", "so wide that even light", "takes over two weeks", "just to cross it."],
-        "rate": "-8%",
-        "pause_ms": 300,
+        "rate": "-10%",
+        "pause_ms": 400,
         "num_frames": 169,
         "shot": (
             "Cinematic wide shot of a single thin bright beam of white light crawling slowly across "
@@ -1343,8 +1343,8 @@ _EP19_BEATS = [
         "text": "It's called TON six eighteen, and it's still feeding.",
         "caption_text": "It's called TON 618, and it's still feeding.",
         "phrases": ["It's called TON 618,", "and it's still feeding."],
-        "rate": "-12%",
-        "pause_ms": 150,
+        "rate": "-6%",
+        "pause_ms": 100,
         "num_frames": 121,
         "shot": (
             "Cinematic close shot of a bright star being stretched into a long glowing ribbon of "
@@ -1426,6 +1426,9 @@ for _j in science_ltx_jobs:
         _j["caption_phrases"] = {"max_words": 5, "hook": "66 BILLION\nSUNS", "hook_s": 1.5,
                                  "hook_pos": "center", "hook_size": 22}
         _j["captions"] = "clean_heavy"
+        # Shot 1 (blazing disk, luma ~124) cuts to the dark Solar System (~27): a -78%
+        # cliff. A longer dissolve turns the cut into a fade instead of a flash-to-black.
+        _j["crossfade_s"] = 0.7
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
