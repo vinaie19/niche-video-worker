@@ -270,7 +270,7 @@ One threshold. One law. One image.
 - **Build:** first-shot check `ONLY_SHOT=1 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep19_ton618 python run_test_batch.py`,
   then the full render without ONLY_SHOT.
 - **Playlist:** Space at Impossible Scale (supermassive, not a stellar death, so not Dead stars). **Related video:** Saturn star. **Post:** 4-6 PM IST (Fri-Sun best).
-- **Pinned comment:** `Which monster in space should we cover next?`
+- **Pinned comment:** `Which is more extreme: a star spinning 716 times a second, or a black hole that weighs 66 billion Suns?` (two-choice questions are easier to answer)
 - **Description:**
 ```
 How big can a black hole get? TON 618, one of the largest known, weighs about 66 billion times the mass of the Sun, and its edge is over 40 times wider than Neptune's orbit. Even light takes more than two weeks to cross it.
