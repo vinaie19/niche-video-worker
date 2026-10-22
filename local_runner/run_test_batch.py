@@ -374,6 +374,15 @@ def _only_shot():
     return n
 
 
+def _missing_shot_indices(vid):
+    """MISSING_SHOTS_ONLY=1 → 0-based indices of shots with no temp_clips/{vid}_shot_N.mp4
+    yet (None when the flag is off). Lets approved local shots survive a full run."""
+    if not _env_flag("MISSING_SHOTS_ONLY"):
+        return None
+    n = len(vid["shots"])
+    return [i for i in range(n) if not os.path.isfile(f"./temp_clips/{vid['video_id']}_shot_{i + 1}.mp4")]
+
+
 def _save_render_manifest(rendered_urls, path=None):
     # Single-shot re-renders get their own manifest so the full-run one is not clobbered.
     if path is None:
@@ -509,8 +518,8 @@ def _nearest_ltx_frames(n):
     return 8 * k + 1
 
 
-def render_video_shots(comfy_url, vid, manifest):
-    """Generate every shot for one video. Returns list of R2 URLs."""
+def render_video_shots(comfy_url, vid, manifest, indices=None):
+    """Generate every shot for one video (or only `indices`, 0-based). Returns list of R2 URLs."""
     from ltx_multishot import (
         build_multishot_prompt,
         is_multishot_mode,
@@ -557,7 +566,13 @@ def render_video_shots(comfy_url, vid, manifest):
 
     prompts = vid["shots"]
     n = len(prompts)
-    if only:
+    if indices is not None:
+        indices = list(indices)
+        print(
+            f"\n🧩 MISSING_SHOTS_ONLY: rendering {vid_id} shots {[i + 1 for i in indices]} of {n} "
+            f"(keeping local {[i + 1 for i in range(n) if i not in indices]})"
+        )
+    elif only:
         if only > n:
             raise SystemExit(f"ONLY_SHOT={only} out of range for {vid_id} ({n} shots)")
         indices = [only - 1]
@@ -678,11 +693,14 @@ def execute_batch(comfy_url, test_jobs):
         print(f"\n{'=' * 60}")
         print(f"📌 Short {i}/{n_vids}: {vid_id}")
         print(f"{'=' * 60}")
-        urls = render_video_shots(comfy_url, vid, manifest)
+        missing = None if _only_shot() else _missing_shot_indices(vid)
+        urls = render_video_shots(comfy_url, vid, manifest, indices=missing)
         manifest[vid_id] = urls
         _save_render_manifest(manifest)
         only = _only_shot()
-        if only:
+        if missing is not None:
+            _finish_missing_shots(vid, missing, urls)
+        elif only:
             _finish_only_shot(vid, only, urls)
         elif urls:
             print(f"\n🎞️ Stitching {vid_id} ({len(urls)} clips) before next short...")
@@ -693,6 +711,26 @@ def execute_batch(comfy_url, test_jobs):
             print(f"\n➡️ Starting next short: {test_jobs[i]['video_id']}")
     print(f"\n✅ All {n_vids} shorts processed (generate→stitch per video)")
     return manifest
+
+
+def _finish_missing_shots(vid, missing, urls):
+    """Save newly rendered clips as temp_clips/{vid}_shot_{N}.mp4, then stitch all local shots."""
+    vid_id = vid["video_id"]
+    if len(urls) != len(missing):
+        print(f"⚠️ MISSING_SHOTS_ONLY: got {len(urls)} clip(s) for {len(missing)} shot(s) — skip stitch")
+        return
+    os.makedirs("./temp_clips", exist_ok=True)
+    for idx, url in zip(missing, urls):
+        path = f"./temp_clips/{vid_id}_shot_{idx + 1}.mp4"
+        r = requests.get(url, stream=True)
+        r.raise_for_status()
+        with open(path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print(f"⬇️ MISSING_SHOTS_ONLY: saved {path}")
+    local_paths = [f"./temp_clips/{vid_id}_shot_{i}.mp4" for i in range(1, len(vid["shots"]) + 1)]
+    print(f"\n🎞️ Stitching {vid_id} from local shots 1..{len(local_paths)}...")
+    download_and_stitch({vid_id: local_paths}, [vid], local=True)
 
 
 def _finish_only_shot(vid, only, urls):
@@ -968,6 +1006,15 @@ def run_one_engine(engine):
     if only:
         stitch = "RESTITCH_LOCAL (local shots 1..N)" if _env_flag("RESTITCH_LOCAL") and not _env_flag("SKIP_STITCH") else "SKIP"
         print(f"🎯 ONLY_SHOT={only} → render shot {only} only; stitch={stitch}")
+
+    if not only and _env_flag("MISSING_SHOTS_ONLY"):
+        todo = {j["video_id"]: _missing_shot_indices(j) for j in jobs}
+        print(f"🧩 MISSING_SHOTS_ONLY → shots to render: { {v: [i + 1 for i in m] for v, m in todo.items()} }")
+        if not any(todo.values()):
+            # Nothing to render: stitch from local clips and never start (or pay for) a pod.
+            for j in jobs:
+                _finish_missing_shots(j, [], [])
+            return
 
     pod_id = None
     try:
