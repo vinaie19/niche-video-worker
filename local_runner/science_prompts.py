@@ -1374,12 +1374,15 @@ _EP20_BEATS = [
         "pause_ms": 250,
         "num_frames": 121,
         "shot": (
-            # v1 filled the frame, so the vertical crop cut the sides into an oval and the
-            # Red Spot rotated away within 1s. Keep the whole sphere in frame instead.
-            "Cinematic shot of the whole round planet Jupiter centred in the frame, a perfect "
-            "sphere fully visible with black space around it, the camera pushing steadily closer "
-            "from the very first frame, its bright orange, cream and brown cloud bands swirling "
-            "and the Great Red Spot facing the camera, strong sunlight on its face, continuous motion, "
+            # v1 filled the frame, so the vertical crop squashed the planet into an oval, the Red
+            # Spot rotated away within 1s, and nothing happened beyond slow rotation. A curved limb
+            # suits 9:16 (ep18's Earth limb read well); the swoop, lightning and inner glow give
+            # an event in second one that matches "never got to burn".
+            "Cinematic fast swoop toward Jupiter's huge curved horizon arcing across the frame, "
+            "a perfectly round edge against black space, the Great Red Spot large and centred and "
+            "swirling, bright orange and cream cloud bands racing past, lightning flashing inside "
+            "the storms and a deep orange glow flaring up beneath the clouds as if about to ignite, "
+            "strong sunlight, fast continuous motion from the very first frame, "
             f"{_SCI_SUFFIX}"
         ),
     },
