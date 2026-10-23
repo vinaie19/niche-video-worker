@@ -1355,6 +1355,74 @@ _EP19_BEATS = [
     },
 ]
 
+# --- Ep 20: Jupiter, the star that never lit up — built on the 20h audit of all 19 videos ---
+# Stayed% follows the FIRST LINE, not motion or stills: TON 618 had the brightest moving
+#   opener yet and held 41.8%; the Saturn star (a still image) held 62%. Winners open on a
+#   contradiction or action involving a familiar thing (white dwarf "size of Earth but weighs
+#   a Sun" 69.6%, card wipe 64.6%, spaghetti 63.9%, Saturn 62.2%); losers open on a bare
+#   size/speed/mass (66B Suns, 30 km/s, 110 km/s: 38-42%). So: contradiction first, number
+#   second, no big-number-alone hook. Story pacing + phrase captions kept (APV 111-113%).
+# Physics: Jupiter is ~90% hydrogen + helium by number, like the Sun. Core ~20,000-24,000 K,
+#   above the Sun's ~5,800 K surface but far below the millions of K hydrogen fusion needs.
+#   Minimum mass for hydrogen fusion ~0.075-0.08 Msun = ~75-85 Jupiter masses ("about 80").
+# Loop: "...80 times too light." -> "Jupiter is made of the same stuff as the Sun."
+_EP20_BEATS = [
+    {
+        "text": "Jupiter is made of the same stuff as the Sun. It just never got to burn.",
+        "phrases": ["Jupiter is made", "of the same stuff as the Sun.", "It just never", "got to burn."],
+        "rate": "+6%",
+        "pause_ms": 250,
+        "num_frames": 121,
+        "shot": (
+            "Cinematic close shot of giant Jupiter filling the frame from the very first frame, "
+            "its bright orange, cream and brown cloud bands racing sideways and the Great Red Spot "
+            "swirling, strong sunlight on its face, fast continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Its core is hotter than the surface of the Sun, and it's still far too cold to ignite.",
+        "phrases": ["Its core is hotter", "than the surface of the Sun,", "and it's still", "far too cold to ignite."],
+        "rate": "-2%",
+        "pause_ms": 350,
+        "num_frames": 145,
+        "shot": (
+            "Cinematic steady push down through Jupiter's swirling orange cloud bands into a deep "
+            "glowing core of dull red-hot churning haze, the glow pulsing but never igniting, "
+            "continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Pile on about eighty Jupiters, and the crush would push that core to millions of degrees. It would light up as a star.",
+        "caption_text": "Pile on about 80 Jupiters, and the crush would push that core to millions of degrees. It would light up as a star.",
+        "phrases": ["Pile on about 80 Jupiters,", "and the crush would push", "that core to millions of degrees.", "It would light up", "as a star."],
+        "rate": "-10%",
+        "pause_ms": 400,
+        "num_frames": 193,
+        "shot": (
+            "Cinematic wide shot of many striped gas giant planets drifting together and merging "
+            "into one larger glowing ball, which collapses and suddenly ignites into a small "
+            "blazing red star, a burst of light flooding the frame, continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+    {
+        "text": "Our biggest planet is a star that came up eighty times too light.",
+        "caption_text": "Our biggest planet is a star that came up 80 times too light.",
+        "phrases": ["Our biggest planet", "is a star that came up", "80 times too light."],
+        "rate": "-6%",
+        "pause_ms": 100,
+        "num_frames": 121,
+        "shot": (
+            "Cinematic shot of giant Jupiter turning beside a much smaller blazing red star in "
+            "black space, Jupiter's bright orange cloud bands swirling in the star's light, "
+            "steady continuous motion, "
+            f"{_SCI_SUFFIX}"
+        ),
+    },
+]
+
 # Primary queue (Top 12)
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
@@ -1376,7 +1444,9 @@ _EPISODES = [
     ("sci_ep12_neutron_drip", _beats_script(_EP12_BEATS), _beats_shots(_EP12_BEATS), _EP12_BEATS),
     ("sci_ep08_neutron_star", _beats_script(_EP08N_BEATS), _beats_shots(_EP08N_BEATS), _EP08N_BEATS),
     ("sci_ep17_sun_black_hole", _beats_script(_EP17_BEATS), _beats_shots(_EP17_BEATS), _EP17_BEATS),
-    ("sci_ep18_earth_speed", _beats_script(_EP18_BEATS), _beats_shots(_EP18_BEATS), _EP18_BEATS),    ("sci_ep19_ton618", _beats_script(_EP19_BEATS), _beats_shots(_EP19_BEATS), _EP19_BEATS),
+    ("sci_ep18_earth_speed", _beats_script(_EP18_BEATS), _beats_shots(_EP18_BEATS), _EP18_BEATS),
+    ("sci_ep19_ton618", _beats_script(_EP19_BEATS), _beats_shots(_EP19_BEATS), _EP19_BEATS),
+    ("sci_ep20_jupiter_star", _beats_script(_EP20_BEATS), _beats_shots(_EP20_BEATS), _EP20_BEATS),
 ]
 
 
@@ -1402,7 +1472,7 @@ for _j in science_ltx_jobs:
         # blow-out), so bottom captions land on top of it. Anchor to the top instead.
         _j["captions"] = "clean_high"
         _j["ambient_volume"] = 0.10
-    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed", "sci_ep19_ton618"):
+    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed", "sci_ep19_ton618", "sci_ep20_jupiter_star"):
         # Word-pop reverted 2026-09-28. ep09 (full-sentence "clean") holds the best
         # AVD on the channel at 107%; ep14, the only episode to ship word-pop, came
         # in at 92.1%. Confounded, but not encouraging — and the style reads as
@@ -1429,6 +1499,12 @@ for _j in science_ltx_jobs:
         # Shot 1 (blazing disk, luma ~124) cuts to the dark Solar System (~27): a -78%
         # cliff. A longer dissolve turns the cut into a fade instead of a flash-to-black.
         _j["crossfade_s"] = 0.7
+    if _j.get("video_id") == "sci_ep20_jupiter_star":
+        # 20h audit: number-alone hooks sat at ~41% stayed, so no hook card; the first
+        # phrase captions carry the opening. Bright Jupiter fills the lower frame too.
+        _j["caption_phrases"] = {"max_words": 5}
+        _j["captions"] = "clean_heavy"
+        _j["crossfade_s"] = 0.7
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
@@ -1451,6 +1527,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep17_sun_black_hole": "ltx",
     "sci_ep18_earth_speed": "ltx",
     "sci_ep19_ton618": "ltx",
+    "sci_ep20_jupiter_star": "ltx",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",

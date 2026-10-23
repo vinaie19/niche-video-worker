@@ -259,6 +259,28 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep20 Jupiter, the star that never lit up *(NEW — built on the 20h audit, 2026-10-23)*
+- **Slug:** `sci_ep20_jupiter_star`
+- **Title:** `Jupiter Is a Star That Never Lit Up (80x Too Light)`
+- **Spoken hook:** `Jupiter is made of the same stuff as the Sun. It just never got to burn.`
+- **Why:** stayed% follows the first line: contradiction/action with a familiar thing wins
+  (white dwarf 69.6%, Saturn star 62.2%); bare size/speed/mass openers lose (TON 618 41.8%,
+  ep18 40.4%). No number-alone hook card. Keeps ep18/19 story pacing (APV 111-113%).
+- **Physics:** Jupiter ~H/He like the Sun; core ~20,000 K (> Sun's 5,800 K surface) but fusion
+  needs millions of K; minimum star mass ~75-85 Jupiter masses.
+- **Build:** `ONLY_SHOT=1 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep20_jupiter_star venv/bin/python run_test_batch.py`
+  → check shot 1 → `MISSING_SHOTS_ONLY=1 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep20_jupiter_star venv/bin/python run_test_batch.py`
+- **Playlist:** Exact Limits. **Related video:** The Star So Big It Would Swallow Saturn. **Post:** 4-6 PM IST.
+- **Pinned comment:** `Which planet should we cover next: Saturn, Neptune or Mars?`
+- **Description:**
+```
+Why didn't Jupiter become a star? It is made mostly of hydrogen and helium like the Sun, but it would need about 80 times more mass to crush its core hot enough to start fusion.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #jupiter
+```
+
 ### ep19 TON 618 *(NEW — built on the YouTube agent's answers, 2026-10-22)*
 - **Slug:** `sci_ep19_ton618`
 - **Title:** `The Black Hole That Weighs 66 Billion Suns (TON 618)`
