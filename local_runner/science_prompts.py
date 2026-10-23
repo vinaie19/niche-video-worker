@@ -1374,9 +1374,12 @@ _EP20_BEATS = [
         "pause_ms": 250,
         "num_frames": 121,
         "shot": (
-            "Cinematic close shot of giant Jupiter filling the frame from the very first frame, "
-            "its bright orange, cream and brown cloud bands racing sideways and the Great Red Spot "
-            "swirling, strong sunlight on its face, fast continuous motion, "
+            # v1 filled the frame, so the vertical crop cut the sides into an oval and the
+            # Red Spot rotated away within 1s. Keep the whole sphere in frame instead.
+            "Cinematic shot of the whole round planet Jupiter centred in the frame, a perfect "
+            "sphere fully visible with black space around it, the camera pushing steadily closer "
+            "from the very first frame, its bright orange, cream and brown cloud bands swirling "
+            "and the Great Red Spot facing the camera, strong sunlight on its face, continuous motion, "
             f"{_SCI_SUFFIX}"
         ),
     },
