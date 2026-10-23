@@ -276,6 +276,8 @@ One threshold. One law. One image.
 ```
 Why didn't Jupiter become a star? It is made mostly of hydrogen and helium like the Sun, but it would need about 80 times more mass to crush its core hot enough to start fusion.
 
+Jupiter imagery: NASA/ESA Hubble (public domain).
+
 One threshold. One law. One image.
 
 #ThresholdPhysics #physics #science #space #jupiter
