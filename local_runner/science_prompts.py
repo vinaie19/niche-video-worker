@@ -1383,7 +1383,8 @@ _EP20_BEATS = [
             "swirling, bright orange and cream cloud bands racing past, lightning flashing inside "
             "the storms and a deep orange glow flaring up beneath the clouds as if about to ignite, "
             "strong sunlight, fast continuous motion from the very first frame, "
-            f"{_SCI_SUFFIX}"
+            # _SCI_SUFFIX says "locked camera", which fights the swoop; same suffix minus that.
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
         ),
     },
     {
