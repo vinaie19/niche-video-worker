@@ -26,6 +26,9 @@ ASSETS = {
         ("earth.jpg", "The Earth seen from Apollo 17"),
         ("city.jpg", "Chicago Illinois pictured at night from the International Space Station iss075e0099858"),
     ],
+    "sci_ep20_jupiter_star": [
+        ("jupiter.jpg", "Hubble Planetary Portrait Captures New Changes in Jupiter Great Red Spot 22214599072"),
+    ],
 }
 
 
