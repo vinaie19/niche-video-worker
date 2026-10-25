@@ -1430,6 +1430,129 @@ _EP20_BEATS = [
     },
 ]
 
+# --- Ep 21: Saturn would float in water — "show, don't tell" format ---
+# ep20 proved the opener (contradiction + familiar planet: 62.5% stayed, 106% APV). The user's
+#   ask now: make the explanation land for people with no physics background, with pictures
+#   that match every idea. So instead of 4 long shots under 4 long lines:
+#   - 8 short beats, one idea each, and a NEW picture every ~2-3s that shows that exact idea.
+#   - Everyday comparisons carry the physics (beach ball vs pebble = density). No jargon.
+#   - Conversational pace: rates near natural, short pauses, quick cuts (0.15s xfade).
+#   - Ends mid-thought ("...an ocean big enough") so it loops into "Saturn would float in water."
+# Shot 1 is replaced after render by a real Saturn (Cassini/Hubble public domain) on the laptop:
+#   LTX squashes round planets in 9:16. The LTX shot 1 is still rendered (same pod session) so
+#   its audio bed and timing slot exist.
+# Physics: Saturn's mean density 0.687 g/cm^3 < water 1.0 (the only planet less dense than
+#   water); ~760 Earths fit inside by volume; mostly hydrogen + helium. "Would float" is the
+#   standard pop framing of average density; the script says "lighter than the same amount of
+#   water", which is exactly true.
+_EP21_BEATS = [
+    {
+        "text": "Saturn would float in water.",
+        "phrases": ["Saturn would float", "in water."],
+        "rate": "+4%",
+        "pause_ms": 150,
+        "num_frames": 65,
+        "shot": (
+            "Cinematic fast push toward the planet Saturn, the whole golden planet and its wide "
+            "bright rings visible against black space, the camera moving closer from the very "
+            "first frame, strong sunlight, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "Even though seven hundred and sixty Earths could fit inside it.",
+        "caption_text": "Even though 760 Earths could fit inside it.",
+        "phrases": ["Even though 760 Earths", "could fit inside it."],
+        "rate": "+2%",
+        "pause_ms": 200,
+        "num_frames": 89,
+        "shot": (
+            "Cinematic wide shot of hundreds of small blue Earth-like planets streaming in a long "
+            "glowing river into a giant golden ringed planet, which swallows them easily, black "
+            "space, continuous motion, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "Here's the secret. Floating has nothing to do with size.",
+        "phrases": ["Here's the secret.", "Floating has nothing", "to do with size."],
+        "rate": "+0%",
+        "pause_ms": 150,
+        "num_frames": 81,
+        "shot": (
+            "Cinematic shot of a giant colourful inflatable beach ball dropping onto a calm "
+            "turquoise sea and bouncing on the surface, splashing, bright sunny sky, slow motion "
+            "water droplets, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "A huge beach ball floats. A tiny pebble sinks.",
+        "phrases": ["A huge beach ball floats.", "A tiny pebble sinks."],
+        "rate": "+0%",
+        "pause_ms": 200,
+        "num_frames": 73,
+        "shot": (
+            "Cinematic underwater close-up of a small grey pebble plunging into clear blue water "
+            "and sinking fast to the sandy bottom, a trail of bubbles behind it, sunlight rays "
+            "through the water, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "What matters is how tightly packed it is.",
+        "phrases": ["What matters is", "how tightly packed it is."],
+        "rate": "-2%",
+        "pause_ms": 200,
+        "num_frames": 65,
+        "shot": (
+            "Cinematic close-up of two clear glass cubes side by side on black, the left one "
+            "crammed full of tightly packed glowing blue marbles, the right one holding only a "
+            "few glowing golden marbles drifting slowly with lots of empty space, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "Saturn is mostly hydrogen and helium, the lightest stuff in the universe.",
+        "phrases": ["Saturn is mostly", "hydrogen and helium,", "the lightest stuff", "in the universe."],
+        "rate": "-2%",
+        "pause_ms": 200,
+        "num_frames": 97,
+        "shot": (
+            "Cinematic flight through Saturn's upper atmosphere, soft pale golden clouds and thin "
+            "wispy haze streaming past the camera, the giant rings arcing across the sky above, "
+            "continuous forward motion, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "So even with all that size, it's lighter than the same amount of water.",
+        "phrases": ["So even with all that size,", "it's lighter than", "the same amount of water."],
+        "rate": "-4%",
+        "pause_ms": 250,
+        "num_frames": 97,
+        "shot": (
+            "Cinematic wide shot of the giant golden planet Saturn gently bobbing on the surface "
+            "of an endless calm ocean, its wide rings just above the water, slow ripples spreading "
+            "outward across the sea, soft sunlight, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+    {
+        "text": "So if you could find an ocean big enough...",
+        "phrases": ["So if you could find", "an ocean big enough..."],
+        "rate": "-4%",
+        "pause_ms": 80,
+        "num_frames": 73,
+        "shot": (
+            "Cinematic slow pull-back from the golden ringed planet Saturn floating on a vast "
+            "dark ocean, revealing the endless water stretching to the horizon under a starry "
+            "sky, continuous motion, "
+            f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
+        ),
+    },
+]
+
 # Primary queue (Top 12)
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
@@ -1454,6 +1577,7 @@ _EPISODES = [
     ("sci_ep18_earth_speed", _beats_script(_EP18_BEATS), _beats_shots(_EP18_BEATS), _EP18_BEATS),
     ("sci_ep19_ton618", _beats_script(_EP19_BEATS), _beats_shots(_EP19_BEATS), _EP19_BEATS),
     ("sci_ep20_jupiter_star", _beats_script(_EP20_BEATS), _beats_shots(_EP20_BEATS), _EP20_BEATS),
+    ("sci_ep21_saturn_float", _beats_script(_EP21_BEATS), _beats_shots(_EP21_BEATS), _EP21_BEATS),
 ]
 
 
@@ -1479,7 +1603,7 @@ for _j in science_ltx_jobs:
         # blow-out), so bottom captions land on top of it. Anchor to the top instead.
         _j["captions"] = "clean_high"
         _j["ambient_volume"] = 0.10
-    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed", "sci_ep19_ton618", "sci_ep20_jupiter_star"):
+    if _j.get("video_id") in ("sci_ep14_pulsar_716hz", "sci_ep10_eddington", "sci_ep18_earth_speed", "sci_ep19_ton618", "sci_ep20_jupiter_star", "sci_ep21_saturn_float"):
         # Word-pop reverted 2026-09-28. ep09 (full-sentence "clean") holds the best
         # AVD on the channel at 107%; ep14, the only episode to ship word-pop, came
         # in at 92.1%. Confounded, but not encouraging — and the style reads as
@@ -1512,6 +1636,12 @@ for _j in science_ltx_jobs:
         _j["caption_phrases"] = {"max_words": 5}
         _j["captions"] = "clean_heavy"
         _j["crossfade_s"] = 0.7
+    if _j.get("video_id") == "sci_ep21_saturn_float":
+        # 8 short picture-per-idea beats: quick near-cuts keep the rhythm; long dissolves would
+        # blur ideas into each other.
+        _j["caption_phrases"] = {"max_words": 5}
+        _j["captions"] = "clean_heavy"
+        _j["crossfade_s"] = 0.15
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
@@ -1535,6 +1665,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep18_earth_speed": "ltx",
     "sci_ep19_ton618": "ltx",
     "sci_ep20_jupiter_star": "ltx",
+    "sci_ep21_saturn_float": "ltx",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",

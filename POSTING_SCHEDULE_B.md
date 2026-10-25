@@ -259,6 +259,27 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep21 Saturn would float in water *(NEW — "show, don't tell" format, 2026-10-25)*
+- **Slug:** `sci_ep21_saturn_float`
+- **Title:** `Saturn Would Float in Water (Here's Why)`
+- **Spoken hook:** `Saturn would float in water.`
+- **Format change:** 8 short beats, one idea each, a new picture every ~2-3s that shows that exact
+  idea; everyday comparisons (beach ball vs pebble) instead of jargon; quick cuts; ends mid-thought
+  so it loops. Opener = contradiction + familiar planet (ep20: 62.5% stayed).
+- **Physics:** Saturn mean density 0.687 g/cm³ < water; ~760 Earths fit inside; mostly H + He.
+- **Build (one pod session):** `MISSING_SHOTS_ONLY=1 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep21_saturn_float venv/bin/python run_test_batch.py`,
+  then replace shot 1's picture with a real public-domain Saturn (keep its audio) and restitch locally.
+- **Playlist:** Exact Limits. **Related video:** Jupiter Is a Star That Never Lit Up. **Post:** 4-6 PM IST.
+- **Pinned comment:** `Did you know Saturn could float before this? Yes or no?`
+- **Description:**
+```
+Would Saturn really float in water? On average, yes: Saturn is less dense than water, about 0.69 g/cm³, because it is made mostly of hydrogen and helium, even though about 760 Earths could fit inside it.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #saturn
+```
+
 ### ep20 Jupiter, the star that never lit up *(NEW — built on the 20h audit, 2026-10-23)*
 - **Slug:** `sci_ep20_jupiter_star`
 - **Title:** `Jupiter Is a Star That Never Lit Up (80x Too Light)`
