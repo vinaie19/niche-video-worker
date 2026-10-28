@@ -1542,10 +1542,12 @@ _EP21_BEATS = [
         ),
     },
     {
-        "text": "So if you could find an ocean big enough...",
-        "phrases": ["So if you could find", "an ocean big enough..."],
+        # 2026-10-28: "...an ocean big enough..." trailed off with no payoff and no room
+        # after it. Finish the thought, then hold the picture ~0.7s before the loop.
+        "text": "So drop it in an ocean big enough, and it would bob right back up.",
+        "phrases": ["So drop it in", "an ocean big enough,", "and it would bob", "right back up."],
         "rate": "-2%",
-        "pause_ms": 60,
+        "pause_ms": 700,
         "num_frames": 73,
         "shot": (
             "Cinematic slow pull-back from the golden ringed planet Saturn floating on a vast "
