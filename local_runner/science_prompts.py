@@ -1535,9 +1535,12 @@ _EP21_BEATS = [
         "pause_ms": 200,
         "num_frames": 97,
         "shot": (
-            "Cinematic wide shot of the giant golden planet Saturn gently bobbing on the surface "
-            "of an endless calm ocean, its wide rings just above the water, slow ripples spreading "
-            "outward across the sea, soft sunlight, "
+            # 2026-10-28: v1 sat Saturn ON the water (7) and in the sky (8). At 0.69 g/cm3 it
+            # floats with ~69% below the waterline, rings lying on the surface.
+            "Cinematic wide shot of the giant golden planet Saturn floating low in an endless calm "
+            "ocean like a huge beach ball, about two thirds of the planet below the waterline and "
+            "only its top third above the water, its wide rings lying flat on the water surface, "
+            "gently bobbing, soft ripples spreading out, warm sunset light, "
             f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
         ),
     },
@@ -1548,11 +1551,14 @@ _EP21_BEATS = [
         "phrases": ["So drop it in", "an ocean big enough,", "and it would bob", "right back up."],
         "rate": "-2%",
         "pause_ms": 700,
-        "num_frames": 73,
+        "num_frames": 97,
         "shot": (
-            "Cinematic slow pull-back from the golden ringed planet Saturn floating on a vast "
-            "dark ocean, revealing the endless water stretching to the horizon under a starry "
-            "sky, continuous motion, "
+            # 2026-10-28: v1 sat Saturn ON the water (7) and in the sky (8). At 0.69 g/cm3 it
+            # floats with ~69% below the waterline, rings lying on the surface.
+            "Cinematic slow rising pull-back from the golden planet Saturn floating low in a vast "
+            "calm ocean, only its top third above the waterline and its rings resting flat on the "
+            "water, gently bobbing up and down, ripples spreading, dusk sky, endless water to the "
+            "horizon, "
             f"{_SCI_SUFFIX.replace('locked camera, ', '')}"
         ),
     },
