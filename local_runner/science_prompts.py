@@ -1449,8 +1449,8 @@ _EP21_BEATS = [
     {
         "text": "Saturn would float in water.",
         "phrases": ["Saturn would float", "in water."],
-        "rate": "+4%",
-        "pause_ms": 150,
+        "rate": "+6%",
+        "pause_ms": 120,
         "num_frames": 65,
         "shot": (
             "Cinematic fast push toward the planet Saturn, the whole golden planet and its wide "
@@ -1460,11 +1460,13 @@ _EP21_BEATS = [
         ),
     },
     {
-        "text": "Even though seven hundred and sixty Earths could fit inside it.",
-        "caption_text": "Even though 760 Earths could fit inside it.",
-        "phrases": ["Even though 760 Earths", "could fit inside it."],
-        "rate": "+2%",
-        "pause_ms": 200,
+        # 2026-10-28 tune: sentences joined with ':'/',' so Edge-TTS doesn't drop a ~1s
+        # pause mid-beat, and each phrase is re-split onto the picture that shows it.
+        "text": "Even though seven hundred and sixty Earths could fit inside it. Here's the secret:",
+        "caption_text": "Even though 760 Earths could fit inside it. Here's the secret:",
+        "phrases": ["Even though 760 Earths", "could fit inside it.", "Here's the secret:"],
+        "rate": "+4%",
+        "pause_ms": 150,
         "num_frames": 89,
         "shot": (
             "Cinematic wide shot of hundreds of small blue Earth-like planets streaming in a long "
@@ -1474,10 +1476,11 @@ _EP21_BEATS = [
         ),
     },
     {
-        "text": "Here's the secret. Floating has nothing to do with size.",
-        "phrases": ["Here's the secret.", "Floating has nothing", "to do with size."],
-        "rate": "+0%",
-        "pause_ms": 150,
+        "text": "floating has nothing to do with size, a huge beach ball floats,",
+        "caption_text": "Floating has nothing to do with size. A huge beach ball floats,",
+        "phrases": ["Floating has nothing", "to do with size.", "A huge beach ball floats,"],
+        "rate": "+4%",
+        "pause_ms": 80,
         "num_frames": 81,
         "shot": (
             "Cinematic shot of a giant colourful inflatable beach ball dropping onto a calm "
@@ -1487,10 +1490,10 @@ _EP21_BEATS = [
         ),
     },
     {
-        "text": "A huge beach ball floats. A tiny pebble sinks.",
-        "phrases": ["A huge beach ball floats.", "A tiny pebble sinks."],
-        "rate": "+0%",
-        "pause_ms": 200,
+        "text": "but a tiny pebble sinks.",
+        "phrases": ["but a tiny pebble", "sinks."],
+        "rate": "+2%",
+        "pause_ms": 180,
         "num_frames": 73,
         "shot": (
             "Cinematic underwater close-up of a small grey pebble plunging into clear blue water "
@@ -1502,8 +1505,8 @@ _EP21_BEATS = [
     {
         "text": "What matters is how tightly packed it is.",
         "phrases": ["What matters is", "how tightly packed it is."],
-        "rate": "-2%",
-        "pause_ms": 200,
+        "rate": "+2%",
+        "pause_ms": 180,
         "num_frames": 65,
         "shot": (
             "Cinematic close-up of two clear glass cubes side by side on black, the left one "
@@ -1515,8 +1518,8 @@ _EP21_BEATS = [
     {
         "text": "Saturn is mostly hydrogen and helium, the lightest stuff in the universe.",
         "phrases": ["Saturn is mostly", "hydrogen and helium,", "the lightest stuff", "in the universe."],
-        "rate": "-2%",
-        "pause_ms": 200,
+        "rate": "+2%",
+        "pause_ms": 180,
         "num_frames": 97,
         "shot": (
             "Cinematic flight through Saturn's upper atmosphere, soft pale golden clouds and thin "
@@ -1528,8 +1531,8 @@ _EP21_BEATS = [
     {
         "text": "So even with all that size, it's lighter than the same amount of water.",
         "phrases": ["So even with all that size,", "it's lighter than", "the same amount of water."],
-        "rate": "-4%",
-        "pause_ms": 250,
+        "rate": "+0%",
+        "pause_ms": 200,
         "num_frames": 97,
         "shot": (
             "Cinematic wide shot of the giant golden planet Saturn gently bobbing on the surface "
@@ -1541,8 +1544,8 @@ _EP21_BEATS = [
     {
         "text": "So if you could find an ocean big enough...",
         "phrases": ["So if you could find", "an ocean big enough..."],
-        "rate": "-4%",
-        "pause_ms": 80,
+        "rate": "-2%",
+        "pause_ms": 60,
         "num_frames": 73,
         "shot": (
             "Cinematic slow pull-back from the golden ringed planet Saturn floating on a vast "
