@@ -26,3 +26,7 @@ local_runner/docs/
 # Generated shots/stills and voice cache stay local, not in git
 local_runner/i2v_stills/
 local_runner/vo_cache/
+
+# Render + pod watchdog logs
+local_runner/watchdog.log
+local_runner/*_render.log
