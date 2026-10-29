@@ -18,7 +18,7 @@ VOICE = "en-US-AndrewMultilingualNeural"
 
 def main():
     os.makedirs(WORK, exist_ok=True)
-    beats = [{"text": b["text"], "rate": b.get("rate", sc.VOICE_RATE), "pause_ms": b.get("pause_ms", 350)}
+    beats = [{"text": b["text"], "rate": b.get("rate", sc.VOICE_RATE), "pause_ms": b.get("pause_ms", 200)}
              for b in sc.BEATS]
     mp3 = os.path.join(WORK, f"{STEM}.mp3")
     # Long-form narrator: Andrew (Edge "warm, confident, authentic") reads more naturally over

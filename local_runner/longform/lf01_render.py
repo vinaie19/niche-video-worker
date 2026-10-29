@@ -23,7 +23,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT); sys.path.insert(0, HERE)
 os.environ.setdefault("CHANNEL", "b")
 
-W, H, FPS = 1920, 1080, 24
+W, H, FPS = 1920, 1080, 30  # 30 fps: smoother pulls and zooms on phones
 ASSETS = os.path.join(ROOT, "i2v_stills", "lf01_universe_scale")
 WORK = os.path.join(ROOT, "temp_clips", "lf01_universe_scale_audio")
 SEG_DIR = os.path.join(ROOT, "temp_clips", "lf01_segments")
