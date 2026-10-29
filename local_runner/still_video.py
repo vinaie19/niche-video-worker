@@ -264,6 +264,8 @@ def build(video_id, shots_only=False):
     stem = f"{video_id}_still_voice"
     vo_delay_ms = int(job.get("vo_delay_ms", 100))
     fade = float(job.get("crossfade_s", 0.35))
+    tail_s = float(job["tail_s"]) if "tail_s" in job else TAIL_S
+    ambient_volume = float(job.get("ambient_volume", AMBIENT_VOLUME))
 
     # Voice first, so every shot is cut to its exact beat length (no stretch/trim later).
     generate_voiceover(
@@ -278,7 +280,7 @@ def build(video_id, shots_only=False):
 
     shot_paths = []
     for i, beat in enumerate(beats):
-        dur = targets[i] + (fade if i < len(beats) - 1 else TAIL_S)
+        dur = targets[i] + (fade if i < len(beats) - 1 else tail_s)
         spec = shot_spec(beat, i, video_id)
         path = os.path.join(work, f"shot_{i + 1}.mp4")
         src = spec.get("image", "starfield")
@@ -304,10 +306,11 @@ def build(video_id, shots_only=False):
     add_voice_and_captions(
         silent, job.get("script"), output, work_dir=work, voice=job.get("voice"),
         burn_captions=captions_on, caption_style=caption_style,
-        ambient=AMBIENT, ambient_volume=AMBIENT_VOLUME, vo_delay_ms=vo_delay_ms,
+        ambient=AMBIENT, ambient_volume=ambient_volume, vo_delay_ms=vo_delay_ms,
         voice_volume=float(job.get("voice_volume", 1.0)),
         voice_rate=job.get("voice_rate"), voice_pitch=job.get("voice_pitch"),
         script_beats=beats, caption_chunk_words=job.get("caption_chunk_words"),
+        caption_phrases=job.get("caption_phrases"),
     )
     print(f"🎉 Still video ({_probe_duration(output):.1f}s, $0 GPU): {output}")
     return output

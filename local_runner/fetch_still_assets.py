@@ -26,6 +26,11 @@ ASSETS = {
         ("earth.jpg", "The Earth seen from Apollo 17"),
         ("city.jpg", "Chicago Illinois pictured at night from the International Space Station iss075e0099858"),
     ],
+    "sci_ep22_sun_white": [
+        ("sun_iss.jpg", "Sun over Earth's horizon International Space Station NASA"),
+        ("astronaut.jpg", "Bruce McCandless II during EVA in 1984"),
+        ("earth_limb.jpg", "Earth's limb atmosphere thin blue line from the International Space Station NASA"),
+    ],
     "sci_ep21_saturn_float": [
         ("saturn.jpg", "Saturn from Cassini Orbiter 2004-10-06"),
     ],

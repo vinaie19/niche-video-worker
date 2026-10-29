@@ -259,6 +259,33 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep22 The Sun is not yellow *(NEW — first $0 local build, 2026-10-29)*
+- **Slug:** `sci_ep22_sun_white`
+- **Title:** `The Sun Is Not Yellow (Astronauts See White)`
+- **Spoken hook:** `The Sun is not yellow.`
+- **Why:** ep21 held 48% at the hook but fell to 67% APV: the answer was given by ~15s and the
+  ending had a hold. Here the middle shows clues and withholds the answer, the answer is the last
+  line, and that line is the hook's twin ("The Sun is white." → replay → "The Sun is not yellow."),
+  so the Short loops with a reason to rewatch. Cut on the last word, no tail. ~22s, 7 beats.
+- **Physics:** sunlight is all visible wavelengths mixed (white, ~5,800 K). Rayleigh scattering
+  removes some blue on the way through the air (blue sky), so the disc looks slightly yellow from
+  the ground and white from orbit.
+- **Build ($0, laptop):** `python make_ep22_assets.py && VIDEO_ID=sci_ep22_sun_white python fetch_still_assets.py`
+  then `CHANNEL=b VIDEO_ID=sci_ep22_sun_white python still_video.py` → `final_videos/sci_ep22_sun_white_still_complete.mp4`,
+  then `python make_thumbnail_ep22.py`. Check `i2v_stills/sci_ep22_sun_white/SOURCES.md` for the three photo credits.
+- **Playlist:** Exact Limits. **Related video:** Saturn Would Float in Water. **Post:** 4-6 PM IST.
+- **Pinned comment:** `What colour did you think the Sun was? Tell us below.`
+- **Description:**
+```
+What colour is the Sun really? White. Sunlight contains every colour mixed together, and that mix is white. The air scatters some of the blue on its way down to you, which makes the sky blue and leaves the Sun looking slightly yellow. Above the atmosphere, astronauts see it white.
+
+Photos: NASA (public domain).
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #sun
+```
+
 ### ep21 Saturn would float in water *(NEW — "show, don't tell" format, 2026-10-25)*
 - **Slug:** `sci_ep21_saturn_float`
 - **Title:** `Saturn Would Float in Water (Here's Why)`

@@ -1565,6 +1565,117 @@ _EP21_BEATS = [
 ]
 
 # Primary queue (Top 12)
+
+# --- Ep 22: The Sun is not yellow (first fully local build, 2026-10-29) ---
+# ep21 lesson: the hook held (48% stayed) but the answer was given by ~15s and the ending
+# had a hold, so APV fell to 67%. Here the middle shows clues and withholds the answer,
+# the answer lands on the last line, and that line is the hook's twin ("The Sun is white."
+# -> "The Sun is not yellow.") so YouTube's replay completes the thought. Cut on the last
+# word, no tail. Every picture is a real public-domain photo or drawn in code ($0).
+# Build: python make_ep22_assets.py && VIDEO_ID=sci_ep22_sun_white python fetch_still_assets.py
+#        && CHANNEL=b VIDEO_ID=sci_ep22_sun_white python still_video.py
+_EP22_STILL_SUN = {"image": "sun_iss.jpg", "move": "push_in", "zoom": 0.30}
+_EP22_DISCS = [  # six colours spread around the frame, all sliding into one point
+    ("disc_red.png", 0.18, 0.22), ("disc_orange.png", 0.82, 0.20), ("disc_yellow.png", 0.14, 0.52),
+    ("disc_green.png", 0.86, 0.50), ("disc_blue.png", 0.22, 0.78), ("disc_violet.png", 0.78, 0.76),
+]
+_EP22_BEATS = [
+    {
+        "text": "The Sun is not yellow.",
+        "phrases": ["The Sun", "is not yellow."],
+        "rate": "+6%",
+        "pause_ms": 150,
+        "num_frames": 57,
+        "still": _EP22_STILL_SUN,
+        "shot": "Real photo: the white Sun over Earth's horizon from the ISS, fast push-in.",
+    },
+    {
+        "text": "Kids draw it yellow. Astronauts don't.",
+        "phrases": ["Kids draw it yellow.", "Astronauts don't."],
+        "rate": "+4%",
+        "pause_ms": 150,
+        "num_frames": 65,
+        "still": {
+            "image": "crayon_sun.png", "move": "push_in", "zoom": 0.12,
+            "end": {"image": "astronaut.jpg"}, "end_at": (0.44, 0.62),
+        },
+        "shot": "A child's crayon drawing of a yellow sun dissolves into a real astronaut on a spacewalk.",
+    },
+    {
+        "text": "Pull sunlight apart and you get a rainbow. Every colour is in there.",
+        "phrases": ["Pull sunlight apart", "and you get a rainbow.", "Every colour", "is in there."],
+        "rate": "+4%",
+        "pause_ms": 150,
+        "num_frames": 97,
+        "still": {
+            "image": "starfield", "seed": 3, "move": "hold",
+            "layers": [
+                {"image": "white_beam.png", "x": 0.5, "y": 0.2, "width": 0.34},
+                {"image": "spectrum.png", "x": 0.5, "y": 0.66, "width": 0.3, "width_to": 1.04},
+            ],
+        },
+        "shot": "A white beam from above and a rainbow arc that grows across the frame beneath it.",
+    },
+    {
+        "text": "But the air steals the blue on the way down. That's why the sky is blue.",
+        "phrases": ["But the air steals the blue", "on the way down.", "That's why", "the sky is blue."],
+        "rate": "+2%",
+        "pause_ms": 150,
+        "num_frames": 105,
+        "still": {"image": "earth_limb.jpg", "move": "pan_down", "zoom": 0.30},
+        "shot": "Real photo: Earth's thin blue atmosphere on the limb, seen from orbit, camera drifting down.",
+    },
+    {
+        "text": "Lose blue, and what's left looks yellow.",
+        "phrases": ["Lose blue,", "and what's left", "looks yellow."],
+        "rate": "+2%",
+        "pause_ms": 150,
+        "num_frames": 65,
+        "still": {
+            "image": "starfield", "seed": 5, "move": "hold",
+            "layers": [{"image": "spectrum.png", "x": 0.5, "y": 0.68, "width": 1.0}],
+            "end": {
+                "image": "starfield", "seed": 5,
+                "layers": [
+                    {"image": "spectrum_noblue.png", "x": 0.5, "y": 0.68, "width": 1.0},
+                    {"image": "yellow_sun.png", "x": 0.5, "y": 0.32, "width": 0.5},
+                ],
+            },
+            "end_at": (0.25, 0.65),
+        },
+        "shot": "The blue end of the rainbow fades away and a yellowish sun appears above it.",
+    },
+    {
+        "text": "Climb above the air, mix every colour back, and you see what astronauts see.",
+        "phrases": ["Climb above the air,", "mix every colour back,", "and you see", "what astronauts see."],
+        "rate": "+2%",
+        "pause_ms": 100,
+        "num_frames": 113,
+        "still": {
+            "image": "starfield", "seed": 6, "move": "hold",
+            "layers": [
+                {"image": n, "x": x, "x_to": 0.5, "y": y, "y_to": 0.45, "width": 0.15, "width_to": 0.24}
+                for n, x, y in _EP22_DISCS
+            ],
+            "end": {
+                "image": "starfield", "seed": 6,
+                "layers": [{"image": "white_sun.png", "x": 0.5, "y": 0.45, "width": 0.9}],
+            },
+            "end_at": (0.62, 0.96),
+        },
+        "shot": "Six coloured discs slide together into one point and merge into a blazing white disc.",
+    },
+    {
+        "text": "The Sun is white.",
+        "phrases": ["The Sun is white."],
+        "rate": "+0%",
+        "pause_ms": 0,
+        "num_frames": 49,
+        "still": {"image": "sun_iss.jpg", "move": "push_in", "zoom": 0.08},
+        "shot": "Real photo: the white Sun from the ISS again, so the last frame matches the first and the Short loops.",
+    },
+]
+
 _EPISODES = [
     ("sci_ep01_sound_194db", _beats_script(_EP01_BEATS), _beats_shots(_EP01_BEATS), _EP01_BEATS),
     ("sci_ep02_roche_limit", _beats_script(_EP02_BEATS), _beats_shots(_EP02_BEATS), _EP02_BEATS),
@@ -1589,6 +1700,7 @@ _EPISODES = [
     ("sci_ep19_ton618", _beats_script(_EP19_BEATS), _beats_shots(_EP19_BEATS), _EP19_BEATS),
     ("sci_ep20_jupiter_star", _beats_script(_EP20_BEATS), _beats_shots(_EP20_BEATS), _EP20_BEATS),
     ("sci_ep21_saturn_float", _beats_script(_EP21_BEATS), _beats_shots(_EP21_BEATS), _EP21_BEATS),
+    ("sci_ep22_sun_white", _beats_script(_EP22_BEATS), _beats_shots(_EP22_BEATS), _EP22_BEATS),
 ]
 
 
@@ -1653,6 +1765,14 @@ for _j in science_ltx_jobs:
         _j["caption_phrases"] = {"max_words": 5}
         _j["captions"] = "clean_heavy"
         _j["crossfade_s"] = 0.15
+    if _j.get("video_id") == "sci_ep22_sun_white":
+        # ep21 ending lesson: cut on the last word, no quiet tail, so the replay runs
+        # "The Sun is white." straight into "The Sun is not yellow."
+        _j["caption_phrases"] = {"max_words": 5}
+        _j["captions"] = "clean_heavy"
+        _j["crossfade_s"] = 0.15
+        _j["ambient_volume"] = 0.10
+        _j["tail_s"] = 0.0
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
@@ -1677,6 +1797,7 @@ SCIENCE_ENGINE_BY_ID = {
     "sci_ep19_ton618": "ltx",
     "sci_ep20_jupiter_star": "ltx",
     "sci_ep21_saturn_float": "ltx",
+    "sci_ep22_sun_white": "still",
     # Parked Batch-0 (files may exist; not in active _EPISODES)
     "sci_ep01_sun_closer": "ltx",
     "sci_ep02_dyson_heat": "ltx",
