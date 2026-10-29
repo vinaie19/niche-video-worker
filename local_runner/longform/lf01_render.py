@@ -94,7 +94,7 @@ class Assets:
             if crop:
                 w, h = im.size
                 im = im.crop((int(crop[0] * w), int(crop[1] * h), int(crop[2] * w), int(crop[3] * h)))
-            im.thumbnail((2600, 2600), Image.LANCZOS)
+            im.thumbnail((3840 if n == "udf" else 2600,) * 2, Image.LANCZOS)  # full-res Deep Field for the zoom
             self.photo[n] = im
         rng = np.random.default_rng(7)
         n = 1400
@@ -271,10 +271,11 @@ def halo_img(r, col):
 # ---------- chapters ---------------------------------------------------------------------------
 
 def ch_marble(F, t):
-    t1, t2, t3, t4, t5 = (S("Shrink"), S("Now, let's"), S("Every size"), S("By the end"), S("It won't even"))
+    t1, t2, t3 = S("If Earth were"), S("But build"), S("Every size")
+    t4, t5, tend = S("But build"), S("It won't even"), S("Let's start")
     F.stars(0.8, drift=(t * 0.002, 0))
     u = eo((t - t1) / 3.2)
-    push = sm((t - t1 - 3.2) / max(1.0, t4 - t1 - 3.2))  # slow push on the marble after the shrink
+    push = sm((t - t1 - 3.2) / max(1.0, tend - t1 - 3.2))  # slow push on the marble after the shrink
     d = lerp_log(880, 70, u) * (1 + 0.45 * push)
     cx, cy = 960, lerp(540, 430, u)
     F.planet("earth", cx, cy, d)
@@ -290,8 +291,8 @@ def ch_marble(F, t):
         if k3 > 0:
             F.photo(name, zoom=1.05 + 0.05 * (t - t0), alpha=0.75 * k3)
             F.planet("earth", cx, cy, d)
-    if t > t3 - 0.1 and t < t4 + 0.4:
-        kk = ramp(t, t3, 0.4) * (1 - ramp(t, t4, 0.4))
+    if t > t3 - 0.1 and t < tend + 0.4:
+        kk = ramp(t, t3, 0.4) * (1 - ramp(t, tend - 0.4, 0.4))
         F.label("same scale for everything", cx, 140, 34, DIM, kk)
         # teaser strip of what's coming, sliding in
         for j, (kind, name) in enumerate((("disc", "sun"), ("photo", "milkyway"), ("photo", "udf"))):
@@ -481,6 +482,7 @@ def ch_planets(F, t):
         r = xv - x0
         F.draw().ellipse((x0 - r, y - r, x0 + r, y + r), outline=(150, 255, 190, int(180 * kt)), width=4)
         F.label("everything we've ever launched", W / 2 - 200, 170, 50, GREEN, kt)
+    _past_town(F, t)
 
 
 @lru_cache(maxsize=1)
@@ -492,6 +494,15 @@ def voyager_img():
     ImageDraw.Draw(m).rounded_rectangle((0, 0, crop.width - 1, crop.height - 1), 18, fill=255)
     crop.putalpha(m)
     return crop
+
+
+def _past_town(F, t):
+    """Pattern interrupt after "small town": everything sinks into darkness but one dot."""
+    k = ramp(t, E("Everything humanity") + 0.3, 1.4)
+    if k > 0:
+        F.fade(0.9 * k)
+        F.paste(halo_img(26, (255, 240, 210)), W / 2, H / 2, k)
+        F.draw().ellipse((W / 2 - 4, H / 2 - 4, W / 2 + 4, H / 2 + 4), fill=(255, 250, 230, int(255 * k)))
 
 
 def ch_star(F, t):
@@ -616,8 +627,8 @@ def ch_andromeda(F, t):
             xv = x0 + 173 * ppa
             F.draw().ellipse((xv - 6, y - 6, xv + 6, y + 6), fill=(255, 255, 255, int(255 * kv)))
             F.paste(voyager_img().resize((150, 137)), xv, y - 130, kv)
-            F.label("real Voyager 1  ·  173 AU", xv - 80, y + 70, 34, WHITE, kv)
-            F.label("closer than Voyager really is", W / 2, 150, 54, GREEN, kv)
+            F.label("REAL Voyager 1  ·  173 AU", xv - 40, y + 150, 34, WHITE, kv)
+            F.label("the REAL Voyager 1 is already farther", W / 2, 150, 54, GREEN, kv)
     else:
         u = sm((t - tmg - 0.2) / max(2.0, (TL["beats"][-1]["end"] - tmg) * 0.0 + 4.5))
         F.stars(0.4)
@@ -648,8 +659,15 @@ NEAR_STARS = [("Proxima", 4.24, 20), ("Sirius", 8.6, 140), ("Procyon", 11.5, 200
 def ch_universe(F, t):
     t0, th, tg, tf, tb, tm, tlt, tbe = (S("Now, zoom out"), S("This is one tiny"), S("Hubble stared"), S("The light from the faintest"),
                                         S("The observable universe holds"), S("Build that"), S("Light itself"), S("And that's only"))
-    if t < tm:
-        z = lerp_log(9.0, 1.0, eo((t - t0) / 6.0))
+    tr = th + 2.2  # the Deep Field reveal lands after "This is one tiny patch of sky"
+    if t < tr:
+        # one tiny patch of the night sky: a pinprick square that grows before the reveal
+        F.stars(0.8, zoom=1.0 + 0.3 * sm((t - t0) / max(1.0, tr - t0)))
+        r = lerp_log(3, 90, sm((t - t0 - 0.3) / max(1.0, tr - t0 - 0.3)))
+        F.draw().rectangle((W / 2 - r, H / 2 - r, W / 2 + r, H / 2 + r), outline=(255, 220, 150, 230), width=3)
+        F.label("one tiny patch of sky", W / 2, H / 2 + r + 60, 40, WHITE, ramp(t, t0 + 0.4))
+    elif t < tm:
+        z = lerp_log(10.0, 1.0, eo((t - tr) / 4.5))
         F.photo("udf", zoom=z, cx=0.55, cy=0.45)
         F.label("Hubble Ultra Deep Field", W / 2, 70, 44, WHITE, ramp(t, th + 0.3) * (1 - ramp(t, tg)))
         F.label("almost every dot is a galaxy", W / 2, H - 70, 44, AMBER, ramp(t, th + 2.5) * (1 - ramp(t, tg)))
@@ -722,13 +740,23 @@ CHAPTERS = [ch_marble, ch_moon, ch_sun, ch_planets, ch_star, ch_galaxy, ch_andro
 BOUNDS = [c[0] for c in CH] + [TOTAL]
 
 
+def marble_anchor(F, t, i):
+    """Persistent "Earth = 1 cm" reminder so the viewer never loses the scale (chapters 1-7)."""
+    if 1 <= i <= 7:
+        k = ramp(t, BOUNDS[i], 0.6) * 0.9
+        F.planet("earth", 70, H - 64, 34, k)
+        F.label("Earth = 1 cm", 175, H - 64, 28, DIM, k)
+
+
 def render_frame(t):
     i = max(k for k in range(len(CHAPTERS)) if BOUNDS[k] <= t or k == 0)
     F = Frame()
     CHAPTERS[i](F, t)
+    marble_anchor(F, t, i)
     if i > 0 and t < BOUNDS[i] + XFADE:
         P = Frame()
         CHAPTERS[i - 1](P, t)
+        marble_anchor(P, t, i - 1)
         k = (t - BOUNDS[i]) / XFADE
         img = Image.blend(P.rgb(), F.rgb(), sm(k))
     else:

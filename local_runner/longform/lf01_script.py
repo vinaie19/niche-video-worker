@@ -18,11 +18,11 @@ VOICE_RATE = "+6%"
 
 BEATS = [
     # C0 cold open
-    dict(ch="The marble", text="Shrink the Earth down to a marble, one centimetre wide."),
-    dict(text="Now, let's build the rest of the universe at exactly the same scale."),
-    dict(text="Every size, every distance, shrunk by the same amount. Nothing exaggerated."),
-    dict(text="By the end of this video, that model won't fit on Earth."),
-    dict(text="It won't even fit in our Solar System.", pause_ms=650),
+    # Hook per the YouTube agent: lead with the paradox, then the rules.
+    dict(ch="The marble", text="If Earth were a marble, one centimetre wide, everything we've ever launched into space would fit inside a small town."),
+    dict(text="But build the rest of the universe at that same scale, and the model won't fit on Earth."),
+    dict(text="It won't even fit in our Solar System."),
+    dict(text="Every size, every distance, shrunk by the same amount. Nothing exaggerated. Let's walk it.", pause_ms=650),
     # C1 Moon
     dict(ch="The Moon", text="Let's start close to home."),
     dict(text="The Moon becomes a tiny grain, less than three millimetres across."),
@@ -37,7 +37,8 @@ BEATS = [
     dict(text="And if it were hollow, you could pour more than a million Earths inside."),
     dict(text="And it isn't next to us. It's a hundred and seventeen metres away, longer than a football pitch."),
     dict(text="Even light needs eight minutes and twenty seconds to make that trip."),
-    dict(text="The sunlight hitting you right now left the Sun before you pressed play.", pause_ms=650),
+    dict(text="The sunlight hitting you right now left the Sun before you pressed play."),
+    dict(text="Keep that football pitch in mind. Because by the end, even light itself will look painfully slow.", pause_ms=650),
     # C3 planets and Voyager
     dict(ch="The edge of the planets", text="Keep walking."),
     dict(text="Jupiter, the giant, is the size of a grapefruit, more than half a kilometre from the Sun."),
@@ -46,7 +47,8 @@ BEATS = [
     dict(text="And in between, almost nothing. A few tiny balls, scattered across kilometres of empty ground."),
     dict(text="And Voyager One, our farthest spacecraft, after forty nine years of flying at seventeen kilometres every second,"),
     dict(text="is only about twenty kilometres away in our model."),
-    dict(text="Everything humanity has ever launched fits inside one small town.", pause_ms=650),
+    dict(text="Everything humanity has ever launched fits inside one small town.", pause_ms=1600),
+    dict(text="And past that town? Nothing, for a very long way.", pause_ms=650),
     # C4 nearest star
     dict(ch="The nearest star", text="Now, the nearest star."),
     dict(text="Proxima Centauri. In our model, it sits thirty one thousand kilometres away."),
@@ -69,7 +71,7 @@ BEATS = [
     dict(text="Andromeda, our nearest big neighbour, is two and a half million light years away."),
     dict(text="In our model, that's about a hundred and twenty five times the distance from Earth to the Sun."),
     dict(text="Three times farther than Pluto."),
-    dict(text="And here's the strange part. That's still closer than Voyager One really is, right now.", pause_ms=650),
+    dict(text="And here's the strange part. The real Voyager One, the actual spacecraft, is already farther from us than that."),
     dict(text="It's the most distant thing you can see with your own eyes. A faint smudge on a dark night."),
     dict(text="The light you'd see left it before our species even existed."),
     dict(text="And it's coming our way. In four or five billion years, the two galaxies will merge.", pause_ms=650),
