@@ -352,8 +352,18 @@ async def _synthesize_voice(
     import edge_tts
 
     clean_text = re.sub(r'\s+', ' ', text).strip()
-    communicate = edge_tts.Communicate(clean_text, voice, rate=rate, pitch=pitch)
-    await communicate.save(output_mp3)
+    # Edge-TTS intermittently drops a request (NoAudioReceived / 503), more so for the
+    # Multilingual voices; retry with backoff instead of failing a whole long-form build.
+    for attempt in range(5):
+        try:
+            communicate = edge_tts.Communicate(clean_text, voice, rate=rate, pitch=pitch)
+            await communicate.save(output_mp3)
+            return
+        except Exception as e:  # noqa: BLE001
+            if attempt == 4:
+                raise
+            print(f"   ⚠️ Edge-TTS retry {attempt + 1}/4 ({type(e).__name__})")
+            await asyncio.sleep(2 * 2 ** attempt)
 
 
 def _silence_wav(path: str, duration_ms: int, sample_rate: int = 24000) -> str:

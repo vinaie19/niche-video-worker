@@ -13,6 +13,7 @@ import lf01_script as sc  # noqa: E402
 WORK = os.path.join(ROOT, "temp_clips", "lf01_universe_scale_audio")
 STEM = "lf01_voice"
 LEAD_S = 0.35  # silence before the first word
+VOICE = "en-US-AndrewMultilingualNeural"
 
 
 def main():
@@ -20,7 +21,9 @@ def main():
     beats = [{"text": b["text"], "rate": b.get("rate", sc.VOICE_RATE), "pause_ms": b.get("pause_ms", 350)}
              for b in sc.BEATS]
     mp3 = os.path.join(WORK, f"{STEM}.mp3")
-    generate_voiceover(script_beats=beats, output_mp3=mp3, voice="guy", pitch="-1Hz", work_dir=WORK)
+    # Long-form narrator: Andrew (Edge "warm, confident, authentic") reads more naturally over
+    # 5 minutes than the punchier Shorts voice (Guy).
+    generate_voiceover(script_beats=beats, output_mp3=mp3, voice=VOICE, pitch="+0Hz", work_dir=WORK)
     t, rows = LEAD_S, []
     for i, (b, raw) in enumerate(zip(beats, sc.BEATS), start=1):
         d = _probe_duration(os.path.join(WORK, f"{STEM}_beat{i}.wav"))

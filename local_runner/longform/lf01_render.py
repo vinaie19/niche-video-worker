@@ -240,7 +240,7 @@ class Frame:
             h = 20 if k % step_lbl == 0 else 10
             dr.line((x, y - 6, x, y - 6 + h), fill=(255, 240, 200, a), width=2)
             if k % step_lbl == 0:
-                self.label(f"{k}", x, y + 42, 22, (255, 235, 190), alpha, bold=False)
+                self.label(f"{k}", x, y + 44, 26, (255, 235, 190), alpha, bold=False)
 
     def big_text(self, text, cy, size=96, color=WHITE, alpha=1.0):
         self.label(text, W / 2, cy, size, color, alpha)
@@ -422,7 +422,7 @@ def ch_planets(F, t):
         ppk = lerp_log(w2, w3, eo((t - tv) / 3.0))
     x0, y = 110, 560
     F.planet("sun", x0, y, 26, halo=0.8, halo_col=(255, 170, 70))
-    F.label("SUN", x0, y + 60, 26, AMBER)
+    F.label("SUN", x0, y + 60, 30, AMBER)
     F.line((x0, y, W, y), (120, 140, 180), 2, 0.6)
     dim_mid = 1 - 0.7 * ramp(t, tb + 0.2) * (1 - ramp(t, tv))
     for name, km, d in PLANET_KM:
@@ -430,11 +430,17 @@ def ch_planets(F, t):
         if x > W + 50 or d == 0:
             if name == "saturn" and x < W + 50:
                 F.draw().ellipse((x - 9, y - 9, x + 9, y + 9), fill=(230, 210, 160, int(255 * dim_mid)))
-                F.label("Saturn", x, y - 46, 22, DIM, dim_mid * (1 - ramp(t, tv + 1.0)))
+                F.label("Saturn", x, y - 46, 30, DIM, dim_mid * (1 - ramp(t, tv + 1.0)))
             continue
         F.planet(name, x, y, d * (0.6 if ppk < w1 * 0.5 else 1.0), alpha=dim_mid)
+        inner = name in ("mercury", "venus", "earth", "mars")
+        zoomed_out = ppk < w1 * 0.5
+        if inner and zoomed_out:
+            continue  # one shared "inner planets" label below instead of four overlapping ones
         below = name in ("venus", "mars")  # stagger the crowded inner-planet labels
-        F.label(name.capitalize(), x, y + (46 if below else -46), 26, DIM, dim_mid * (1 - ramp(t, tv + 1.0)))
+        F.label(name.capitalize(), x, y + (46 if below else -46), 30, DIM, dim_mid * (1 - ramp(t, tv + 1.0)))
+    if ppk < w1 * 0.5:
+        F.label("inner planets", x0 + 0.12 * ppk + 150, y + 46, 26, DIM, dim_mid * (1 - ramp(t, tv + 1.0)))
     kj = ramp(t, tj + 0.3) * (1 - ramp(t, tn))
     if kj > 0:
         xj = x0 + 0.611 * ppk
@@ -448,7 +454,7 @@ def ch_planets(F, t):
     xp = x0 + 4.64 * ppk
     if kp > 0 and xp < W:
         F.draw().ellipse((xp - 3, y - 3, xp + 3, y + 3), fill=(220, 200, 180, int(255 * kp * dim_mid)))
-        F.label("Pluto", xp, y - 40, 22, DIM, kp * dim_mid * (1 - ramp(t, tv + 1.0)))
+        F.label("Pluto", xp, y - 40, 30, DIM, kp * dim_mid * (1 - ramp(t, tv + 1.0)))
         F.label("PLUTO  ·  a speck, 4.6 km", xp - 60, y + 230, 34, DIM, kp * (1 - ramp(t, tb)))
     kb = ramp(t, tb + 0.2) * (1 - ramp(t, tv))
     F.label("almost entirely empty", W / 2, 200, 52, WHITE, kb)
@@ -460,7 +466,7 @@ def ch_planets(F, t):
         F.draw().ellipse((xv - 5, y - 5, xv + 5, y + 5), fill=(255, 255, 255, int(255 * kv)))
         F.line((xv, y - 70, xv, y - 6), (255, 255, 255), 2, kv)
         F.label("VOYAGER 1", xv, y + 60, 34, WHITE, kv)
-        F.label("49 years  ·  17 km/s", xv - 30, y + 105, 28, DIM, kv * (1 - ramp(t, tv2)))
+        F.label("49 years  ·  17 km/s", xv - 30, y + 105, 30, DIM, kv * (1 - ramp(t, tv2)))
         k2 = ramp(t, tv2 + 0.2)
         F.label("20 km", xv, y + 110, 64, AMBER, k2)
     kt = ramp(t, tt + 0.2)
@@ -555,7 +561,7 @@ def ch_galaxy(F, t):
         for au, nm in ((1.0, "Earth"), (1.52, "Mars"), (5.2, "Jupiter")):
             r = au * ppa
             dr.ellipse((sx - r, sy - r, sx + r, sy + r), outline=(150, 175, 220, int(170 * u)), width=2)
-            F.label(nm, sx + r, sy - 30, 26, DIM, u)
+            F.label(nm, sx + r, sy - 30, 30, DIM, u)
         F.planet("sun", sx, sy, 18, u, halo=0.8 * u, halo_col=(255, 170, 70))
         kg = ramp(t, tj + 0.3)
         gd = 4.96 * ppa
@@ -585,10 +591,10 @@ def ch_andromeda(F, t):
         x0, y = 120, 560
         F.line((x0, y, W, y), (120, 140, 180), 2, u)
         F.planet("sun", x0, y, 24, u, halo=0.8 * u, halo_col=(255, 170, 70))
-        F.label("SUN", x0, y + 60, 26, AMBER, u)
+        F.label("SUN", x0, y + 60, 30, AMBER, u)
         xpl = x0 + 39.5 * ppa
         F.draw().ellipse((xpl - 5, y - 5, xpl + 5, y + 5), fill=(220, 200, 180, int(255 * u)))
-        F.label("Pluto  ·  40 AU", xpl, y - 50, 28, DIM, u)
+        F.label("Pluto  ·  40 AU", xpl, y - 50, 30, DIM, u)
         xa = x0 + 126 * ppa
         ka = ramp(t, tm + 0.6)
         F.paste(andromeda_thumb(), xa, y - 150, ka)
@@ -661,13 +667,13 @@ def ch_universe(F, t):
         dr.ellipse((cx - R, cy - R, cx + R, cy + R), outline=(255, 200, 120, int(230 * u)), width=4,
                    fill=(255, 190, 110, int(18 * u)))
         F.planet("sun", cx, cy, 14, u, halo=0.8 * u, halo_col=(255, 180, 80))
-        F.label("Sun", cx, cy + 34, 22, AMBER, u)
+        F.label("Sun", cx, cy + 34, 30, AMBER, u)
         for nm, ly, ang in NEAR_STARS:
             a = math.radians(ang + spin)
             x, y = cx + ly * ppl * math.cos(a), cy + ly * ppl * math.sin(a)
             if 0 < x < W and 0 < y < H:
                 F.paste(halo_img(12, (220, 230, 255)), x, y, u)
-                F.label(nm, x, y - 24, 22, DIM, u)
+                F.label(nm, x, y - 24, 30, DIM, u)
         F.label("our model universe: 73 light-years across", W / 2, 70, 50, AMBER, ramp(t, tm + 0.5))
         kl = ramp(t, tlt + 0.2) * (1 - ramp(t, tbe))
         if kl > 0:
