@@ -31,6 +31,17 @@ ASSETS = {
         ("astronaut.jpg", "Bruce McCandless II during EVA in 1984"),
         ("earth_limb.jpg", "Earth's limb atmosphere thin blue line from the International Space Station NASA"),
     ],
+    "sci_ep23_planets_moon_gap": [
+        ("earth.jpg", "The Earth seen from Apollo 17"),
+        ("moon.jpg", "Moon nearside LRO 5000"),
+        ("mercury.jpg", "Mercury in color - Prockter07 centered"),
+        ("venus.jpg", "Venus-real color"),
+        ("mars.jpg", "Mars 23 aug 2003 hubble"),
+        ("jupiter.jpg", "Jupiter by Cassini-Huygens"),
+        ("saturn.jpg", "Saturn from Cassini Orbiter 2004-10-06"),
+        ("uranus.jpg", "Uranus2"),
+        ("neptune.jpg", "Neptune Full"),
+    ],
     "sci_ep21_saturn_float": [
         ("saturn.jpg", "Saturn from Cassini Orbiter 2004-10-06"),
     ],

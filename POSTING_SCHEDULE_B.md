@@ -259,6 +259,35 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### ep23 Every planet fits between Earth and the Moon *(NEW — fully local, $0, 2026-10-29)*
+- **Slug:** `sci_ep23_planets_moon_gap`
+- **Title:** `Every Planet Fits Between Earth and the Moon`
+- **Spoken hook:** `Every planet in the Solar System could fit between Earth and the Moon.`
+- **Why (ep21 audit):** ep21's contradiction hook lifted stayed% to 48.2%, but the answer came
+  at ~15s and the ending added a hold, so avg viewed fell to 66.8% (ep18/19: 111-113%). ep22
+  keeps the contradiction hook, builds with clues (planets drop in one by one: will they fit?),
+  lands the reason in the last ~3s ("because the Moon is 30 Earths away"), restates the hook as
+  the final line and cuts on the last word so the replay joins. 18.0s.
+- **Physics:** planet diameters sum to 379,010 km. At apogee (405,500 km centre to centre) the
+  surface-to-surface gap is ~397,400 km, so they fit with ~18,000 km to spare (at the *average*
+  distance they don't quite, hence "at its farthest"). Average distance ≈ 30 Earth diameters.
+- **Build ($0, no GPU):** `VIDEO_ID=sci_ep23_planets_moon_gap python fetch_still_assets.py` →
+  `python ep23_planet_stack.py` (VO → word timings → render → per-beat clips) →
+  `MISSING_SHOTS_ONLY=1 CHANNEL=b ENGINE=ltx VIDEO_ID=sci_ep23_planets_moon_gap python run_test_batch.py`
+  (stitch only, no pod) → `python make_thumbnail_ep23.py`.
+- **Playlist:** Space at Impossible Scale. **Related video:** Saturn Would Float in Water. **Post:** 4-6 PM IST.
+- **Pinned comment:** `Did you think the Moon was this far away? Yes or no?`
+- **Description:**
+```
+Could every planet really fit between Earth and the Moon? Line up Mercury, Venus, Mars, Jupiter, Saturn, Uranus and Neptune and they span about 379,000 km. When the Moon is at its farthest, the gap between the two surfaces is about 397,000 km, so they all fit, with room to spare. The Moon is about 30 Earths away.
+
+Planet images: NASA (public domain); Jupiter from NASA/ESA Hubble OPAL.
+
+One threshold. One law. One image.
+
+#ThresholdPhysics #physics #science #space #solarsystem
+```
+
 ### ep22 The Sun is not yellow *(NEW — first $0 local build, 2026-10-29)*
 - **Slug:** `sci_ep22_sun_white`
 - **Title:** `The Sun Is Not Yellow (Astronauts See White)`

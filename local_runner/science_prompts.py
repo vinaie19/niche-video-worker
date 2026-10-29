@@ -1564,6 +1564,57 @@ _EP21_BEATS = [
     },
 ]
 
+# ep23 Every planet fits between Earth and the Moon (2026-10-29). Fully local ($0): real
+# NASA planet photos stacked at true scale by ep22_planet_stack.py, no LTX. Structure per
+# the ep21 audit: contradiction hook, clues that build (planets dropping in one by one, "will
+# they fit?"), the reason lands in the last ~3s, and the final line restates the hook so the
+# replay joins cleanly. Diameters sum to 379,010 km; at apogee (405,500 km centre to centre)
+# the surface-to-surface gap is ~397,400 km, so they fit with ~18,000 km to spare.
+_EP23_BEATS = [
+    {
+        "text": "Every planet in the Solar System could fit between Earth and the Moon.",
+        "phrases": ["Every planet", "in the Solar System", "could fit between", "Earth and the Moon."],
+        "rate": "+6%",
+        "pause_ms": 120,
+        "num_frames": 97,  # unused: shots are rendered locally to the exact beat length
+        "shot": "Local: close on Earth, fast pull up through empty space to the far-off Moon.",
+    },
+    {
+        "text": "Drop in Jupiter, eleven Earths wide.",
+        "caption_text": "Drop in Jupiter, 11 Earths wide.",
+        "phrases": ["Drop in Jupiter,", "11 Earths wide."],
+        "rate": "+4%",
+        "pause_ms": 100,
+        "num_frames": 97,  # unused: shots are rendered locally to the exact beat length
+        "shot": "Local: Jupiter falls into the gap and lands on Earth.",
+    },
+    {
+        "text": "Then Saturn, Uranus, and Neptune.",
+        "phrases": ["Then Saturn,", "Uranus,", "and Neptune."],
+        "rate": "+4%",
+        "pause_ms": 100,
+        "num_frames": 97,  # unused: shots are rendered locally to the exact beat length
+        "shot": "Local: Saturn, Uranus and Neptune drop in one after another.",
+    },
+    {
+        "text": "Venus, Mars, little Mercury, and when the Moon is at its farthest, they all fit.",
+        "phrases": ["Venus, Mars,", "little Mercury,", "and when the Moon", "is at its farthest,", "they all fit."],
+        "rate": "+2%",
+        "pause_ms": 150,
+        "num_frames": 97,  # unused: shots are rendered locally to the exact beat length
+        "shot": "Local: the three small planets pop in; the leftover gap below the Moon glows.",
+    },
+    {
+        "text": "Because the Moon is thirty Earths away, so yes, every planet fits between Earth and the Moon.",
+        "caption_text": "Because the Moon is 30 Earths away, so yes, every planet fits between Earth and the Moon.",
+        "phrases": ["Because the Moon", "is 30 Earths away,", "so yes, every planet", "fits between", "Earth and the Moon."],
+        "rate": "+0%",
+        "pause_ms": 0,
+        "num_frames": 97,  # unused: shots are rendered locally to the exact beat length
+        "shot": "Local: a column of 30 Earths stacks up beside the planets, Earth to Moon.",
+    },
+]
+
 # Primary queue (Top 12)
 
 # --- Ep 22: The Sun is not yellow (first fully local build, 2026-10-29) ---
@@ -1701,6 +1752,7 @@ _EPISODES = [
     ("sci_ep20_jupiter_star", _beats_script(_EP20_BEATS), _beats_shots(_EP20_BEATS), _EP20_BEATS),
     ("sci_ep21_saturn_float", _beats_script(_EP21_BEATS), _beats_shots(_EP21_BEATS), _EP21_BEATS),
     ("sci_ep22_sun_white", _beats_script(_EP22_BEATS), _beats_shots(_EP22_BEATS), _EP22_BEATS),
+    ("sci_ep23_planets_moon_gap", _beats_script(_EP23_BEATS), _beats_shots(_EP23_BEATS), _EP23_BEATS),
 ]
 
 
@@ -1773,6 +1825,14 @@ for _j in science_ltx_jobs:
         _j["crossfade_s"] = 0.15
         _j["ambient_volume"] = 0.10
         _j["tail_s"] = 0.0
+    if _j.get("video_id") == "sci_ep23_planets_moon_gap":
+        # One continuous local animation cut at the beat boundaries: hard joins (no xfade)
+        # keep the planets from ghosting. No LTX audio bed, so synth space ambience.
+        _j["caption_phrases"] = {"max_words": 5}
+        _j["captions"] = "clean_heavy"
+        _j["crossfade_s"] = 0.0
+        _j["ambient"] = "space"
+        _j["ambient_volume"] = 0.12
 
 # Preferred ENGINE per episode (LTX only for Top 12)
 SCIENCE_ENGINE_BY_ID = {
