@@ -29,7 +29,7 @@ ASSETS = {
     "sci_ep22_sun_white": [
         ("sun_iss.jpg", "Sun over Earth's horizon International Space Station NASA"),
         ("astronaut.jpg", "Bruce McCandless II during EVA in 1984"),
-        ("earth_limb.jpg", "Earth's limb atmosphere thin blue line from the International Space Station NASA"),
+        ("earth_limb.jpg", "Top of Atmosphere"),
     ],
     "sci_ep23_planets_moon_gap": [
         ("earth.jpg", "The Earth seen from Apollo 17"),

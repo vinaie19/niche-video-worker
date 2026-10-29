@@ -1183,7 +1183,8 @@ def concat_clips_crossfade(
                 "copy",
                 "-c:a",
                 "aac",
-                "-shortest",
+                # no -shortest: with -c:v copy it can drop the last few video frames, and the
+                # xfade offsets below then run past the clip and drop the following shot.
                 silent,
             ],
             check=True,

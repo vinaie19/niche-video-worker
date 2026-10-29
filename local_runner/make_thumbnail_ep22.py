@@ -16,10 +16,12 @@ AMBER = (255, 176, 72); WHITE = (255, 255, 255)
 def f(p, s): return ImageFont.truetype(p, s)
 
 
-def cover(img, w, h):
+def cover(img, w, h, fx=0.5):
+    """fx: horizontal point to keep centred; the Sun sits near the left edge of the photo."""
     s = max(w / img.width, h / img.height)
     img = img.resize((round(img.width * s), round(img.height * s)), Image.LANCZOS)
-    l, t = (img.width - w) // 2, (img.height - h) // 2
+    l = min(max(0, round(img.width * fx - w / 2)), img.width - w)
+    t = (img.height - h) // 2
     return img.crop((l, t, l + w, t + h))
 
 
@@ -37,7 +39,7 @@ def text(img, xy, txt, fnt, fill, anchor="mm", stroke=10, rad=22):
 src = Image.open(SRC).convert("RGB")
 
 # 9:16 — text across the top; nothing in the bottom 20% (Shorts UI).
-tall = cover(src, 1080, 1920)
+tall = cover(src, 1080, 1920, fx=0.24)
 tall = text(tall, (540, 240), "THE SUN", f(BOLD, 190), WHITE, stroke=12, rad=26)
 tall = text(tall, (540, 430), "IS NOT", f(BOLD, 150), WHITE, stroke=12, rad=26)
 tall = text(tall, (540, 610), "YELLOW", f(BOLD, 190), AMBER, stroke=12, rad=26)

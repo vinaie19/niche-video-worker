@@ -77,13 +77,17 @@ def rainbow_arc(no_blue=False, w=1400, h=760):
 
 
 def white_beam():
+    """A white light source at the top with a soft beam fanning down and fading out."""
     w, h = 700, 900
-    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    # a bright source at the top and a tapering beam pointing down
-    d.polygon([(w * 0.42, 0), (w * 0.58, 0), (w * 0.72, h), (w * 0.28, h)], fill=(255, 255, 255, 110))
-    d.ellipse((w * 0.3, -h * 0.1, w * 0.7, h * 0.22), fill=(255, 255, 255, 255))
-    return im.filter(ImageFilter.GaussianBlur(14))
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    cx, cy = w / 2, h * 0.12
+    glow = np.clip(1 - np.hypot(xx - cx, yy - cy) / (w * 0.22), 0, 1) ** 1.6
+    half = w * 0.05 + (yy - cy) * 0.22                      # beam widens as it falls
+    across = np.clip(1 - np.abs(xx - cx) / np.maximum(half, 1), 0, 1) ** 0.8
+    down = np.clip(1 - (yy - cy) / (h - cy), 0, 1) * (yy > cy)
+    alpha = np.clip(glow + across * down * 0.55, 0, 1) * 255
+    out = np.dstack([np.full((h, w, 3), 255, np.float32), alpha]).astype(np.uint8)
+    return Image.fromarray(out, "RGBA").filter(ImageFilter.GaussianBlur(6))
 
 
 def crayon_sun(seed=22):

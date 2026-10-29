@@ -25,6 +25,8 @@ beat["still"] keys (all optional):
   end_at       (start, finish) fractions of the shot for that crossfade, default (0.35, 0.75)
   move         push_in | pull_out | pan_left | pan_right | pan_up | pan_down | hold (push_in)
   zoom         move strength, default 0.10 (10% scale change / travel)
+  focus        (fx, fy) 0-1 point of the background photo to keep in frame when cropping to 9:16
+               (default centre), e.g. (0.2, 0.3) for a Sun near the left edge of a landscape shot
   pulse        brightness pulse amplitude 0-0.3, default 0;  pulse_hz default 0.5
 
 Output: final_videos/<video_id>_still_complete.mp4  (never overwrites an LTX render).
@@ -102,19 +104,20 @@ def _starfield(w, h, seed=7):
     return img
 
 
-def _cover(img, w, h):
-    """Scale to cover w x h and centre-crop (like CSS background-size: cover)."""
+def _cover(img, w, h, focus=(0.5, 0.5)):
+    """Scale to cover w x h and crop around focus (like CSS background-size: cover)."""
     s = max(w / img.width, h / img.height)
     img = img.resize((max(w, round(img.width * s)), max(h, round(img.height * s))), Image.LANCZOS)
-    left, top = (img.width - w) // 2, (img.height - h) // 2
+    left = min(max(0, round(img.width * focus[0] - w / 2)), img.width - w)
+    top = min(max(0, round(img.height * focus[1] - h / 2)), img.height - h)
     return img.crop((left, top, left + w, top + h))
 
 
 @functools.lru_cache(maxsize=16)
-def _background(src, video_id, w, h, seed):
+def _background(src, video_id, w, h, seed, focus=(0.5, 0.5)):
     if src == "starfield":
         return starfield(w, h, seed=seed)
-    return _cover(Image.open(_resolve(src, video_id)).convert("RGB"), w, h)
+    return _cover(Image.open(_resolve(src, video_id)).convert("RGB"), w, h, focus)
 
 
 @functools.lru_cache(maxsize=16)
@@ -137,7 +140,8 @@ def compose(spec, video_id, w, h, t=0.0):
 
     t (0-1, already eased) drives any layer width_to / x_to / y_to animation.
     """
-    base = _background(spec.get("image") or "starfield", video_id, w, h, int(spec.get("seed", 7))).copy()
+    focus = tuple(spec.get("focus", (0.5, 0.5)))
+    base = _background(spec.get("image") or "starfield", video_id, w, h, int(spec.get("seed", 7)), focus).copy()
     for layer in spec.get("layers") or []:
         lw = max(1, round(w * _lerp(layer, "width", t, 0.4)))
         if layer.get("image"):

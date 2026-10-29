@@ -1625,7 +1625,8 @@ _EP23_BEATS = [
 # word, no tail. Every picture is a real public-domain photo or drawn in code ($0).
 # Build: python make_ep22_assets.py && VIDEO_ID=sci_ep22_sun_white python fetch_still_assets.py
 #        && CHANNEL=b VIDEO_ID=sci_ep22_sun_white python still_video.py
-_EP22_STILL_SUN = {"image": "sun_iss.jpg", "move": "push_in", "zoom": 0.30}
+# The Sun sits near the left edge of the landscape ISS photo, so the 9:16 crop is pulled left.
+_EP22_STILL_SUN = {"image": "sun_iss.jpg", "move": "push_in", "zoom": 0.30, "focus": (0.24, 0.5)}
 _EP22_DISCS = [  # six colours spread around the frame, all sliding into one point
     ("disc_red.png", 0.18, 0.22), ("disc_orange.png", 0.82, 0.20), ("disc_yellow.png", 0.14, 0.52),
     ("disc_green.png", 0.86, 0.50), ("disc_blue.png", 0.22, 0.78), ("disc_violet.png", 0.78, 0.76),
@@ -1633,7 +1634,7 @@ _EP22_DISCS = [  # six colours spread around the frame, all sliding into one poi
 _EP22_BEATS = [
     {
         "text": "The Sun is not yellow.",
-        "phrases": ["The Sun", "is not yellow."],
+        "phrases": ["The Sun is not yellow."],  # one cue, the twin of the last line
         "rate": "+6%",
         "pause_ms": 150,
         "num_frames": 57,
@@ -1654,7 +1655,7 @@ _EP22_BEATS = [
     },
     {
         "text": "Pull sunlight apart and you get a rainbow. Every colour is in there.",
-        "phrases": ["Pull sunlight apart", "and you get a rainbow.", "Every colour", "is in there."],
+        "phrases": ["Pull sunlight apart", "and you get a rainbow.", "Every colour is in there."],
         "rate": "+4%",
         "pause_ms": 150,
         "num_frames": 97,
@@ -1669,7 +1670,7 @@ _EP22_BEATS = [
     },
     {
         "text": "But the air steals the blue on the way down. That's why the sky is blue.",
-        "phrases": ["But the air steals the blue", "on the way down.", "That's why", "the sky is blue."],
+        "phrases": ["But the air", "steals the blue", "on the way down.", "That's why", "the sky is blue."],
         "rate": "+2%",
         "pause_ms": 150,
         "num_frames": 105,
@@ -1678,7 +1679,7 @@ _EP22_BEATS = [
     },
     {
         "text": "Lose blue, and what's left looks yellow.",
-        "phrases": ["Lose blue,", "and what's left", "looks yellow."],
+        "phrases": ["Lose blue,", "and what's left looks yellow."],
         "rate": "+2%",
         "pause_ms": 150,
         "num_frames": 65,
@@ -1722,7 +1723,8 @@ _EP22_BEATS = [
         "rate": "+0%",
         "pause_ms": 0,
         "num_frames": 49,
-        "still": {"image": "sun_iss.jpg", "move": "push_in", "zoom": 0.08},
+        # pull_out ends at zoom 0, the exact framing of the first frame, so the loop seam is invisible
+        "still": {"image": "sun_iss.jpg", "move": "pull_out", "zoom": 0.08, "focus": (0.24, 0.5)},
         "shot": "Real photo: the white Sun from the ISS again, so the last frame matches the first and the Short loops.",
     },
 ]
