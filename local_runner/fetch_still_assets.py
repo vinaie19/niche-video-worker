@@ -31,6 +31,12 @@ ASSETS = {
         ("astronaut.jpg", "Bruce McCandless II during EVA in 1984"),
         ("earth_limb.jpg", "Top of Atmosphere"),
     ],
+    "lf01_universe_scale": [
+        ("milkyway.jpg", "Milky Way galaxy1"),
+        ("andromeda.jpg", "Andromeda Galaxy PIA04921"),
+        ("udf.jpg", "Hubble ultra deep field high rez edit1"),
+        ("voyager.jpg", "Voyager spacecraft"),
+    ],
     "sci_ep23_planets_moon_gap": [
         ("earth.jpg", "The Earth seen from Apollo 17"),
         ("moon.jpg", "Moon nearside LRO 5000"),

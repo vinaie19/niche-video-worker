@@ -259,6 +259,18 @@ One threshold. One law. One image.
   that was already underperforming, but it makes this result unattributable. Hold the next
   one to a single change so the data means something.
 
+### LF01 How Big Is the Universe? (first long-form, 16:9, 4:59, $0 local) *(2026-10-29)*
+- **Why:** YPP via 4,000 long-form watch hours (Shorts route = 10M views/90d, unrealistic at our size).
+  YouTube agent: start long-form now, 5-8 min. One true scale (Earth = 1 cm) walked outward,
+  each chapter a bigger reveal than the last; no intro; picture change every few seconds.
+- **Build ($0):** `VIDEO_ID=lf01_universe_scale python fetch_still_assets.py` → `python longform/lf01_voice.py`
+  → `python longform/lf01_render.py` (8-core parallel, ~3 min) → `python longform/lf01_finish.py`
+  → `python longform/lf01_thumbs.py`. Output: `final_videos/lf01_universe_scale_complete.mp4`,
+  `.en.srt` (upload as CC), `_chapters.txt`, thumbs A/B/C.
+- **Title:** `How Big Is the Universe? (If Earth Were 1 cm)`
+- **Thumbnails:** Test & Compare A / B / C (A = Milky Way vs 1 cm Earth is the pick).
+- **Post:** 5-6 PM IST. Playlist: Space at Impossible Scale. End screen: subscribe + "Every Planet Fits Between Earth and the Moon".
+
 ### ep23 Every planet fits between Earth and the Moon *(NEW — fully local, $0, 2026-10-29)*
 - **Slug:** `sci_ep23_planets_moon_gap`
 - **Title:** `Every Planet Fits Between Earth and the Moon`
