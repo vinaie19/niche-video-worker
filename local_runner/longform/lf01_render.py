@@ -23,7 +23,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT); sys.path.insert(0, HERE)
 os.environ.setdefault("CHANNEL", "b")
 
-W, H, FPS = 1920, 1080, 24
+W, H, FPS = 1920, 1080, 30  # 30 fps: smoother camera moves than 24 for screen graphics
 ASSETS = os.path.join(ROOT, "i2v_stills", "lf01_universe_scale")
 WORK = os.path.join(ROOT, "temp_clips", "lf01_universe_scale_audio")
 SEG_DIR = os.path.join(ROOT, "temp_clips", "lf01_segments")
@@ -144,19 +144,25 @@ class Frame:
         self.im = Image.new("RGB", (W, H), (0, 0, 0))
 
     def stars(self, alpha=1.0, drift=(0.0, 0.0), zoom=1.0):
+        """Stars splatted bilinearly at sub-pixel positions, so slow drifts glide instead of
+        hopping a whole pixel at a time (which read as flicker at 24 fps)."""
         if alpha <= 0:
             return
         a = assets()
-        arr = np.asarray(self.im).copy()
-        x = ((a.sx - 0.5) * zoom + 0.5 + drift[0]) % 1.0 * W
-        y = ((a.sy - 0.5) * zoom + 0.5 + drift[1]) % 1.0 * H
-        b = (a.sb * alpha).astype(np.uint8)
-        xi, yi = x.astype(int), y.astype(int)
-        arr[yi, xi, :3] = np.maximum(arr[yi, xi, :3], b[:, None])
+        x = ((a.sx - 0.5) * zoom + 0.5 + drift[0]) % 1.0 * (W - 2)
+        y = ((a.sy - 0.5) * zoom + 0.5 + drift[1]) % 1.0 * (H - 2)
+        b = a.sb * alpha * 1.8  # splatting spreads a star over 4 px; restore its peak brightness
+        buf = np.zeros((H, W), np.float32)
+        x0, y0 = np.floor(x).astype(int), np.floor(y).astype(int)
+        fx, fy = x - x0, y - y0
+        for dx, dy, w in ((0, 0, (1 - fx) * (1 - fy)), (1, 0, fx * (1 - fy)), (0, 1, (1 - fx) * fy), (1, 1, fx * fy)):
+            np.add.at(buf, (y0 + dy, x0 + dx), b * w)
         big = a.ss
-        for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
-            xx, yy = np.clip(xi[big] + dx, 0, W - 1), np.clip(yi[big] + dy, 0, H - 1)
-            arr[yy, xx, :3] = np.maximum(arr[yy, xx, :3], (b[big] * 0.6).astype(np.uint8)[:, None])
+        for dx, dy in ((2, 0), (0, 2), (-1, 0), (0, -1)):
+            xx, yy = np.clip(x0[big] + dx, 0, W - 1), np.clip(y0[big] + dy, 0, H - 1)
+            np.add.at(buf, (yy, xx), b[big] * 0.35)
+        arr = np.asarray(self.im).copy()
+        arr = np.maximum(arr, np.clip(buf, 0, 255).astype(np.uint8)[..., None])
         self.im = Image.fromarray(arr, "RGB")
 
     def paste(self, img, cx, cy, alpha=1.0):
@@ -196,7 +202,7 @@ class Frame:
         px, py = cx * p.width, cy * p.height
         tx, ty = bw / 2, bh / 2
         coeffs = (c, sn, px - c * tx - sn * ty, -sn, c, py + sn * tx - c * ty)
-        layer = p.transform((bw, bh), Image.AFFINE, coeffs, resample=Image.BILINEAR, fillcolor=(0, 0, 0))
+        layer = p.transform((bw, bh), Image.AFFINE, coeffs, resample=Image.BICUBIC, fillcolor=(0, 0, 0))
         if alpha < 0.999:
             self.im.paste(layer, (bx0, by0), Image.new("L", layer.size, int(255 * alpha)))
         else:
