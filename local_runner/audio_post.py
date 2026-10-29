@@ -88,6 +88,15 @@ CAPTION_STYLES = {
         "OutlineColour=&H00000000&,BackColour=&HA0000000&,BorderStyle=1,"
         "Outline=2.5,Shadow=1.5,Alignment=2,MarginV=56"
     ),
+    # clean_heavy raised into the Shorts safe zone. Measured on ep23: MarginV=56 puts the
+    # text at 77-81% down the frame, and the phone app's title/description overlay starts
+    # at ~75-80%, so the bottom line can be covered. 130 lands it at ~68-72%: clear of
+    # the overlay, below the subject, away from the right-hand buttons.
+    "clean_heavy_safe": (
+        "FontName=Arial,FontSize=11,Bold=1,PrimaryColour=&H00FFFFFF&,"
+        "OutlineColour=&H00000000&,BackColour=&HA0000000&,BorderStyle=1,"
+        "Outline=2.5,Shadow=1.5,Alignment=2,MarginV=130"
+    ),
     "boxed": (
         "FontName=Arial,FontSize=10,PrimaryColour=&H00FFFFFF&,"
         "OutlineColour=&H00000000&,BackColour=&H80000000&,BorderStyle=3,"

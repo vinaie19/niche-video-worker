@@ -1823,7 +1823,7 @@ for _j in science_ltx_jobs:
         # ep21 ending lesson: cut on the last word, no quiet tail, so the replay runs
         # "The Sun is white." straight into "The Sun is not yellow."
         _j["caption_phrases"] = {"max_words": 5}
-        _j["captions"] = "clean_heavy"
+        _j["captions"] = "clean_heavy_safe"  # Shorts safe zone, see CAPTION_STYLES
         _j["crossfade_s"] = 0.15
         _j["ambient_volume"] = 0.10
         _j["tail_s"] = 0.0
