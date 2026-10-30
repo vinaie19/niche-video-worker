@@ -9,6 +9,7 @@ minutes have passed since it started, whichever is first, it stops every RUNNING
 verifies they are EXITED, logs to local_runner/watchdog.log and exits.
 
   python pod_watchdog.py --status   # print balance + pod states once, then exit
+  WATCHDOG_MAX_MIN=60 python pod_watchdog.py --pod POD_ID   # cap one utility pod only
 
 The API key is read from local_runner/.env and never printed. Stopped pods cost nothing;
 only the network volume bills while idle.
@@ -113,5 +114,34 @@ def watch():
         time.sleep(POLL_S)
 
 
+def watch_one(pod_id):
+    """Utility pods (copies, tests): stop just this pod once MAX_MIN minutes have passed,
+    or as soon as it has already stopped. Other pods are never touched."""
+    import runpod
+
+    runpod.api_key = KEY
+    start = time.time()
+    log(f"watchdog start for pod {pod_id} only (cap {MAX_MIN:.0f} min, pid {os.getpid()})")
+    while True:
+        try:
+            st = {p["id"]: p["desiredStatus"] for p in account()["pods"]}.get(pod_id)
+        except Exception as e:  # keep trying through transient API errors
+            log(f"API error: {e}"); time.sleep(POLL_S); continue
+        if st in (None, "EXITED", "TERMINATED"):
+            log(f"pod {pod_id} is {st or 'gone'}; watchdog exit"); return
+        if time.time() - start > MAX_MIN * 60:
+            log(f"{MAX_MIN:.0f}-minute cap reached: stopping pod {pod_id}")
+            try:
+                runpod.stop_pod(pod_id)
+            except Exception as e:
+                log(f"stop_pod failed: {e}")
+        time.sleep(POLL_S)
+
+
 if __name__ == "__main__":
-    status() if "--status" in sys.argv else watch()
+    if "--status" in sys.argv:
+        status()
+    elif "--pod" in sys.argv:
+        watch_one(sys.argv[sys.argv.index("--pod") + 1])
+    else:
+        watch()

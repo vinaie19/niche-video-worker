@@ -177,10 +177,73 @@ def _try_resume_existing_pod():
         return None
 
 
+def _launch_pod_global(image, env_vars, docker_args):
+    """GLOBAL_VOLUME_ID set: create the pod through REST API v2 with the global volume mounted
+    at /runpod-volume, in whichever data center has the GPU. No pinning to the network volume's
+    data center, so GPU stock across regions is usable. Candidates come from the live catalog,
+    cheapest first, restricted to GLOBAL_GPU_IDS (comma list) and >= GLOBAL_MIN_VRAM_GB."""
+    import runpod_v2 as v2
+
+    gvid = os.environ["GLOBAL_VOLUME_ID"].strip()
+    allowed = [g.strip() for g in os.getenv("GLOBAL_GPU_IDS", "").split(",") if g.strip()]
+    min_vram = int(os.getenv("GLOBAL_MIN_VRAM_GB", "80"))
+    avoid = {d.strip() for d in os.getenv("GLOBAL_AVOID_DCS", "").split(",") if d.strip()}
+    max_acquire = int(os.getenv("POD_ACQUIRE_RETRIES", "0") or 0)
+    acquire_sleep = int(os.getenv("POD_ACQUIRE_SLEEP_S", "45") or 45)
+    attempt = 0
+    while True:
+        attempt += 1
+        code, cat = v2.call("GET", "/v2/catalog/gpus", params={"include": "AVAILABILITY", "product": "POD"})
+        gpus = cat.get("gpus", []) if code == 200 else []
+        cands = []
+        for g in gpus:
+            if not g.get("secure") or g.get("availability") == "NONE" or (g.get("memory") or 0) < min_vram:
+                continue
+            if allowed and g["id"] not in allowed:
+                continue
+            if not any(c.get("available") and c["version"].startswith("13.") for c in g.get("cudaVersions", [])):
+                continue  # image is built on CUDA 13 (cu130 torch)
+            for dc in g.get("dataCenters", []):
+                if dc["id"] not in avoid:
+                    cands.append((g["price"].get("secure") or 99, g["id"], g.get("memory"), dc["id"]))
+        cands.sort()
+        print(f"🔁 Global-volume acquire pass {attempt}: {len(cands)} (gpu, dc) candidates")
+        for price, gpu_id, vram, dc in cands:
+            force_offload = "false" if (vram or 0) >= 64 else "true"
+            body = {
+                "name": POD_NAME, "image": image, "cloud": "SECURE",
+                "gpu": {"id": gpu_id, "count": 1, "minCudaVersion": "13.0"},
+                "dataCenterIds": [dc],
+                "disk": int(os.getenv("CONTAINER_DISK_GB", "40")),
+                "ports": ["8000/http"],
+                "env": {k: v for k, v in {**env_vars, "GPU_VRAM_GB": str(vram), "FORCE_OFFLOAD": force_offload,
+                                          "LTX_TE_DEVICE": _ltx_te_device_for_vram(vram)}.items() if v is not None},
+                "mounts": {"global": [{"volumeId": gvid, "path": "/runpod-volume"}]},
+            }
+            if docker_args:
+                body["args"] = docker_args
+            print(f"   🔎 Trying {gpu_id} ({vram}GB, ${price}/h) in {dc} with global volume {gvid}...")
+            code, pod = v2.call("POST", "/v2/pods", body)
+            if code == 201:
+                print(f"   ✅ Acquired {gpu_id} in {dc}")
+                pod_id = pod["id"]
+                _persist_pod_id(pod_id)
+                return pod_id, _wait_for_running_url(pod_id)
+            print(f"   ⚠️ {code}: {pod.get('detail') if isinstance(pod, dict) else pod}")
+            if code == 422:
+                raise SystemExit(f"Pod request rejected: {pod}")
+        if max_acquire > 0 and attempt >= max_acquire:
+            raise Exception("No GPU placed with the global volume")
+        print(f"⏳ No GPU this pass — sleeping {acquire_sleep}s then retrying (Ctrl+C to stop)...")
+        time.sleep(acquire_sleep)
+
+
 def launch_pod():
     image = "vinaie/niche-video-worker:latest"
+    use_global = bool(os.getenv("GLOBAL_VOLUME_ID", "").strip())
 
-    resumed = _try_resume_existing_pod()
+    # A saved pod is pinned to the network volume's data center; global mode always places fresh.
+    resumed = None if use_global else _try_resume_existing_pod()
     if resumed:
         return resumed
 
@@ -258,6 +321,9 @@ exec python3 -u /workspace/handler.py
         docker_args = f"bash -c 'echo {b64} | base64 -d | bash'"
         print("🔧 docker_args: apt install gcc + gemma4 patch before worker (SKIP_CC_BOOTSTRAP=true to skip)")
 
+
+    if use_global:
+        return _launch_pod_global(image, env_vars, docker_args)
 
     pod = None
     gpu_type_id = None
