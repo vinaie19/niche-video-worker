@@ -99,10 +99,10 @@ def frame(t, st, total):
     ed = lerp(ed, 10, sm((t - b3) / 1.0))
     ex, ey2 = Z(cx, ey)
     F.planet("earth", ex, ey2, max(9, ed * (zs if zo > 0 else 1)), halo=1.2 * kp, halo_col=(120, 170, 255))
-    if t > b1 + 1.0 and t < b3 + 0.4:
+    if t < b3 + 0.4:  # "EARTH = 1 cm" from frame 0 (scroll-stop), ruler once it's a marble
         k = ramp(t, b1 + 1.0) * (1 - ramp(t, b3, 0.4))
         F.ruler(cx - 30, cx + 30, SY + 75, 60, 1, step_lbl=1, alpha=k)
-        F.label("EARTH = 1 cm", cx, 170, 64, R.AMBER, ramp(t, b1 + 1.0) * (1 - ramp(t, b2 - 0.2, 0.3)))
+        F.label("EARTH = 1 cm", cx, 170, 64, R.AMBER, (1 - ramp(t, b2 - 0.2, 0.3)))
     # Sun: grows beside the marble (beat 2), then moves to the top goal (beat 3)
     ks = ramp(t, b2 + 0.1, 0.8)
     if ks > 0:
