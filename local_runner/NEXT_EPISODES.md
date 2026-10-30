@@ -93,18 +93,17 @@ Feeders for the long video (cut-downs, ~20 s each, Related video = the long one)
 
 Venus was dropped: dozens of "a day on Venus is longer than its year" Shorts already exist and nearly all sit at 100-1,000 views. Saturated common facts are out; one-continuous-zoom visuals are in ("the most satisfying zoom" sits at 13M views in 15 s with almost no text).
 
-| Date | 5:30 PM | 8:30 PM |
+| Date | 5-6 PM | 8-9 PM |
 |---|---|---|
-| Thu 30 Oct | The Sun Is Not Yellow | Sun 117 m away (feeder, Related = long video) |
-| Fri 31 Oct | - | - |
-| Sat 1 Nov | Zoom Out From Earth to the Edge of the Universe (6:30 PM, Related = long video) | - |
-| Sun 2 Nov | Saturn's Rings Are Thinner Than a House (6:30 PM) | - |
-| Mon 3 Nov | You're Seeing the Sun 8 Minutes Ago | ask YouTube agent for long-video data |
-| Tue 4 Nov | Olympus Mons Is Too Big to See | - |
-| Wed 5 Nov | The Moon Is Leaving Us | - |
-| Thu 6 Nov | Betelgeuse Might Already Be Gone | Long video #2, 9 PM |
+| Fri 30 Oct | 5:30 The Sun Is Not Yellow | 8:30 Sun 117 m away (feeder, Related = long video) |
+| Sat 31 Oct | 6:30 Zoom Out From Earth to the Edge of the Universe (Related = long video) | Voyager feeder |
+| Sun 1 Nov | 6:30 Saturn's Rings Are Thinner Than a House | - |
+| Mon 2 Nov | You're Seeing the Sun 8 Minutes Ago | ask YouTube agent for long-video data |
+| Tue 3 Nov | Olympus Mons Is Too Big to See | - |
+| Wed 4 Nov | The Moon Is Leaving Us | - |
+| Thu 5 Nov | Betelgeuse Might Already Be Gone | Long video #2, 9 PM |
 
-## 5. Long video #2 (build starts after Venus; publish Thu 6 Nov 9 PM IST)
+## 5. Long video #2 (build starts after Venus; publish Thu 5 Nov 9 PM IST)
 
 "Every Planet Is Weirder Than You Think" (working title; statement form): one 30-45 s contradiction per planet, each opening on the real full-frame planet, first 5 s = a rapid cut of all eight payoffs. Thumbnail: one planet, big, with 2-4 words. Each chapter becomes a feeder Short, so the Shorts above (Venus, Saturn, Mercury, Uranus, Mars) are also its chapters: build once, post twice.
 
