@@ -89,20 +89,20 @@ Each: title · frame 0 · hook (spoken) · human anchor · payoff (last line) ·
 
 Feeders for the long video (cut-downs, ~20 s each, Related video = the long one): Voyager "50 years, barely left the driveway"; "Every star you can see is in one galaxy"; "Andromeda's light left before humans existed".
 
-## 4. Posting schedule (IST)
+## 4. Posting schedule (IST), revised 30 Oct after the laptop's own benchmark
 
-| Date | 5-6 PM | 8-9 PM |
+Venus was dropped: dozens of "a day on Venus is longer than its year" Shorts already exist and nearly all sit at 100-1,000 views. Saturated common facts are out; one-continuous-zoom visuals are in ("the most satisfying zoom" sits at 13M views in 15 s with almost no text).
+
+| Date | 5:30 PM | 8:30 PM |
 |---|---|---|
-| Thu 30 Oct | The Sun Is Not Yellow | Sun 117 m away (feeder, re-opened) |
-| Fri 31 Oct | A Day on Venus Is Longer Than Its Year | Voyager feeder |
-| Sat 1 Nov | Saturn's Rings Are Thinner Than a House | Every-star-you-see feeder |
-| Sun 2 Nov | You're Seeing the Sun 8 Minutes Ago | Andromeda feeder |
-| Mon 3 Nov | Olympus Mons Is Too Big to See | (ask YouTube agent for long-video data) |
-| Tue 4 Nov | The Moon Is Leaving Us | - |
-| Wed 5 Nov | Mercury Is Not the Hottest Planet | Long video #2 goes live Thu 6 Nov, 9 PM |
-| Thu 6 Nov | Betelgeuse Might Already Be Gone | Long #2 |
-
-Fri-Sun are the strongest days on this channel, so the two strongest new concepts (Venus, Saturn rings) land there. Second slot drops to one a day once the three feeders are used, unless the feeders show a lift on the long video.
+| Thu 30 Oct | The Sun Is Not Yellow | Sun 117 m away (feeder, Related = long video) |
+| Fri 31 Oct | - | - |
+| Sat 1 Nov | Zoom Out From Earth to the Edge of the Universe (6:30 PM, Related = long video) | - |
+| Sun 2 Nov | Saturn's Rings Are Thinner Than a House (6:30 PM) | - |
+| Mon 3 Nov | You're Seeing the Sun 8 Minutes Ago | ask YouTube agent for long-video data |
+| Tue 4 Nov | Olympus Mons Is Too Big to See | - |
+| Wed 5 Nov | The Moon Is Leaving Us | - |
+| Thu 6 Nov | Betelgeuse Might Already Be Gone | Long video #2, 9 PM |
 
 ## 5. Long video #2 (build starts after Venus; publish Thu 6 Nov 9 PM IST)
 
