@@ -38,6 +38,12 @@ ASSETS = {
         ("ringclose.jpg", "Cassini Saturn rings Staggering Structure PIA21627"),
         ("backlit.jpg", "Backlit Saturn from Cassini Orbiter 2007 May 9"),
     ],
+    "sci_ep27_great_red_spot": [
+        ("jupiter.jpg", "Hubble Planetary Portrait Captures New Changes in Jupiter Great Red Spot 22214599072"),
+        ("voyager.jpg", "Great Red Spot Voyager 1 PIA00014"),
+        ("juno.jpg", "Juno Great Red Spot PIA21775"),
+        ("trouvelot.tif", "Trouvelot Jupiter 1880"),
+    ],
     "lf01_universe_scale": [
         ("milkyway.jpg", "Milky Way galaxy1"),
         ("andromeda.jpg", "Andromeda Galaxy PIA04921"),
