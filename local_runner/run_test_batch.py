@@ -278,6 +278,10 @@ def launch_pod():
         "LTX_WIDTH": os.getenv("LTX_WIDTH", "1088"),
         "LTX_HEIGHT": os.getenv("LTX_HEIGHT", "1920"),
         "KEEP_MODELS_LOADED": os.getenv("KEEP_MODELS_LOADED", "true"),
+        # Quality knobs (handler.py): int8|bf16 weights, ManualSigmas vs LTXVScheduler, CFG.
+        "LTX_PRECISION": os.getenv("LTX_PRECISION", "int8"),
+        "LTX_SCHEDULER": os.getenv("LTX_SCHEDULER", "auto"),
+        "LTX_CFG": os.getenv("LTX_CFG"),
         # Triton JIT (Gemma4 TE) needs gcc; also set in rebuilt image
         "CC": "gcc",
         "CXX": "g++",
@@ -403,12 +407,12 @@ exec python3 -u /workspace/handler.py
                     container_disk_in_gb=container_disk,
                     ports="8000/http",
                     volume_mount_path=os.getenv("VOLUME_MOUNT_PATH", "/runpod-volume"),
-                    env={
+                    env={k: v for k, v in {
                         **env_vars,
                         "GPU_VRAM_GB": str(gpu_vram),
                         "FORCE_OFFLOAD": force_offload,
                         "LTX_TE_DEVICE": ltx_te_device,
-                    },
+                    }.items() if v is not None},
                 )
                 if docker_args:
                     create_kwargs["docker_args"] = docker_args

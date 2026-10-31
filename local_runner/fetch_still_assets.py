@@ -31,6 +31,13 @@ ASSETS = {
         ("astronaut.jpg", "Bruce McCandless II during EVA in 1984"),
         ("earth_limb.jpg", "Top of Atmosphere"),
     ],
+    "sci_ep26_saturn_rings": [
+        ("saturn.jpg", "Saturn from Cassini Orbiter 2004-10-06"),
+        ("equinox.jpg", "Saturn during Equinox"),
+        ("edgeon.jpg", "Saturn's Rings Edge-on 1995-31-320"),
+        ("ringclose.jpg", "Cassini Saturn rings Staggering Structure PIA21627"),
+        ("backlit.jpg", "Backlit Saturn from Cassini Orbiter 2007 May 9"),
+    ],
     "lf01_universe_scale": [
         ("milkyway.jpg", "Milky Way galaxy1"),
         ("andromeda.jpg", "Andromeda Galaxy PIA04921"),
