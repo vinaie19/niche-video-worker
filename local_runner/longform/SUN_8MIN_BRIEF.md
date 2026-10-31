@@ -1,6 +1,6 @@
-# ep27 brief: "You're Seeing the Sun 8 Minutes Late"
+# Next Short brief: "You're Seeing the Sun 8 Minutes Late"
 
-Slot: Tue 3 Nov 2026, 6:30 PM IST. Playlist: Space at Impossible Scale. $0 laptop build (real NASA imagery, code camera moves).
+Slot: Wed 4 Nov 2026, 6:30 PM IST (ep27 slot went to the Great Red Spot Short; this becomes the next build). Playlist: Space at Impossible Scale. $0 laptop build (real NASA imagery, code camera moves).
 Rules: full-frame bright real imagery every frame (no black, no small diagrams), constant motion, whoosh on every cut,
 music bed, Andrew voice, ~18 s, punchline is the last word, last frame matches the first (loop).
 
