@@ -214,9 +214,11 @@ def _launch_pod_global(image, env_vars, docker_args):
                 "name": POD_NAME, "image": image, "cloud": "SECURE",
                 "gpu": {"id": gpu_id, "count": 1, "minCudaVersion": "13.0"},
                 "dataCenterIds": [dc],
-                "disk": int(os.getenv("CONTAINER_DISK_GB", "40")),
+                # The local copy of the models (~39 GB) needs room on the container disk.
+                "disk": max(int(os.getenv("CONTAINER_DISK_GB", "40")), 80),
                 "ports": ["8000/http"],
                 "env": {k: v for k, v in {**env_vars, "GPU_VRAM_GB": str(vram), "FORCE_OFFLOAD": force_offload,
+                                          "PRECOPY_MODELS": os.getenv("PRECOPY_MODELS", "1"),
                                           "LTX_TE_DEVICE": _ltx_te_device_for_vram(vram)}.items() if v is not None},
                 "mounts": {"global": [{"volumeId": gvid, "path": "/runpod-volume"}]},
             }
@@ -311,6 +313,23 @@ if p.is_file():
     else:
         print("ℹ️ gemma4 freqs patch skipped (already patched or different source)")
 PY
+if [ "${PRECOPY_MODELS:-0}" = "1" ] && [ -d /runpod-volume/models ]; then
+  # Global volumes are object storage: ComfyUI's piecewise reads of 38 GB from them are slow.
+  # Copy each model to the local disk in one sequential pass (in parallel); setup.py then links
+  # /comfyui/models/<folder> to /local_models/<folder> because that root comes first.
+  echo "📥 Pre-copying models from the global volume to local disk..."
+  t0=$(date +%s)
+  for d in diffusion_models text_encoders vae; do
+    mkdir -p /local_models/$d
+    for f in /runpod-volume/models/$d/*.safetensors; do
+      [ -f "$f" ] || continue
+      ( t=$(date +%s); dd if="$f" of="/local_models/$d/$(basename "$f")" bs=64M status=none \
+          && echo "   ✅ $(basename "$f") $(( $(stat -c %s "$f") / 1000000 )) MB in $(( $(date +%s) - t ))s" ) &
+    done
+  done
+  wait
+  echo "📥 Pre-copy done in $(( $(date +%s) - t0 ))s" | tee /workspace/precopy.log
+fi
 python3 /workspace/setup.py
 python3 /comfyui/main.py --listen 0.0.0.0 --port 8188 --dont-upcast-attention --reserve-vram 2 &
 sleep 5
