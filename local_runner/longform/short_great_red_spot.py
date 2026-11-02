@@ -102,11 +102,11 @@ _EARTH = None
 
 
 def earth(F, x, y, d, alpha=1.0):
-    """Earth disc trimmed 4% inside its edge: the stock sprite keeps a dark rim that shows on Jupiter."""
+    """Earth disc trimmed 6.5% inside its edge: the stock sprite keeps a dark rim that shows on Jupiter."""
     global _EARTH
     if _EARTH is None:
         src = R.assets().disc["earth"]
-        m = int(src.width * 0.04)
+        m = int(src.width * 0.065)
         e = src.crop((m, m, src.width - m, src.height - m)).convert("RGB")
         mask = Image.new("L", e.size, 0)
         ImageDraw.Draw(mask).ellipse((1, 1, e.width - 2, e.height - 2), fill=255)
@@ -123,13 +123,13 @@ def to_screen(name, s, cx, cy, x, y, ty=SUBJ_Y):
 
 def scene(F, i, u, t):
     sm = R.sm
-    if i == 0:  # today's spot from Juno; Earth rises in to sit inside it
-        z = R.lerp(0.70, 0.62, sm(u))
+    if i == 0:  # the comparison is on frame 1 (ep26 lost 76% in the first 2 s): Earth already
+        # inside today's spot, camera pushing in so the storm swells past it
+        z = R.lerp(0.56, 0.64, sm(u))
         cx, cy = JUNO_SPOT[0], JUNO_SPOT[1]
         s = photo(F, "juno", z, cx, cy)
         d = JUNO_EARTH * PH["juno"].width * s
-        e = sm(min(1, max(0, (u - 0.15) / 0.5)))
-        earth(F, W / 2, SUBJ_Y + (1 - e) * 1100, d, alpha=0.82)
+        earth(F, W / 2, SUBJ_Y, d, alpha=0.62 if i == 0 else 0.82)
     elif i == 1:  # Voyager 1, 1979: push in on the spot with a slow roll
         photo(F, "voyager", R.lerp(1.5, 1.9, u), VOY_SPOT[0], R.lerp(0.33, 0.29, u), rot=R.lerp(-4, 3, u), ty=H / 2)
     elif i == 2:  # into the vortex, spinning
@@ -147,7 +147,7 @@ def scene(F, i, u, t):
         cx, cy, sw, sh = JUNO_SPOT
         s = photo(F, "juno", 0.62, cx, cy)
         d = JUNO_EARTH * PH["juno"].width * s
-        earth(F, W / 2, SUBJ_Y, d, alpha=0.82)
+        earth(F, W / 2, SUBJ_Y, d, alpha=0.62 if i == 0 else 0.82)
         k = R.lerp(40 / 16, 1.0, sm(min(1, u / 0.7)))
         ew, eh = sw * PH["juno"].width * s * k, sh * PH["juno"].height * s * k
         F.draw().ellipse((W / 2 - ew / 2, SUBJ_Y - eh / 2, W / 2 + ew / 2, SUBJ_Y + eh / 2),
@@ -167,7 +167,10 @@ def frame(t, st, total):
         scene(P, i - 1, 1.0, t)
         F.im = Image.blend(P.rgb(), F.rgb(), R.sm((t - s0) / XF))
     if TOP[i]:
-        F.label(TOP[i], W / 2, 170, 70 if len(TOP[i]) < 18 else 56, R.AMBER, R.ramp(t, s0 + 0.1, 0.3))
+        if i == 0:  # bold claim visible from the very first frame
+            F.label(TOP[0], W / 2, 260, 84, R.AMBER, 1.0)
+        else:
+            F.label(TOP[i], W / 2, 170, 70 if len(TOP[i]) < 18 else 56, R.AMBER, R.ramp(t, s0 + 0.1, 0.3))
     return F.rgb()
 
 
