@@ -80,6 +80,7 @@ def load():
         b = b.resize((math.ceil(b.width * 8), math.ceil(b.height * 8)))
         b = b.crop(((b.width - W) // 2, (b.height - H) // 2, (b.width - W) // 2 + W, (b.height - H) // 2 + H))
         BLUR[n] = Image.eval(b, lambda v: int(v * 0.55))
+    BLUR["juno"] = Image.new("RGB", (W, H))  # Juno's top is black space: extend it, no blurred band
 
 
 def photo(F, name, zoom, cx, cy, rot=0.0, ty=SUBJ_Y):
@@ -94,6 +95,8 @@ def photo(F, name, zoom, cx, cy, rot=0.0, ty=SUBJ_Y):
     coeffs = (c, sn, px - c * tx - sn * ty, -sn, c, py + sn * tx - c * ty)
     layer = p.transform((W, H), Image.AFFINE, coeffs, resample=Image.BICUBIC)
     mask = Image.new("L", p.size, 255).transform((W, H), Image.AFFINE, coeffs, resample=Image.BILINEAR)
+    if name == "juno":  # feather the photo's edges into the space around it
+        mask = mask.filter(ImageFilter.GaussianBlur(28))
     F.im.paste(layer, (0, 0), mask)
     return s
 
@@ -129,7 +132,7 @@ def scene(F, i, u, t):
         cx, cy = JUNO_SPOT[0], JUNO_SPOT[1]
         s = photo(F, "juno", z, cx, cy)
         d = JUNO_EARTH * PH["juno"].width * s
-        earth(F, W / 2, SUBJ_Y, d, alpha=0.62 if i == 0 else 0.82)
+        earth(F, W / 2, SUBJ_Y, d, alpha=0.9)
     elif i == 1:  # Voyager 1, 1979: push in on the spot with a slow roll
         photo(F, "voyager", R.lerp(1.5, 1.9, u), VOY_SPOT[0], R.lerp(0.33, 0.29, u), rot=R.lerp(-4, 3, u), ty=H / 2)
     elif i == 2:  # into the vortex, spinning
@@ -147,7 +150,7 @@ def scene(F, i, u, t):
         cx, cy, sw, sh = JUNO_SPOT
         s = photo(F, "juno", 0.62, cx, cy)
         d = JUNO_EARTH * PH["juno"].width * s
-        earth(F, W / 2, SUBJ_Y, d, alpha=0.62 if i == 0 else 0.82)
+        earth(F, W / 2, SUBJ_Y, d, alpha=0.9)
         k = R.lerp(40 / 16, 1.0, sm(min(1, u / 0.7)))
         ew, eh = sw * PH["juno"].width * s * k, sh * PH["juno"].height * s * k
         F.draw().ellipse((W / 2 - ew / 2, SUBJ_Y - eh / 2, W / 2 + ew / 2, SUBJ_Y + eh / 2),
