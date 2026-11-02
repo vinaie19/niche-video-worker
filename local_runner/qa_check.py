@@ -121,7 +121,11 @@ def check_motion(f):
         if mask.mean() < 0.002:
             continue  # a still shot
         d = np.array([x[mask].mean() for x in seg])
-        stalled = (d < 0.35 * np.median(d)).mean()  # frames where the moving part barely moves
+        # compare each frame with its neighbours (+-0.5 s), not one median for the whole span: crossfades
+        # don't register as cuts, so a slow zoom next to busy footage used to read as "stalling"
+        roll = np.array([np.median(d[max(0, k - FPS // 2):k + FPS // 2 + 1]) for k in range(len(d))])
+        ref = np.maximum(roll, 0.3 * np.median(d))  # a long hold still fails: its neighbours are still too
+        stalled = (d < 0.35 * ref).mean()  # frames where the moving part barely moves
         if stalled > 0.12:
             fails.append(f"judder {a / FPS:.1f}-{b / FPS:.1f}s: {stalled:.0%} of frames stall inside a moving shot")
     # repeated shots: compare each shot's middle frame at low resolution

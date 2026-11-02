@@ -30,3 +30,4 @@ local_runner/vo_cache/
 # Render + pod watchdog logs
 local_runner/watchdog.log
 local_runner/*_render.log
+local_runner/nasa_video/
