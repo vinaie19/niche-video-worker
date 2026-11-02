@@ -186,7 +186,7 @@ def main():
     for i, b in enumerate(BEATS, start=1):
         d = _probe_duration(os.path.join(WORK, f"{STEM}_beat{i}.wav"))
         st.append((t, t + d)); t += d + b["pause_ms"] / 1000.0
-    total = t + 0.05
+    total = t + 0.6  # room after the last word: mp3 encode delay + natural decay (ep26 lost its last word at 0.05)
     if "--preview" in sys.argv:
         ts = [0.3, 1.5] + [s + 0.8 for s, _ in st[1:]] + [st[3][0] + 2.5, st[4][0] + 1.5, total - 0.2]
         ims = [frame(x, st, total).resize((216, 384)) for x in sorted(ts)]

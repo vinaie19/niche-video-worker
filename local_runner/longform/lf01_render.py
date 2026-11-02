@@ -184,7 +184,37 @@ class Frame:
             r = d * 1.6 + 14
             g = halo_img(int(r), halo_col)
             self.paste(g, cx, cy, alpha * halo)
-        self.paste(assets().sprite(name, d), cx, cy, alpha)
+        self.paste_sprite(name, d, cx, cy, alpha)
+
+    def paste_sprite(self, name, d, cx, cy, alpha=1.0):
+        """Draw a disc sprite at a sub-pixel size and position, so zooms and drifts glide instead of
+        stepping one whole pixel at a time (the judder in ep26/ep27). Resample in premultiplied
+        alpha so the transparent border can't bleed a dark ring into the edge."""
+        if alpha <= 0.01 or d <= 0.5:
+            return
+        base = assets().sprite(name, math.ceil(d) + 1)  # cached LANCZOS step, then a near-1 affine
+        S = int(math.ceil(d)) + 4
+        x0, y0 = math.floor(cx - S / 2), math.floor(cy - S / 2)
+        if x0 >= W or y0 >= H or x0 + S <= 0 or y0 + S <= 0:
+            return
+        k = base.width / d
+        coeffs = (k, 0, (x0 - cx) * k + base.width / 2, 0, k, (y0 - cy) * k + base.height / 2)
+        img = base.convert("RGBa").transform((S, S), Image.AFFINE, coeffs, resample=Image.BICUBIC).convert("RGBA")
+        self.paste_at(img, x0, y0, alpha)
+
+    def paste_at(self, img, x0, y0, alpha=1.0):
+        """Paste an RGBA image with its top-left at integer (x0, y0), clipped to the frame."""
+        if alpha <= 0.01:
+            return
+        if alpha < 0.999:
+            img = img.copy(); img.putalpha(img.getchannel("A").point(lambda v: int(v * alpha)))
+        bx0, by0 = max(0, -x0), max(0, -y0)
+        bx1, by1 = min(img.width, W - x0), min(img.height, H - y0)
+        if bx1 <= bx0 or by1 <= by0:
+            return
+        if (bx0, by0, bx1, by1) != (0, 0, img.width, img.height):
+            img = img.crop((bx0, by0, bx1, by1))
+        self.im.paste(img, (x0 + bx0, y0 + by0), img)
 
     def label(self, text, cx, cy, size=44, color=WHITE, alpha=1.0, bold=True):
         self.paste(label_img(text, size, color, bold), cx, cy, alpha)

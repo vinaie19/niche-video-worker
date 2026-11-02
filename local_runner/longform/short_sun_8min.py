@@ -165,7 +165,7 @@ def main():
     for i, b in enumerate(BEATS, start=1):
         d = _probe_duration(os.path.join(WORK, f"{STEM}_beat{i}.wav"))
         st.append((t, t + d)); t += d + b["pause_ms"] / 1000.0
-    total = t + 0.45  # let the punchline caption sit for a beat before the loop restarts
+    total = t + 0.6  # let the punchline caption sit for a beat before the loop restarts
     if "--preview" in sys.argv:
         ts = sorted([0.0, 1.2] + [s + 0.6 for s, _ in st[1:]] + [st[3][0] + 2.5, st[4][0] + 1.6, st[4][0] + 2.6,
                                                                 total - 0.05])
