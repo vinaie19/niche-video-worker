@@ -115,8 +115,51 @@ def earth(F, x, y, d, alpha=1.0):
         ImageDraw.Draw(mask).ellipse((1, 1, e.width - 2, e.height - 2), fill=255)
         e = e.convert("RGBA"); e.putalpha(mask.filter(ImageFilter.GaussianBlur(1.5)))
         _EARTH = e
-    sp = _EARTH.resize((max(2, int(d)), max(2, int(d))), Image.LANCZOS)
-    F.paste(sp, x, y, alpha)
+    sprite(F, _EARTH, x, y, d, alpha)
+
+
+def sprite(F, base, x, y, d, alpha=1.0, fx=0.5, fy=0.5):
+    """Sub-pixel draw of a square RGBA sprite at screen diameter d, with sprite point (fx, fy) at (x, y).
+    Whole-pixel resize + paste made the Earth zoom step instead of glide (the v3 judder)."""
+    if alpha <= 0.01 or d <= 0.5:
+        return
+    k = base.width / d
+    x0, y0 = max(0, math.floor(x - fx * d) - 2), max(0, math.floor(y - fy * d) - 2)
+    x1, y1 = min(W, math.ceil(x + (1 - fx) * d) + 2), min(H, math.ceil(y + (1 - fy) * d) + 2)
+    if x1 <= x0 or y1 <= y0:
+        return
+    coeffs = (k, 0, (x0 - x) * k + fx * base.width, 0, k, (y0 - y) * k + fy * base.height)
+    img = base.convert("RGBa").transform((x1 - x0, y1 - y0), Image.AFFINE, coeffs,
+                                         resample=Image.BICUBIC).convert("RGBA")
+    if alpha < 0.999:
+        img.putalpha(img.getchannel("A").point(lambda v: int(v * alpha)))
+    F.im.paste(img, (x0, y0), img)
+
+
+_GLOBE = None
+GLOBE_SPOT = (0.313, 0.685, 0.105)      # spot centre and width on the Hubble globe (disc fractions)
+GLOBE_F0 = (0.42, 0.60)                  # framing of the opening (and closing, for the loop) wide shot
+GLOBE_D0, GLOBE_D1 = 1250, 3000          # globe diameter on screen: whole planet -> spot fills the middle
+
+
+def globe(F, k):
+    """Hubble's Jupiter as a globe. k=0 is the whole planet with Earth beside the spot at true scale;
+    k=1 is pushed in on the spot. The same k gives the same frame, so the ending can return to frame 1."""
+    global _GLOBE
+    if _GLOBE is None:
+        from ep23_planet_stack import jupiter_sprite
+        _GLOBE = jupiter_sprite(2400)
+    e = k  # callers ease k themselves, so the holds can keep drifting instead of freezing
+    d = R.lerp_log(GLOBE_D0, GLOBE_D1, e)
+    fx, fy = R.lerp(GLOBE_F0[0], GLOBE_SPOT[0], e), R.lerp(GLOBE_F0[1], GLOBE_SPOT[1], e)
+    sprite(F, _GLOBE, W / 2, SUBJ_Y, d, fx=fx, fy=fy)
+    sx, sy = W / 2 + (GLOBE_SPOT[0] - fx) * d, SUBJ_Y + (GLOBE_SPOT[1] - fy) * d
+    ed, sw = d / 11.2, GLOBE_SPOT[2] * d  # Earth at true scale: Jupiter is 11.2 Earths wide
+    F.draw().ellipse((sx - sw * 0.62, sy - sw * 0.5, sx + sw * 0.62, sy + sw * 0.5), outline=R.AMBER + (235,),
+                     width=max(4, int(sw * 0.035)))
+    ex = sx + sw * 0.62 + ed * 0.75
+    earth(F, ex, sy, ed)
+    F.label("EARTH", ex, sy + ed / 2 + 38, 38, (255, 255, 255), 1.0)
 
 
 def to_screen(name, s, cx, cy, x, y, ty=SUBJ_Y):
@@ -126,37 +169,32 @@ def to_screen(name, s, cx, cy, x, y, ty=SUBJ_Y):
 
 def scene(F, i, u, t):
     sm = R.sm
-    if i == 0:  # the comparison is on frame 1 (ep26 lost 76% in the first 2 s): Earth already
-        # inside today's spot, camera pushing in so the storm swells past it
-        z = R.lerp(0.56, 0.64, sm(u))
-        cx, cy = JUNO_SPOT[0], JUNO_SPOT[1]
-        s = photo(F, "juno", z, cx, cy)
-        d = JUNO_EARTH * PH["juno"].width * s
-        earth(F, W / 2, SUBJ_Y, d, alpha=0.9)
-    elif i == 1:  # Voyager 1, 1979: push in on the spot with a slow roll
-        photo(F, "voyager", R.lerp(1.5, 1.9, u), VOY_SPOT[0], R.lerp(0.33, 0.29, u), rot=R.lerp(-4, 3, u), ty=H / 2)
-    elif i == 2:  # into the vortex, spinning
-        photo(F, "voyager", R.lerp_log(2.0, 3.2, sm(u)), *VOY_SPOT, rot=R.lerp(3, 28, u), ty=H / 2)
+    if i == 0:  # frame 1 says what this is: the whole of Jupiter, the spot circled, Earth beside it to scale;
+        globe(F, 0.08 * min(1.0, u / 0.35) + 0.92 * R.ramp(u, 0.35, 0.65))  # then the camera dives onto the spot
+    elif i == 1:  # Juno's real colour, close: a slow drift across the storm
+        photo(F, "juno", R.lerp(0.70, 0.80, u), R.lerp(0.50, 0.58, u), JUNO_SPOT[1], rot=R.lerp(0, -3, u))
+    elif i == 2:  # Voyager 1, into the vortex, spinning
+        photo(F, "voyager", R.lerp_log(1.8, 3.0, sm(u)), *VOY_SPOT, rot=R.lerp(-6, 24, u), ty=H / 2)
     elif i == 3:  # Trouvelot's 1880 plate: zoom to the spot, three Earths line up across it
         cx, cy = TROU_SPOT
-        z = R.lerp_log(1.15, 2.1, sm(min(1, u / 0.6)))
+        z = R.lerp_log(1.15, 2.1, sm(min(1, u / 0.6))) * (1 + 0.08 * u)  # keeps creeping in after the dive
         s = photo(F, "trouvelot", z, cx, cy)
         d = TROU_DISK * PH["trouvelot"].width * s / 11.2  # Earth at the plate's scale
         for k in range(3):
             a = R.ramp(u, 0.25 + 0.1 * k, 0.1)
             if a > 0:
                 earth(F, W / 2 + (k - 1) * d * 1.02, SUBJ_Y, d * 0.98, alpha=a)
-    elif i == 4:  # back to Juno: the 1880 outline shrinks onto today's spot, one Earth inside
+    elif i == 4:  # Juno again, tighter: the 1880 outline shrinks onto today's spot, one Earth inside
         cx, cy, sw, sh = JUNO_SPOT
-        s = photo(F, "juno", 0.62, cx, cy)
+        s = photo(F, "juno", R.lerp(0.60, 0.64, u), cx, cy)
         d = JUNO_EARTH * PH["juno"].width * s
         earth(F, W / 2, SUBJ_Y, d, alpha=0.9)
         k = R.lerp(40 / 16, 1.0, sm(min(1, u / 0.7)))
         ew, eh = sw * PH["juno"].width * s * k, sh * PH["juno"].height * s * k
         F.draw().ellipse((W / 2 - ew / 2, SUBJ_Y - eh / 2, W / 2 + ew / 2, SUBJ_Y + eh / 2),
                          outline=R.AMBER + (230,), width=8)
-    else:  # slow drift across the whole storm
-        photo(F, "juno", R.lerp(0.80, 0.95, u), R.lerp(0.50, 0.58, u), JUNO_SPOT[1], rot=R.lerp(0, -4, u))
+    else:  # pull all the way back out to the whole planet: the last frame is the first frame (loop)
+        globe(F, 1.0 - 0.92 * R.ramp(u, 0.0, 0.75) - 0.08 * max(0.0, (u - 0.75) / 0.25))
 
 
 def frame(t, st, total):
