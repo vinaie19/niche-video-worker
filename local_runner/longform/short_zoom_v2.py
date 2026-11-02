@@ -155,7 +155,10 @@ def whoosh_track(times, total, path):
                      f"afade=t=in:st=0:d=0.35,afade=t=out:st=0.35:d=0.35,volume=0.22,"
                      f"adelay={int(max(0, tt - 0.35) * 1000)}:all=1[w{k}]")
         labels.append(f"[w{k}]")
-    fc = ";".join(parts) + ";" + "".join(labels) + f"amix=inputs={len(times)}:normalize=0,atrim=0:{total:.3f}[o]"
+    # a silent bed of the full length leads the mix, so the track never ends at the last whoosh
+    # (it did: amix duration=shortest downstream then cut the voice off after the final cut)
+    fc = (f"anullsrc=r=44100:cl=stereo:d={total:.3f}[base];" + ";".join(parts) + ";[base]" + "".join(labels)
+          + f"amix=inputs={len(times) + 1}:duration=first:normalize=0,atrim=0:{total:.3f}[o]")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-filter_complex", fc, "-map", "[o]", "-ar", "48000", "-ac", "2", path], check=True)
 
 

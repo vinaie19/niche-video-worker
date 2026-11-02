@@ -1687,6 +1687,14 @@ def mux_video_audio_subs(
     ]
     print(f"🎬 FFmpeg mux → {output_path}")
     subprocess.run(cmd, check=True)
+    # QC: the audio stream must run the whole video, or the last line of the voiceover is lost
+    # (ep25-ep28 shipped with it cut at the final whoosh)
+    a_dur = float(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
+                                  "stream=duration", "-of", "csv=p=0", output_path],
+                                 capture_output=True, text=True).stdout.strip() or 0)
+    v_dur = _probe_duration(output_path)
+    if a_dur < v_dur - 0.25:
+        raise RuntimeError(f"QC fail: audio {a_dur:.2f}s is shorter than video {v_dur:.2f}s in {output_path}")
     return output_path
 
 
