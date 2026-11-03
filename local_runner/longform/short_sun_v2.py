@@ -88,8 +88,10 @@ SHOTS = [
     dict(src="sdo_phoenix.mp4", t0=54.0, speed=1.0, pre=PHOENIX_30P, k=3.08, cx=0.60, cy=0.50, z=(1.00, 1.06)),
     dict(still="giza_warm.jpg", k=0.76, cx=0.645, cy=0.47, z=(1.08, 0.99)),
 ]
-TOP = [("IF THE SUN", "VANISHED..."), None, None, ("BUT THAT LIGHT", "IS OLDER"), None,
-       ("OLDER THAN", "THE PYRAMIDS")]
+# Headlines that repeated the voice ("IF THE SUN VANISHED...", "BUT THAT LIGHT IS OLDER", "OLDER THAN THE
+# PYRAMIDS") were dropped 2026-11-03: with the spoken captions they made two competing text layers. Only the
+# clock and the years counter stay on screen, since they are pictures, not words.
+TOP = [None, None, None, None, None, None]
 
 
 def probe_size(path):
