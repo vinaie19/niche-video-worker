@@ -7,7 +7,7 @@ possible, with a slow sub-pixel camera move on top:
 
   1  SDO 4K full-disc Sun (orange)           "If the Sun vanished right now..."   claim on frame 1
   2  ISS 4K: the Sun blazing past Earth's limb  "...keep coming for 8 more minutes"   clock starts
-  3  ISS 4K: city lights at night            "...how long it takes to reach you"  clock hits 8:20, lights die
+  3  ISS 4K: sunlit Earth (Sahara to ocean)  "...how long it takes to reach you"  clock hits 8:20, Earth goes dark
   4  SDO 4K: M6.7 flare close-up             "But that light is far older..."     the turn
   5  SDO: Phoenix prominence eruption        "...thousands of years trapped inside"  10,000+ YEARS counter
   6  Giza at sunset (LOC, 1930s), warm-toned  "...older than the pyramids."       dissolves back to frame 1
@@ -64,8 +64,9 @@ BEATS = [
     dict(text="But that light is far older than eight minutes.",
          caption_text="But that light is far older than 8 minutes.",
          phrases=["But that light is far older", "than 8 minutes."], rate="+4%", pause_ms=100),
-    dict(text="It spent thousands of years trapped inside the Sun first.",
-         phrases=["It spent thousands of years", "trapped inside the Sun first."], rate="+4%", pause_ms=120),
+    # "It spent..." was heard as "It's been..." (Whisper, and plausibly viewers): plain words only
+    dict(text="It was trapped inside the Sun for thousands of years.",
+         phrases=["It was trapped inside the Sun", "for thousands of years."], rate="+4%", pause_ms=120),
     dict(text="So the sunlight on your face right now is older than the pyramids.",
          phrases=["So the sunlight on your face", "right now", "is older than the pyramids."],
          rate="+2%", pause_ms=0),
@@ -80,9 +81,9 @@ PHOENIX_30P = "framestep=2,setpts=N/(30*TB)"
 # Shots: source, start (s), playback speed, scale (canvas px per source px), source point at the
 # canvas centre (fractions), camera zoom at the start and end of the beat (1 = canvas px = screen px).
 SHOTS = [
-    dict(src="sdo_flare_4k.mp4", t0=10.8, speed=1.0, k=0.56, cx=0.49, cy=0.48, z=(1.00, 1.09)),
+    dict(src="sdo_flare_4k.mp4", t0=10.8, speed=1.0, k=0.90, cx=0.49, cy=0.48, z=(1.00, 1.08)),
     dict(src="iss4k_sunburst.mp4", t0=2.0, speed=1.25, pre=ISS_24P, k=0.80, cx=0.53, cy=0.52, z=(0.98, 1.12)),
-    dict(src="iss4k_city.mp4", t0=10.0, speed=1.25, pre=ISS_24P, k=0.80, cx=0.45, cy=0.42, z=(1.00, 1.10)),
+    dict(src="iss4k_day.mp4", t0=7.0, speed=1.25, pre=ISS_24P, k=0.80, cx=0.50, cy=0.50, z=(1.00, 1.10)),
     dict(src="sdo_flare_4k.mp4", t0=26.0, speed=1.0, k=1.04, cx=0.70, cy=0.55, z=(1.00, 1.14)),
     dict(src="sdo_phoenix.mp4", t0=54.0, speed=1.0, pre=PHOENIX_30P, k=3.08, cx=0.60, cy=0.50, z=(1.00, 1.06)),
     dict(still="giza_warm.jpg", k=0.76, cx=0.645, cy=0.47, z=(1.08, 0.99)),
@@ -173,11 +174,12 @@ class Film:
         u = min(1.0, max(0.0, (t - s0) / (s1 - s0)))
         z0, z1 = SHOTS[i]["z"]
         im = camera(self.shot(i).get(max(0, int(round((t - s0) * FPS)))), R.lerp(z0, z1, R.sm(u) * 0.5 + u * 0.5))
-        if i == 2:  # the light runs out the moment the clock hits 8:20: the lights fade to almost black
+        if i == 2:  # the moment the clock hits 8:20 the last sunlight arrives: sunlit Earth fades to night
             _, t_out = timer_value(t, self.st)
-            k = 1.0 - 0.88 * R.ramp(t, t_out, 0.5)
-            if k < 0.999:
-                im = ImageEnhance.Brightness(im).enhance(k)
+            e = R.ramp(t, t_out, 0.6)
+            if e > 0.001:
+                im = ImageEnhance.Brightness(im).enhance(1.0 - 0.72 * e)  # dimmed to night, still visible
+                im = Image.blend(im, Image.new("RGB", (W, H), (10, 20, 50)), 0.3 * e)
         return im
 
     def frame(self, t):
@@ -190,8 +192,11 @@ class Film:
             F.im = Image.blend(self.picture(i - 1, t), F.im, R.sm((t - s0) / XF))
         if TOP[i]:
             a = 1.0 if i == 0 else R.ramp(t, s0, 0.25)
+            if i == len(TOP) - 1:  # clear the last label before the loop dissolve, so two labels never overlap
+                a *= 1.0 - R.ramp(t, self.total - 0.7, 0.25)
             F.label(TOP[i][0], W / 2, 210, 96, (255, 255, 255), a)
-            F.label(TOP[i][1], W / 2, 330, 92, R.AMBER, a)
+            # on the warm Giza photo amber vanishes into the sky, so the last label's second line is pale gold
+            F.label(TOP[i][1], W / 2, 330, 92, (255, 236, 160) if i == 5 else R.AMBER, a)
         tv = timer_value(t, st)
         if tv and i in (1, 2):
             v, _ = tv
@@ -205,7 +210,7 @@ class Film:
             n = int(round(10000 * x ** 0.6 / 100.0)) * 100
             a = R.ramp(t, s0, 0.2)
             F.label(f"{n:,}" + ("+" if x >= 0.999 else ""), W / 2, 280, 170, (255, 255, 255), a)
-            F.label("YEARS INSIDE THE SUN", W / 2, 410, 52, R.AMBER, a)
+            F.label("YEARS INSIDE THE SUN", W / 2, 415, 62, R.AMBER, a)
         im = F.rgb()
         if t == 0.0:
             self.first = im
@@ -248,12 +253,14 @@ def main():
     srt = os.path.join(WORK, f"{VID}_captions.srt")
     create_phrase_subtitles(BEATS, work_dir=WORK, stem=STEM, srt_path=srt, max_words=5)
     shift_srt_file(srt, int(VO_DELAY * 1000))
-    bed = os.path.join(WORK, "ambient.wav"); generate_ambient_bed(total, bed, preset="space", volume=0.08)
+    bed = os.path.join(WORK, "ambient.wav"); generate_ambient_bed(total + 1.0, bed, preset="space", volume=0.2)  # no dead air between lines
     wh = os.path.join(WORK, "whoosh.wav"); whoosh_track([s for s, _ in st[1:]], total, wh)
     mix = os.path.join(WORK, "mix.wav")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", os.path.join(WORK, f"{STEM}.mp3"), "-i", bed, "-i", wh,
                     "-filter_complex",
-                    f"[0:a]adelay={int(VO_DELAY*1000)}:all=1,apad[v];[v][1:a][2:a]amix=inputs=3:duration=shortest:normalize=0,"
+                    f"[0:a]adelay={int(VO_DELAY*1000)}:all=1,apad[v];"
+                    # skip the bed's 0.35 s fade-in and drop its fade-out: full level from frame 1 to the loop point
+                    f"[1:a]atrim=start=0.4,asetpts=PTS-STARTPTS[b];[v][b][2:a]amix=inputs=3:duration=shortest:normalize=0,"
                     f"atrim=0:{total:.3f},loudnorm=I=-14:TP=-1.5:LRA=11[o]", "-map", "[o]", "-ar", "48000", mix], check=True)
     mux_video_audio_subs(silent, mix, srt, OUT, burn_captions=True, caption_style="clean_heavy_safe")
     print(f"✅ {OUT} ({_probe_duration(OUT):.1f}s)")
