@@ -10,6 +10,13 @@ Checks (any FAIL means the build is not ready; one bad second is a FAIL):
   3. Judder: within a moving shot, frame-to-frame change should be steady. A shot where many
      consecutive frames are identical, or where the change jumps up and down, is stepping.
   4. Repeated shots: two shots more than 2 s apart that look nearly the same.
+  5. Audio every 0.1 s: dropouts, clipping, loudness, audio shorter than video.
+  6. Picture every frame: dark/empty screens, frozen video.
+  7. Per-second verdicts: every second of the video is scored for dark screen, black bands
+     (letterboxing), soft/blurry picture, brightness flashes, silence and stalls. One bad second = FAIL.
+  8. Captions vs voice: every caption must appear within 0.35 s of its first spoken word and stay up
+     until its last word is said.
+Sheets: every frame of the first 2 s, every 0.25 s, every 0.1 s, and every frame around each transition.
 
 It can't judge whether the video feels good. The owner's phone watch stays the final gate.
 """
@@ -25,6 +32,9 @@ import tempfile
 import numpy as np
 
 FPS = 30
+WORDS = []   # (word, start, end) from Whisper, filled by check_voice
+AUDIO_DB = None  # level of every 0.1 s of audio, filled by check_audio
+TRANSITIONS = []  # times (s) of cuts and crossfades, filled by check_motion, for the transition sheets
 SW, SH = 540, 960  # half resolution: sub-pixel stepping is still visible, memory stays ~300 MB
 
 
@@ -71,6 +81,9 @@ def check_voice(mp4, script, duration):
     with tempfile.NamedTemporaryFile(suffix=".wav") as wav:
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", mp4, "-ac", "1", "-ar", "16000", wav.name], check=True)
         res = whisper.load_model("small").transcribe(wav.name, word_timestamps=True, language="en")
+    global WORDS
+    WORDS = [(norm(x), wd["start"], wd["end"]) for seg in res["segments"] for wd in seg.get("words", [])
+             for x in words(wd["word"])]
     heard = [(norm(w), s["end"]) for seg in res["segments"] for wd in seg.get("words", [])
              for w, s in [(x, wd) for x in words(wd["word"])]]
     heard_words = [w for w, _ in heard]
@@ -110,6 +123,13 @@ def check_motion(f):
     D = [np.abs(f[k + 1].astype(np.int16) - f[k].astype(np.int16)).astype(np.uint8) for k in range(len(f) - 1)]
     whole = np.array([x.mean() for x in D])
     cuts = np.where(whole > 18)[0]  # hard cuts / fast crossfades
+    global TRANSITIONS
+    roll = np.array([np.median(whole[max(0, k - 15):k + 16]) for k in range(len(whole))])
+    peaks = [k for k in range(len(whole)) if whole[k] > max(4.0, 2.2 * roll[k])]
+    TRANSITIONS = []
+    for k in peaks:  # one entry per transition, at its first frame
+        if not TRANSITIONS or k / FPS - TRANSITIONS[-1] > 0.5:
+            TRANSITIONS.append(k / FPS)
     bounds = [0] + [c + 1 for c in cuts] + [len(f)]
     fails, shots = [], []
     for a, b in zip(bounds[:-1], bounds[1:]):
@@ -149,6 +169,8 @@ def check_audio(mp4, duration):
     win = 1600  # 0.1 s windows
     rms = np.array([np.sqrt(np.mean(a[i:i + win] ** 2) + 1e-12) for i in range(0, len(a) - win, win)])
     db = 20 * np.log10(rms)
+    global AUDIO_DB
+    AUDIO_DB = db
     dead = np.where(db < -50)[0]
     if len(dead):
         fails.append(f"near-silent audio at {', '.join(f'{k / 10:.1f}s' for k in dead[:10])}"
@@ -180,15 +202,116 @@ def check_picture(f):
     return fails
 
 
+def check_seconds(f):
+    """Score every second on its own. Any flagged second fails the build."""
+    n = len(f)
+    lum = np.array([x.mean() for x in f])
+    sharp = []
+    for x in f:
+        y = x[::2, ::2].astype(np.float32)
+        lap = 4 * y[1:-1, 1:-1] - y[:-2, 1:-1] - y[2:, 1:-1] - y[1:-1, :-2] - y[1:-1, 2:]
+        sharp.append(lap.var())
+    sharp = np.array(sharp)
+
+    def band(x):  # near-black rows touching the top/bottom edge: letterboxing
+        rows = x.mean(axis=1) < 14
+        top = np.argmin(rows) if not rows.all() else len(rows)
+        bot = np.argmin(rows[::-1]) if not rows.all() else len(rows)
+        return (top + bot) / len(rows)
+
+    bands = np.array([band(x) for x in f])
+    dark = np.array([(x < 22).mean() for x in f])
+    same = np.array([0] + [int(np.array_equal(f[k], f[k - 1])) for k in range(1, n)])
+    jump = np.abs(np.diff(lum, prepend=lum[0]))
+    lit = sharp[dark < 0.45]
+    ref = np.median(lit) if len(lit) else np.median(sharp)
+    fails, rows = [], []
+    for sec in range(int(np.ceil(n / FPS))):
+        a, b = sec * FPS, min(n, (sec + 1) * FPS)
+        why = []
+        if (dark[a:b] > 0.45).mean() > 0.3:
+            why.append(f"dark {np.mean(dark[a:b]):.0%}")
+        if np.median(bands[a:b]) > 0.10:
+            why.append(f"black bands {np.median(bands[a:b]):.0%} of height")
+        if np.median(sharp[a:b]) < 0.3 * ref and np.median(dark[a:b]) < 0.45:
+            why.append(f"soft picture ({np.median(sharp[a:b]) / ref:.0%} of the video's sharpness)")
+        if jump[a:b].max() > 40:
+            why.append(f"brightness flash ({jump[a:b].max():.0f} levels in one frame)")
+        if same[a:b].sum() >= 3:
+            why.append(f"{same[a:b].sum()} repeated frames")
+        if AUDIO_DB is not None:
+            w = AUDIO_DB[sec * 10:(sec + 1) * 10]
+            if len(w) and (w < -50).any():
+                why.append(f"near-silent audio ({(w < -50).sum()} x 0.1 s)")
+        rows.append(f"  {sec:2d}s  {'FLAG  ' + '; '.join(why) if why else 'ok'}")
+        if why:
+            fails.append(f"second {sec}: " + "; ".join(why))
+    print("per-second verdicts:")
+    print("\n".join(rows))
+    return fails
+
+
+def script_vid(path):
+    for node in ast.walk(ast.parse(open(path).read())):
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "VID" for t in node.targets):
+            return node.value.value
+    return None
+
+
+def check_captions(script_path):
+    """Each caption must appear within 0.35 s of its first spoken word and stay until its last word ends."""
+    vid = script_vid(script_path)
+    root = os.path.dirname(os.path.dirname(os.path.abspath(script_path)))
+    srt = os.path.join(root, "temp_clips", f"{vid}_audio", f"{vid}_captions.srt")
+    if not vid or not os.path.exists(srt):
+        return [f"caption file not found ({srt}): caption timing could not be verified"]
+    if not WORDS:
+        return ["no Whisper words (voice check skipped?): caption timing could not be verified"]
+
+    def ts(x):
+        h, m, r = x.strip().split(":"); sec, ms = r.split(",")
+        return int(h) * 3600 + int(m) * 60 + int(sec) + int(ms) / 1000
+
+    fails, k = [], 0
+    for block in open(srt).read().strip().split("\n\n"):
+        lines = block.strip().split("\n")
+        if len(lines) < 3:
+            continue
+        a, b = (ts(x) for x in lines[1].split("-->"))
+        ws = [norm(w) for w in words(" ".join(lines[2:]))]
+        if not ws:
+            continue
+        hit = next((j for j in range(k, min(k + 10, len(WORDS))) if WORDS[j][0] == ws[0]), None)
+        if hit is None:
+            fails.append(f"caption '{' '.join(lines[2:])}' ({a:.2f}s): its first word wasn't found in the voice")
+            continue
+        last = next((j for j in range(hit + len(ws) - 1, min(hit + len(ws) + 4, len(WORDS)))
+                     if WORDS[j][0] == ws[-1]), hit + len(ws) - 1)
+        k = last + 1
+        if a - WORDS[hit][1] > 0.35:
+            fails.append(f"caption '{' '.join(lines[2:])}' appears {a - WORDS[hit][1]:.2f}s after the word is spoken")
+        if WORDS[hit][1] - a > 0.5:
+            fails.append(f"caption '{' '.join(lines[2:])}' appears {WORDS[hit][1] - a:.2f}s before the word is spoken")
+        if last < len(WORDS) and b < WORDS[last][2] - 0.15:
+            fails.append(f"caption '{' '.join(lines[2:])}' leaves {WORDS[last][2] - b:.2f}s before its last word ends")
+    print(f"captions: checked against {len(WORDS)} spoken words")
+    return fails
+
+
 def contact_sheets(mp4, outdir, duration):
     """Dense frame sheets for the visual review: every frame of the first 2 s, then every 0.25 s."""
     os.makedirs(outdir, exist_ok=True)
-    jobs = [("first2s", "trim=0:2,fps=30", 6), ("every_0.25s", "fps=4", 8)]
-    for name, flt, cols in jobs:
+    for old in os.listdir(outdir):
+        os.remove(os.path.join(outdir, old))
+    jobs = [("first2s", "trim=0:2,fps=30", 6, 216), ("every_0.25s", "fps=4", 8, 216),
+            ("every_0.1s", "fps=10", 10, 162)]
+    for t in TRANSITIONS:  # every frame from 0.3 s before to 0.3 s after each cut or crossfade
+        jobs.append((f"transition_{t:05.2f}s", f"trim=start={max(0, t - 0.3):.3f}:end={t + 0.3:.3f},setpts=PTS-STARTPTS,fps=30", 9, 162))
+    for name, flt, cols, w in jobs:
         out = os.path.join(outdir, f"{name}_%02d.png")
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", mp4, "-vf",
-                        f"{flt},scale=216:384,drawtext=text='%{{pts\\:hms}}':x=6:y=6:fontsize=18:fontcolor=yellow:"
-                        f"box=1:boxcolor=black@0.6,tile={cols}x2", out], check=True)
+                        f"{flt},scale={w}:{w * 16 // 9},drawtext=text='%{{pts\\:hms}}':x=4:y=4:fontsize=14:"
+                        f"fontcolor=yellow:box=1:boxcolor=black@0.6,tile={cols}x2", out], check=True)
     sheets = sorted(os.listdir(outdir))
     print(f"sheets: {len(sheets)} images in {outdir}")
     return sheets
@@ -208,6 +331,14 @@ Answer every question from the sheets (and the script) before sending the video.
 10. Is the final line the payoff, said in full, with the last word clearly heard?
 11. Is every number and claim correct (checked against a source, not memory)?
 12. Would I stop scrolling for frame 1 and stay to the end? If unsure, the answer is no.
+13. Transition sheets: is every cut/crossfade clean (no flash, no black frame, no half-drawn text)?
+14. 0.1 s sheets: does any single moment look wrong (glitch, jump, text overlapping text, wrong crop)?
+15. Is every picture sharp on a phone, or does any shot look upscaled/soft?
+16. Does the on-screen label ever contradict or lag the voice?
+17. Is the footage real and correctly described (no AI-looking details, credits right in the description)?
+18. Is there one clear idea, with a turn, and nothing a viewer would call filler?
+19. Is the audio balanced: voice clearly on top, no music/effects drowning a word, no harsh whoosh?
+20. Compared with the best Shorts on this topic, is this one clearly better? If not, why post it?
 """
 
 
@@ -224,6 +355,9 @@ def main():
     fr = frames(a.mp4)
     fails += check_picture(fr)
     fails += check_motion(fr)
+    fails += check_seconds(fr)
+    if not a.skip_voice:
+        fails += check_captions(a.script)
     contact_sheets(a.mp4, a.sheets or os.path.splitext(a.mp4)[0] + "_qa", dur)
     print(REVIEW_QUESTIONS)
     if fails:

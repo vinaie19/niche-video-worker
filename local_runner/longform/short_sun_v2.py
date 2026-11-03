@@ -81,7 +81,7 @@ PHOENIX_30P = "framestep=2,setpts=N/(30*TB)"
 # Shots: source, start (s), playback speed, scale (canvas px per source px), source point at the
 # canvas centre (fractions), camera zoom at the start and end of the beat (1 = canvas px = screen px).
 SHOTS = [
-    dict(src="sdo_flare_4k.mp4", t0=10.8, speed=1.0, k=0.90, cx=0.49, cy=0.48, z=(1.00, 1.08)),
+    dict(src="sdo_flare_4k.mp4", t0=10.8, speed=1.0, k=1.03, cx=0.49, cy=0.48, z=(1.00, 1.06)),
     dict(src="iss4k_sunburst.mp4", t0=2.0, speed=1.25, pre=ISS_24P, k=0.80, cx=0.53, cy=0.52, z=(0.98, 1.12)),
     dict(src="iss4k_day.mp4", t0=7.0, speed=1.25, pre=ISS_24P, k=0.80, cx=0.50, cy=0.50, z=(1.00, 1.10)),
     dict(src="sdo_flare_4k.mp4", t0=26.0, speed=1.0, k=1.04, cx=0.70, cy=0.55, z=(1.00, 1.14)),
@@ -182,6 +182,32 @@ class Film:
                 im = Image.blend(im, Image.new("RGB", (W, H), (10, 20, 50)), 0.3 * e)
         return im
 
+    def overlays(self, F, i, t, k):
+        """Beat i's text, drawn at opacity k (the clock ignores k across the 1 -> 2 cut: it never blinks)."""
+        st = self.st
+        clock_k = 1.0 if (i == 2 and t < st[2][0] + XF) else k
+        if k <= 0.01 and clock_k <= 0.01:
+            return
+        if TOP[i] and k > 0.01:
+            a = k
+            if i == len(TOP) - 1:  # clear the last label before the loop dissolve, so two labels never overlap
+                a *= 1.0 - R.ramp(t, self.total - 0.5, 0.2)
+            F.label(TOP[i][0], W / 2, 210, 96, (255, 255, 255), a)
+            # on the warm Giza photo amber vanishes into the sky, so the last label's second line is pale gold
+            F.label(TOP[i][1], W / 2, 330, 92, (255, 236, 160) if i == 5 else R.AMBER, a)
+        tv = timer_value(t, st)
+        if tv and (i == 2 or (i == 1 and t < st[2][0])):  # one clock, running straight across the 1 -> 2 cut
+            v, _ = tv
+            done = v >= LIGHT_S
+            F.label(f"{v // 60}:{v % 60:02d}", W / 2, 300, 170, (255, 90, 70) if done else (255, 255, 255), clock_k)
+            F.label("LIGHT RUNS OUT" if done else "SINCE THE SUN VANISHED", W / 2, 430, 46, R.AMBER, clock_k)
+        if i == 4 and k > 0.01:  # how long the energy was stuck inside: counts up to 10,000+
+            s0, s1 = self.bounds[4], self.bounds[5]
+            x = R.ramp(t, s0 + 0.2, (s1 - s0) * 0.6)
+            n = int(round(10000 * x ** 0.6 / 100.0)) * 100
+            F.label(f"{n:,}" + ("+" if x >= 0.999 else ""), W / 2, 280, 170, (255, 255, 255), k)
+            F.label("YEARS INSIDE THE SUN", W / 2, 415, 62, R.AMBER, k)
+
     def frame(self, t):
         st = self.st
         i = max(k for k in range(len(st)) if st[k][0] <= t or k == 0)
@@ -190,32 +216,16 @@ class Film:
         F.im = self.picture(i, t)
         if i > 0 and t < s0 + XF:  # crossfade: the previous shot keeps playing underneath
             F.im = Image.blend(self.picture(i - 1, t), F.im, R.sm((t - s0) / XF))
-        if TOP[i]:
-            a = 1.0 if i == 0 else R.ramp(t, s0, 0.25)
-            if i == len(TOP) - 1:  # clear the last label before the loop dissolve, so two labels never overlap
-                a *= 1.0 - R.ramp(t, self.total - 0.7, 0.25)
-            F.label(TOP[i][0], W / 2, 210, 96, (255, 255, 255), a)
-            # on the warm Giza photo amber vanishes into the sky, so the last label's second line is pale gold
-            F.label(TOP[i][1], W / 2, 330, 92, (255, 236, 160) if i == 5 else R.AMBER, a)
-        tv = timer_value(t, st)
-        if tv and i in (1, 2):
-            v, _ = tv
-            done = v >= LIGHT_S
-            a = R.ramp(t, st[1][0], 0.2)
-            F.label(f"{v // 60}:{v % 60:02d}", W / 2, 300, 170, (255, 90, 70) if done else (255, 255, 255), a)
-            F.label("LIGHT RUNS OUT" if done else "SINCE THE SUN VANISHED", W / 2, 430, 46, R.AMBER, a)
-        if i == 4:  # how long the energy was stuck inside: counts up to 10,000+
-            s1 = self.bounds[5]
-            x = R.ramp(t, s0 + 0.2, (s1 - s0) * 0.6)
-            n = int(round(10000 * x ** 0.6 / 100.0)) * 100
-            a = R.ramp(t, s0, 0.2)
-            F.label(f"{n:,}" + ("+" if x >= 0.999 else ""), W / 2, 280, 170, (255, 255, 255), a)
-            F.label("YEARS INSIDE THE SUN", W / 2, 415, 62, R.AMBER, a)
+        # On-screen text: at each cut the old text fades out over the first half of the crossfade and the
+        # new text fades in over the second half, so text never pops off in one frame or overlaps
+        if i > 0 and t < s0 + XF:
+            self.overlays(F, i - 1, t, 1.0 - R.ramp(t, s0, XF / 2))
+        self.overlays(F, i, t, 1.0 if i == 0 else R.ramp(t, s0 + XF / 2, XF / 2))
         im = F.rgb()
         if t == 0.0:
             self.first = im
-        if self.first is not None and t > self.total - 0.45:  # dissolve into frame 1, so the loop is seamless
-            im = Image.blend(im, self.first, R.sm((t - (self.total - 0.45)) / 0.45))
+        if self.first is not None and t > self.total - 0.25:  # quick dissolve into frame 1: seamless loop, not a soft blur
+            im = Image.blend(im, self.first, R.sm((t - (self.total - 0.25)) / 0.25))
         return im
 
 
