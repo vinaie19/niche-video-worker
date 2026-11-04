@@ -4,11 +4,11 @@ ep29 Short: "Flying to the Biggest Black Hole in Our Galaxy" (9:16, ~18 s, $0 lo
 Built on the framework (local_runner/panel/MARKET_STUDY.md): a journey/zoom (2.6x breakout in the
 market study) to an extreme object (our best-staying topic), real imagery only, one text layer.
 
-  1  ESO/VISTA galactic-centre star field fills the screen; target circled; "26,000 LIGHT-YEARS"
-  2  deep zoom into the core while the distance counts down
-  3  ESO/VLT NACO time-lapse: ~20 years of real observations, stars whipping around an empty point
-  4  same footage: "4,000,000 SUNS" you can't see
-  5  Event Horizon Telescope's first image of Sagittarius A* (2022); dissolves back to frame 1 (loop)
+  1-4  one continuous dive into ESO/VISTA's galactic centre from frame 1: target ring on Sgr A*, a
+       light-year countdown, then "4,000,000 SUNS HIDING HERE" and "SWALLOWS ALL LIGHT"
+  5    the reveal: the Event Horizon Telescope's first image of Sagittarius A* (2022), growing over the same
+       star field; dissolves back to frame 1 (loop)
+(Owner's phone check, 4 Nov: the dive worked; a static photo on frame 1 and the orbit time-lapse did not.)
 
 Facts: distance 8.18 kpc = ~26,700 ly (GRAVITY 2019); mass ~4.3 million Suns; event horizon ~25 million km
 across, inside Mercury's orbit (116 million km across); EHT image released 12 May 2022.
@@ -52,26 +52,25 @@ LY = 26000
 BEATS = [
     dict(text="This is a trip to the black hole at the center of our galaxy.",
          phrases=["This is a trip to the black hole", "at the center of our galaxy."], rate="+8%", pause_ms=60),
-    # plain words only: "past" can be heard as "passed"
-    # "right into the core" was heard as "...the cold" (weak final consonant): clearer words
     dict(text="Twenty-six thousand light-years, through billions of stars, all the way to the center.",
          caption_text="26,000 light-years, through billions of stars, all the way to the center.",
          phrases=["26,000 light-years,", "through billions of stars,", "all the way to the center."], rate="+6%",
          pause_ms=80),
-    # "around nothing." came out as "around now/us": the clipped last word; say it plainly
-    dict(text="This is real telescope footage. Stars racing around an empty point in space.",
-         phrases=["This is real telescope footage.", "Stars racing around", "an empty point in space."],
-         rate="+4%", pause_ms=80),
-    dict(text="Something four million times heavier than the Sun, and completely invisible.",
-         caption_text="Something 4 million times heavier than the Sun, and completely invisible.",
-         phrases=["Something 4 million times", "heavier than the Sun,", "and completely invisible."],
-         rate="+4%", pause_ms=120),
+    dict(text="Hiding there is something four million times heavier than the Sun.",
+         caption_text="Hiding there is something 4 million times heavier than the Sun.",
+         phrases=["Hiding there is something", "4 million times", "heavier than the Sun."], rate="+4%", pause_ms=80),
+    # "...nobody could see it." lost its final "it" (heard as "...could see."): end on a strong word
+    dict(text="It swallows all light, so for decades it stayed invisible.",
+         phrases=["It swallows all light,", "so for decades", "it stayed invisible."], rate="+4%", pause_ms=120),
+    # one sentence: the full stop after "2022" left a 0.62 s gap mid-line
     dict(text="Until twenty twenty-two, when we took its first real photo.",
          caption_text="Until 2022, when we took its first real photo.",
          phrases=["Until 2022,", "when we took its first real photo."], rate="+2%", pause_ms=0),
 ]
-TOP = [("A TRIP TO OUR", "GALAXY'S BLACK HOLE"), None, ("20 YEARS OF", "REAL FOOTAGE"),
-       ("4,000,000 SUNS", "YOU CAN'T SEE"), ("ITS FIRST", "REAL PHOTO")]
+# owner's phone check (4 Nov): the dive is the strong part; a static photo on frame 1 and the zooming orbit
+# clip were not. One continuous dive from frame 1, the real photo only as the final reveal.
+TOP = [("A TRIP TO OUR", "GALAXY'S BLACK HOLE"), None, ("4,000,000 SUNS", "HIDING HERE"),
+       ("SWALLOWS", "ALL LIGHT"), ("ITS FIRST", "REAL PHOTO")]
 
 VISTA_CORE = (0.5125, 0.332)  # Sgr A* in eso1242a (fractions)
 # speed is set in Film so the 20 s clip exactly covers its beats (it ran out once and froze for 2.7 s);
@@ -118,7 +117,7 @@ def ring_composite(im, bg, kk):
 
 def vista_k(e):
     k0 = max(W / PH["vista"].width, H / PH["vista"].height)  # cover
-    return k0 * 1.7 * math.exp(math.log(2.4) * e)  # opens on the core (1.7x), dives to 4x across beats 1-2
+    return k0 * 1.5 * math.exp(math.log(2.9) * e)  # opens on the core (1.5x), dives to ~4.4x across beats 1-4
 
 
 class Film:
@@ -132,88 +131,46 @@ class Film:
         self.trail, self.trail_k = None, -1
         self.open_bg = None
 
-    def zoom_e(self, t):  # 0..1 across beat 2: slow start, accelerating dive
-        a, b = self.bounds[1], self.bounds[2]
-        u = min(1.0, max(0.0, (t - a) / (b - a)))
-        return 0.06 * min(1.0, u / 0.25) + 0.94 * R.sm(max(0.0, (u - 0.15) / 0.85)) ** 1.3
+    def zoom_e(self, t):  # 0..1 across beats 1-4: one steady dive (log-zoom at constant speed), no easing
+        a = self.bounds[4] + XF  # keeps moving under the crossfade into the reveal
+        return min(1.0, max(0.0, t / a))
 
     def picture(self, i, t):
-        if i == 0:  # frame 1: the destination itself, big and recognisable (Gate 2), slowly pulling back
-            k0 = max(W / PH["eht"].width, H / PH["eht"].height)
-            u = min(1.0, t / self.bounds[1])
-            kk = k0 * R.lerp(1.10, 1.02, u)
-            im, _ = still("eht", kk, 0.5, 0.5)
-            if self.open_bg is None:  # the real galactic-centre star field behind it (its sky, no black bands)
-                v, _ = still("vista", vista_k(1.0), *VISTA_CORE)
-                self.open_bg = np.asarray(v).astype(np.float32) * 0.6
-            return Image.fromarray(ring_composite(im, self.open_bg, kk)), (W / 2, H / 2)
-        if i == 1:
-            im, ring = still("vista", vista_k(self.zoom_e(t)), *VISTA_CORE)
-            return im, ring
-        if i in (2, 3):
-            if self.orbit is None:
-                # the one clean pass plays slowly across beats 3-4 (no hold, no loop); -ss lands on its first
-                # frame and trim stops it before the splice (the -t limit is on input time, so trim does the cut)
-                span = self.bounds[4] - self.bounds[2] + XF + 0.1
-                a, b = ORBIT_PASS
-                ORBIT["speed"] = round((b - a) / 25.0 / span, 4)
-                ORBIT["pre"] = (f"trim=end_frame={b - a},setpts=(PTS-STARTPTS)/{ORBIT['speed']},"
-                                f"framerate=fps={FPS}")
-                self.orbit = SV.Shot(ORBIT, span)
-                if self.under is None:  # the same sky region from VISTA, deep zoom + soft: real light behind the stars
-                    u, _ = still("vista", vista_k(1.0), *VISTA_CORE)
-                    self.under = np.asarray(u.filter(ImageFilter.GaussianBlur(3))).astype(np.float32) * 0.32
-            s0, s1 = self.bounds[2], self.bounds[4]
-            z = R.lerp(*ORBIT["z"], min(1.0, max(0.0, (t - s0) / (s1 - s0))))  # steady push, no easing to a stop
-            k_src = max(0, int(round((t - s0) * FPS)))
-            raw = np.asarray(self.orbit.get(k_src)).astype(np.float32)
-            # star trails: each star leaves a fading trail of the positions it actually passed through, so
-            # the orbits around the empty point show as arcs (real positions, nothing drawn by hand)
-            if self.trail is None or k_src < self.trail_k:
-                self.trail = raw.copy()
-            elif k_src != self.trail_k:
-                self.trail = np.maximum(self.trail * 0.997, raw)  # long memory: the whole pass builds up
-            self.trail_k = k_src
-            mix = np.maximum(raw, self.trail * np.array([0.65, 0.85, 1.0], np.float32))  # trails a cooler blue
-            frame = SV.camera(Image.fromarray(np.clip(mix, 0, 255).astype(np.uint8)), z)
-            a = np.asarray(frame).astype(np.float32)
-            a = np.minimum(255, a * 1.35 + 6)  # lift the star field a touch
-            return Image.fromarray(np.maximum(a, self.under).astype(np.uint8)), (W / 2, H / 2)
-        # the EHT photo sits in the real star field it came from (the orbit footage's last frame), so its
-        # black sky never shows as bands; the ring grows steadily
+        if i < 4:
+            return still("vista", vista_k(self.zoom_e(t)), *VISTA_CORE)
+        # the reveal: the EHT image over the same star field, growing slowly
         s0 = self.bounds[4]
         u = min(1.0, max(0.0, (t - s0) / (self.total - s0)))
         if self.bg is None:
-            last = SV.camera(self.orbit.get(10 ** 6), ORBIT["z"][1])
-            a = np.minimum(255, np.asarray(last).astype(np.float32) * 1.35 + 6)
-            self.bg = np.maximum(a, self.under) * 0.8
+            v, _ = still("vista", vista_k(1.0), *VISTA_CORE)
+            self.bg = np.asarray(v).astype(np.float32) * 0.6
         k0 = max(W / PH["eht"].width, H / PH["eht"].height)
-        kk = k0 * R.lerp(0.80, 1.0, u)
+        kk = k0 * math.exp(R.lerp(math.log(0.55), math.log(1.10), u))  # grows steadily (2x) to the last frame
         im, _ = still("eht", kk, 0.5, 0.5)
         return Image.fromarray(ring_composite(im, self.bg, kk)), (W / 2, H / 2)
 
     def overlays(self, F, i, t, k, ring):
-        if k <= 0.01:
-            return
-        if TOP[i]:
+        if TOP[i] and k > 0.01:
             a = k
             if i == len(TOP) - 1:
                 a *= 1.0 - R.ramp(t, self.total - 0.5, 0.2)
             F.label(TOP[i][0], W / 2, 210, fit(TOP[i][0], 92), (255, 255, 255), a)
             F.label(TOP[i][1], W / 2, 325, fit(TOP[i][1], 88), R.AMBER, a)
-        if i == 3:  # the empty point the stars orbit
-            r = 95
-            F.draw().ellipse((W / 2 - r, H / 2 - r, W / 2 + r, H / 2 + r), outline=R.AMBER + (int(230 * k),), width=7)
-        if i == 0:
-            F.label("26,000 LIGHT-YEARS AWAY", W / 2, 1420, fit("26,000 LIGHT-YEARS AWAY", 64), (255, 255, 255), k)
-        if i == 1:  # target ring on Sgr A* and the distance left
+        # ring and countdown run straight across beat changes: drawn once, solid, by the current beat; they
+        # only fade where they end (counter at beat 3, ring into the reveal). Fading them per beat made them blink.
+        cur = max(j for j in range(len(self.st)) if self.st[j][0] <= t or j == 0)
+        if i < 4 and (i == cur or cur == 4):
             e = self.zoom_e(t)
-            r = 70 + 40 * e
+            r = 60 + 70 * e
             x, y = ring
-            F.draw().ellipse((x - r, y - r, x + r, y + r), outline=R.AMBER + (int(230 * k),), width=7)
-            ly = int(round(LY * (1.0 - e) ** 2.2 / 10.0)) * 10
-            F.label(f"{ly:,}", W / 2, 300, 150, (255, 255, 255), k)
-            F.label("LIGHT-YEARS TO GO", W / 2, 420, 52, R.AMBER, k)
+            ra = 1.0 if i == cur else k
+            F.draw().ellipse((x - r, y - r, x + r, y + r), outline=R.AMBER + (int(230 * ra),), width=7)
+        if i < 2 and (i == cur or cur == 2):
+            ca = 1.0 if i == cur else k
+            u = min(1.0, t / self.bounds[2])
+            ly = int(round(LY * (1.0 - u) ** 1.6 / 10.0)) * 10
+            F.label(f"{ly:,}", W / 2, 1400, 130, (255, 255, 255), ca)
+            F.label("LIGHT-YEARS TO GO", W / 2, 1510, 50, R.AMBER, ca)
 
     def frame(self, t):
         st = self.st
@@ -222,7 +179,7 @@ class Film:
         F = R.Frame()
         im, ring = self.picture(i, t)
         F.im = im
-        cross = i > 0 and t < s0 + XF and i != 3  # 2->3 is the same shot
+        cross = i == 4 and t < s0 + XF  # the dive is one continuous shot; only the reveal crossfades
         if cross:
             prev, pring = self.picture(i - 1, t)
             F.im = Image.blend(prev, F.im, R.sm((t - s0) / XF))

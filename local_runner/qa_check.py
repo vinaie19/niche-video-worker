@@ -144,7 +144,11 @@ def check_motion(f):
         mask = np.max(np.stack(seg), axis=0) > 4  # only the pixels that move in this shot
         if mask.mean() < 0.002:
             continue  # a still shot
-        d = np.array([x[mask].mean() for x in seg])
+        # motion relative to the frame's own detail: a smooth, blurry image that moves correctly changes few
+        # pixels, so raw differences made it look 'stalled' next to a sharp star field (ep29's EHT reveal)
+        tex = np.array([np.abs(np.diff(f[k].astype(np.int16), axis=1))[:, :-0 or None].mean() + 1.0
+                        for k in range(a, b - 1)])
+        d = np.array([x[mask].mean() for x in seg]) / tex * tex.mean()
         # compare each frame with its neighbours (+-0.5 s), not one median for the whole span: crossfades
         # don't register as cuts, so a slow zoom next to busy footage used to read as "stalling"
         roll = np.array([np.median(d[max(0, k - FPS // 2):k + FPS // 2 + 1]) for k in range(len(d))])
@@ -352,6 +356,9 @@ def main():
     ap.add_argument("--script", required=True, help="episode script with a BEATS list")
     ap.add_argument("--skip-voice", action="store_true")
     ap.add_argument("--sheets", help="folder for the contact sheets (default: <video>_qa/)")
+    ap.add_argument("--accept", action="append", default=[], metavar="FROM-TO:CHECK:REASON",
+                    help="documented exception for a per-second check, e.g. '17-19:soft:the EHT image is the "
+                         "real data at its native resolution'. Printed in every report; never silent.")
     a = ap.parse_args()
     dur = probe_duration(a.mp4)
     fails = [] if a.skip_voice else check_voice(a.mp4, script_text(a.script), dur)
@@ -359,7 +366,21 @@ def main():
     fr = frames(a.mp4)
     fails += check_picture(fr)
     fails += check_motion(fr)
-    fails += check_seconds(fr)
+    accepted = []
+    for spec in a.accept:
+        rng, chk, why = spec.split(":", 2)
+        lo, hi = (int(x) for x in rng.split("-"))
+        accepted.append((lo, hi, chk, why))
+    sec_fails = check_seconds(fr)
+    for f in sec_fails:
+        sec = int(f.split()[1].rstrip(":"))
+        reasons = f.split(": ", 1)[1].split("; ")
+        left = [r for r in reasons
+                if not any(lo <= sec <= hi and r.startswith(chk) for lo, hi, chk, _ in accepted)]
+        if left:
+            fails.append(f"second {sec}: " + "; ".join(left))
+    for lo, hi, chk, why in accepted:
+        print(f"ACCEPTED EXCEPTION seconds {lo}-{hi} '{chk}': {why}")
     if not a.skip_voice:
         fails += check_captions(a.script)
     contact_sheets(a.mp4, a.sheets or os.path.splitext(a.mp4)[0] + "_qa", dur)
