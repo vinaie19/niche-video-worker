@@ -59,7 +59,11 @@ def script_text(path):
             for d in node.value.elts:
                 if isinstance(d, ast.Call):
                     for kw in d.keywords:
-                        if kw.arg == "text" and isinstance(kw.value, ast.Constant):
+                        # the written form (caption_text, e.g. "26,000") is what Whisper prints, so prefer it
+                        kws = {k.arg: k.value for k in d.keywords if isinstance(k.value, ast.Constant)}
+                        if kw.arg == "text" and "caption_text" not in kws and isinstance(kw.value, ast.Constant):
+                            out.append(kw.value.value)
+                        if kw.arg == "caption_text" and isinstance(kw.value, ast.Constant):
                             out.append(kw.value.value)
                 elif isinstance(d, ast.Dict):
                     for k, v in zip(d.keys, d.values):
