@@ -48,6 +48,7 @@ VO_DELAY = 0.05
 VOICE = "en-US-AndrewMultilingualNeural"
 XF = 0.3
 LY = 26000
+COUNTER_START = 0.0  # version B starts the countdown after the caption has said "26,000 light-years"
 
 BEATS = [
     dict(text="This is a trip to the black hole at the center of our galaxy.",
@@ -167,10 +168,12 @@ class Film:
             F.draw().ellipse((x - r, y - r, x + r, y + r), outline=R.AMBER + (int(230 * ra),), width=7)
         if i < 2 and (i == cur or cur == 2):
             ca = 1.0 if i == cur else k
-            u = min(1.0, t / self.bounds[2])
-            ly = int(round(LY * (1.0 - u) ** 1.6 / 10.0)) * 10
-            F.label(f"{ly:,}", W / 2, 1400, 130, (255, 255, 255), ca)
-            F.label("LIGHT-YEARS TO GO", W / 2, 1510, 50, R.AMBER, ca)
+            if t >= COUNTER_START:
+                u = min(1.0, (t - COUNTER_START) / (self.bounds[2] - COUNTER_START))
+                ly = int(round(LY * (1.0 - u) ** 1.6 / 10.0)) * 10
+                ca *= R.ramp(t, COUNTER_START, 0.2) if COUNTER_START > 0 else 1.0
+                F.label(f"{ly:,}", W / 2, 1400, 130, (255, 255, 255), ca)
+                F.label("LIGHT-YEARS TO GO", W / 2, 1510, 50, R.AMBER, ca)
 
     def frame(self, t):
         st = self.st
