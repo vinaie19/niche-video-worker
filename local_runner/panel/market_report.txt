@@ -1,0 +1,72 @@
+3660 Shorts from 62 channels; 1515 space Shorts from 50 channels (median >= 500 views) analysed
+breakout = top 10% = >= 3.9x the channel's median
+
+TOPIC                  Shorts median x breakout rate
+  extreme objects          78     1.14          14%  (1.4x the average)
+  scale / size            142     1.15          13%  (1.3x the average)
+  what if / danger         87     1.17          11%  (1.1x the average)
+  astronauts / NASA       244     1.00          10%  (1.0x the average)
+  solar system            645     1.05          10%  (1.0x the average)
+  galaxy / universe       352     1.00           8%  (0.8x the average)
+  alien / mystery          62     0.75           3%  (0.3x the average)
+
+TITLE PATTERN          Shorts median x breakout rate
+  superlative              82     1.33          15%  (1.5x the average)
+  has a number            362     1.03          12%  (1.2x the average)
+  emoji                   335     1.00          11%  (1.1x the average)
+  what if / would          74     1.14          11%  (1.1x the average)
+  talks to 'you'           86     1.04           9%  (0.9x the average)
+  hashtags in title       828     1.00           9%  (0.9x the average)
+  question (?)            328     1.01           9%  (0.9x the average)
+  comparison               48     0.88           8%  (0.8x the average)
+  ALL-CAPS word           263     1.00           8%  (0.8x the average)
+
+FORMAT (from title)    Shorts median x breakout rate
+  journey / zoom / flight     57     1.35          26%  (2.6x the average)
+  real footage / caught on camera     27     0.97          22%  (2.2x the average)
+  news / event            157     1.19          16%  (1.6x the average)
+  size comparison         113     1.11          13%  (1.3x the average)
+  explainer (why/how/what is)    152     1.03          10%  (1.0x the average)
+  visualized / simulation / 3D    149     1.00           8%  (0.8x the average)
+
+TOP 40 BREAKOUT SPACE SHORTS (views vs that channel's median):
+  1363.6x   15,000,000  Total Solar Eclipse 2024: Time to Get in Line  [NASA Goddard]
+   509.1x    5,600,000  Flight from the Earth to the Milky Way Black Hole  [European Southern Obse]
+   222.2x    2,000,000  What are you afraid of? 🫣 #FramedByExistence Sponsored by @audible Original, The  [BBC Earth Science]
+   174.2x    2,700,000  Wow! Tesla 'Flying' Roadster with SpaceX Thrusters 🚀 #tesla #spacex #roadster #f  [VideoFromSpace]
+    96.8x    1,500,000  Incredible! Starship Survives Splashdown 🌊🚀 Flight 13 Views #SpaceX #Starship #R  [VideoFromSpace]
+    90.3x    1,400,000  SpaceX to Catch Starship on Flight 15?! 🚀 #SpaceX #Starship #Flight15 #space #sh  [VideoFromSpace]
+    88.2x    1,500,000  OSIRIS-REx Sample Collection at Asteroid Bennu: SamCam View of TAGSAM  [NASA Video]
+    75.9x    1,100,000  Sagittarius A* Black Hole Nears Cosmic Speed Limit #space #sciencetime #blackhol  [Science Time]
+    71.8x      646,000  5 ways to protect the planet 🌍  [BBC Earth Science]
+    70.6x    1,200,000  NASA Camera Catches Moon 'Photobombing' Earth  [NASA Video]
+    63.5x    3,300,000  What If You Grew 1cm Every Second? #Titan #Giant #Space #Shorts  [What If]
+    62.1x    2,700,000  Can a Moon Orbit in a Square? Yes! #shorts  [The Science Asylum]
+    58.3x      903,000  Whoa! Starlink V3 Satellites Deploy From Starship  🛰️🤯 #Starship #Starlink #Spac  [VideoFromSpace]
+    44.8x    1,300,000  Sunlight shifts across Earth as the seasons change.  [Cosmoknowledge]
+    40.6x      630,000  SpaceX Launches Starship Megarocket on Flight 13! 🚀 #SpaceX #Starship #RocketLau  [VideoFromSpace]
+    28.5x    4,800,000  planet bouncing | Solar System Planet Size Comparison 3D #animation #universesiz  [indian gravity]
+    27.7x      402,000  Our Universe is Merging With Baby Universes #multiverse #space #universe  [Science Time]
+    27.6x    1,200,000  We Can’t Measure Distance in Outer Space! #shorts  [The Science Asylum]
+    26.8x      416,000  Wow! Artemis II Launch Supercut 🚀 New footage #artemis2 #nasa #launch #space #sh  [VideoFromSpace]
+    25.3x    9,100,000  The Gravity Illusion  [Astrum]
+    23.4x      339,000  Last Words of Opportunity Mars Rover 😢  [Mr Scientific]
+    22.8x       89,000  What is a Black Hole Bomb?  #astronomy #blackhole #energy #cosmology #physics #p  [morn1415]
+    22.5x       89,000  Why Does the Moon Always Show the Same Face? #shorts  [Insane Curiosity]
+    21.3x      213,000  What If Evolution Started Before Life Existed?  [Astrum Extra]
+    21.2x    3,400,000  ⚠️Saturn's Rings Disappearing  [SciCo]
+    20.5x      348,000  Pluto Through Stained Glass: A Movie from the Edge of the Solar System  [NASA Video]
+    20.0x    3,200,000  Real Gravity Visualized!  [SciCo]
+    18.4x    3,100,000  planet dropping | Solar System Planet Size Comparison 3D #animation  #planet #st  [indian gravity]
+    18.4x      285,000  SpaceX Starship launches to orbit 🚀 #spacex #starship #orbit #flight14 #space #s  [VideoFromSpace]
+    17.5x    2,800,000  Biggest PROOF of Alien Life Found?  [SciCo]
+    17.2x      293,000  OSIRIS-REx Aftermath of Sample Collection at Asteroid Bennu: SamCam View  [NASA Video]
+    17.1x   12,000,000  How Small Is DNA? 💀🧬 #Shorts #Space #Astronomy #Biology #Universe #Earth  [Science Of Infinity]
+    17.0x      187,000  Total Solar Eclipse 2024: Whose Big Day Is It?  [NASA Goddard]
+    15.5x      264,000  NASA's SDO Sees Unraveling Solar Prominence  [NASA Video]
+    15.1x      234,000  Wow! SpaceX Starship Stage Separation 🚀🤯 #epic #spacex #starship #flight14 #spac  [VideoFromSpace]
+    15.0x    5,400,000  The Largest Eruption on Earth Ever Caught on Camera  [Astrum]
+    14.8x    4,500,000  The Moon's Orbit from Earth! | KLT  [KLT]
+    14.2x    5,100,000  The Tragic Final Moments of NASA's Cassini  [Astrum]
+    13.8x    4,200,000  "I feel so small compared to the planets!" | KLT #shorts  [KLT]
+    13.6x    6,400,000  EVERY Star Wars Ship has one of these.  [Corridor Crew]
