@@ -48,9 +48,9 @@ VO_DELAY = 0.05
 VOICE = "en-US-AndrewMultilingualNeural"
 XF = 0.3
 LY = 26000
-COUNTER_START = 0.0
+COUNTER_START = 0.0  # seconds before the countdown appears (0: it is the frame-1 hook, owner 4 Nov)
 REVEAL_S = 2.0  # owner: the real photo on screen for at most 2 s
-FLIGHT = os.environ.get("FLIGHT", "1") == "1"  # 3D star-field flight over the journey (owner approved, 4 Nov)  # version B starts the countdown after the caption has said "26,000 light-years"
+FLIGHT = os.environ.get("FLIGHT", "1") == "1"  # 3D star-field flight over the journey (owner approved, 4 Nov)
 
 BEATS = [
     dict(text="This is a trip to the black hole at the center of our galaxy.",
