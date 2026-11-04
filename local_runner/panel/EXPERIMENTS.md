@@ -5,4 +5,4 @@ Fixed for all experiments: 7 PM IST post, 15-25 s, Andrew voice, one text layer,
 
 | # | Short | Hypothesis (before posting) | Predicted stayed % | Real 1 h | Real 14 h | Verdict |
 |---|---|---|---|---|---|---|
-| 1 | Flying to the Biggest Black Hole in Our Galaxy (sci_ep29_sgra, version B with word-synced captions, posted Wed 4 Nov 2026 7 PM IST) | Journey/zoom from frame 1 (market 2.6x) + extreme object (ours ~54%) + captions for muted viewers beats the recent solar-system Shorts (~37%). Decided by Claude (owner handed the call over) | >= 50% | | | |
+| 1 | Flying to the Biggest Black Hole in Our Galaxy (sci_ep29_sgra, version B with word-synced captions, posted Wed 4 Nov 2026 7 PM IST) | Journey/zoom from frame 1 (market 2.6x) + extreme object (ours ~54%) + captions for muted viewers beats the recent solar-system Shorts (~37%). Decided by Claude (owner handed the call over) | >= 50% | 3-4 h: 216 views, 45.8% stayed, 87.7% viewed, 8 likes | | Partly: +8 pts stayed vs the last two Shorts (37.6%, 37.5%), inside the channel range (45-54%) but below the 50% target; retention strong. Opening line was descriptive, not a hook |
