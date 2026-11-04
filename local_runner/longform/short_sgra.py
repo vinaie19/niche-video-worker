@@ -146,7 +146,7 @@ class Film:
             v, _ = still("vista", vista_k(1.0), *VISTA_CORE)
             self.bg = np.asarray(v).astype(np.float32) * 0.6
         k0 = max(W / PH["eht"].width, H / PH["eht"].height)
-        kk = k0 * math.exp(R.lerp(math.log(0.55), math.log(1.10), u))  # grows steadily (2x) to the last frame
+        kk = k0 * 0.80  # owner (4 Nov): hold the real photo still so viewers can actually see it (whole ring visible)
         im, _ = still("eht", kk, 0.5, 0.5)
         return Image.fromarray(ring_composite(im, self.bg, kk)), (W / 2, H / 2)
 

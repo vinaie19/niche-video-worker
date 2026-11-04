@@ -35,6 +35,13 @@ FPS = 30
 WORDS = []   # (word, start, end) from Whisper, filled by check_voice
 AUDIO_DB = None  # level of every 0.1 s of audio, filled by check_audio
 TRANSITIONS = []  # times (s) of cuts and crossfades, filled by check_motion, for the transition sheets
+ACCEPT = []  # (from_s, to_s, check, reason) from --accept: documented exceptions, printed in every report
+
+
+def accepted(sec, check):
+    return any(lo <= sec <= hi and chk in check for lo, hi, chk, _ in ACCEPT)
+
+
 SW, SH = 540, 960  # half resolution: sub-pixel stepping is still visible, memory stays ~300 MB
 
 
@@ -153,7 +160,8 @@ def check_motion(f):
         # don't register as cuts, so a slow zoom next to busy footage used to read as "stalling"
         roll = np.array([np.median(d[max(0, k - FPS // 2):k + FPS // 2 + 1]) for k in range(len(d))])
         ref = np.maximum(roll, 0.3 * np.median(d))  # a long hold still fails: its neighbours are still too
-        stalled = (d < 0.35 * ref).mean()  # frames where the moving part barely moves
+        keep = np.array([not accepted(int((a + j) / FPS), "judder") for j in range(len(d))])  # documented holds
+        stalled = (d < 0.35 * ref)[keep].mean() if keep.any() else 0.0  # frames where the moving part barely moves
         if stalled > 0.12:
             fails.append(f"judder {a / FPS:.1f}-{b / FPS:.1f}s: {stalled:.0%} of frames stall inside a moving shot")
     # repeated shots: compare each shot's middle frame at low resolution
@@ -206,7 +214,8 @@ def check_picture(f):
     for k in range(1, len(f)):
         same = same + 1 if np.array_equal(f[k], f[k - 1]) else 0
         if same == 6:  # 0.2 s of identical frames
-            fails.append(f"frozen video around {k / FPS:.1f}s")
+            if not accepted(int(k / FPS), "frozen"):
+                fails.append(f"frozen video around {k / FPS:.1f}s")
     return fails
 
 
@@ -360,26 +369,24 @@ def main():
                     help="documented exception for a per-second check, e.g. '17-19:soft:the EHT image is the "
                          "real data at its native resolution'. Printed in every report; never silent.")
     a = ap.parse_args()
+    for spec in a.accept:
+        rng, chk, why = spec.split(":", 2)
+        lo, hi = (int(x) for x in rng.split("-"))
+        ACCEPT.append((lo, hi, chk, why))
     dur = probe_duration(a.mp4)
     fails = [] if a.skip_voice else check_voice(a.mp4, script_text(a.script), dur)
     fails += check_audio(a.mp4, dur)
     fr = frames(a.mp4)
     fails += check_picture(fr)
     fails += check_motion(fr)
-    accepted = []
-    for spec in a.accept:
-        rng, chk, why = spec.split(":", 2)
-        lo, hi = (int(x) for x in rng.split("-"))
-        accepted.append((lo, hi, chk, why))
     sec_fails = check_seconds(fr)
     for f in sec_fails:
         sec = int(f.split()[1].rstrip(":"))
         reasons = f.split(": ", 1)[1].split("; ")
-        left = [r for r in reasons
-                if not any(lo <= sec <= hi and r.startswith(chk) for lo, hi, chk, _ in accepted)]
+        left = [r for r in reasons if not accepted(sec, r)]
         if left:
             fails.append(f"second {sec}: " + "; ".join(left))
-    for lo, hi, chk, why in accepted:
+    for lo, hi, chk, why in ACCEPT:
         print(f"ACCEPTED EXCEPTION seconds {lo}-{hi} '{chk}': {why}")
     if not a.skip_voice:
         fails += check_captions(a.script)
