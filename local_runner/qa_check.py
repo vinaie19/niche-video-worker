@@ -206,7 +206,8 @@ def check_audio(mp4, duration):
 def check_picture(f):
     """Every frame: mostly-dark/empty screens and frozen video."""
     fails = []
-    dark = [k for k in range(len(f)) if (f[k] < 22).mean() > 0.45]  # >45% of the screen near-black
+    dark = [k for k in range(len(f)) if (f[k] < 22).mean() > 0.45  # >45% of the screen near-black
+            and not accepted(int(k / FPS), "dark")]
     if dark:
         secs = sorted({round(k / FPS, 1) for k in dark})
         fails.append(f"mostly dark/empty screen at {len(secs)} moments, e.g. {secs[:8]}s (rule: full-frame imagery)")

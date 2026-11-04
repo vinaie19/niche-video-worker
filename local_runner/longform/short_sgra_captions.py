@@ -84,7 +84,7 @@ def main():
         cap = next((c for c, a, b in caps if a <= tt < b), None)
         if cap and tt < total - 0.3:  # clear before the loop dissolve
             F = R.Frame(); F.im = im
-            y = CAP_Y if tt < st[4][0] else 330  # during the reveal, captions sit above the photo, never on it
+            y = CAP_Y if tt < film.reveal_t() else 300  # during the reveal, captions sit above the photo, never on it
             F.label(cap, G.W / 2, y, G.fit(cap, CAP_SIZE), (255, 255, 255), 1.0)
             im = F.rgb()
         return im

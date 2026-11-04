@@ -48,7 +48,8 @@ VO_DELAY = 0.05
 VOICE = "en-US-AndrewMultilingualNeural"
 XF = 0.3
 LY = 26000
-COUNTER_START = 0.0  # version B starts the countdown after the caption has said "26,000 light-years"
+COUNTER_START = 0.0
+REVEAL_S = 2.0  # owner: the real photo on screen for at most 2 s  # version B starts the countdown after the caption has said "26,000 light-years"
 
 BEATS = [
     dict(text="This is a trip to the black hole at the center of our galaxy.",
@@ -132,23 +133,25 @@ class Film:
         self.trail, self.trail_k = None, -1
         self.open_bg = None
 
-    def zoom_e(self, t):  # 0..1 across beats 1-4: one steady dive (log-zoom at constant speed), no easing
-        a = self.bounds[4] + XF  # keeps moving under the crossfade into the reveal
+    def reveal_t(self):  # owner (4 Nov): the real photo for at most 2 s, on black, at the very end
+        return self.total - REVEAL_S
+
+    def zoom_e(self, t):  # 0..1: one steady dive (log-zoom at constant speed) right up to the reveal
+        a = self.reveal_t() + XF  # keeps moving under the crossfade into the reveal
         return min(1.0, max(0.0, t / a))
 
     def picture(self, i, t):
-        if i < 4:
-            return still("vista", vista_k(self.zoom_e(t)), *VISTA_CORE)
-        # the reveal: the EHT image over the same star field, growing slowly
-        s0 = self.bounds[4]
-        u = min(1.0, max(0.0, (t - s0) / (self.total - s0)))
-        if self.bg is None:
-            v, _ = still("vista", vista_k(1.0), *VISTA_CORE)
-            self.bg = np.asarray(v).astype(np.float32) * 0.6
+        dive = still("vista", vista_k(self.zoom_e(t)), *VISTA_CORE)
+        r0 = self.reveal_t()
+        if t < r0:
+            return dive
+        # the reveal: the real EHT image held still on black (owner, 4 Nov), the whole ring visible
         k0 = max(W / PH["eht"].width, H / PH["eht"].height)
-        kk = k0 * 0.80  # owner (4 Nov): hold the real photo still so viewers can actually see it (whole ring visible)
+        kk = k0 * 0.80
         im, _ = still("eht", kk, 0.5, 0.5)
-        return Image.fromarray(ring_composite(im, self.bg, kk)), (W / 2, H / 2)
+        if t < r0 + XF:
+            im = Image.blend(dive[0], im, R.sm((t - r0) / XF))
+        return im, (W / 2, H / 2)
 
     def overlays(self, F, i, t, k, ring):
         if TOP[i] and k > 0.01:
@@ -160,11 +163,11 @@ class Film:
         # ring and countdown run straight across beat changes: drawn once, solid, by the current beat; they
         # only fade where they end (counter at beat 3, ring into the reveal). Fading them per beat made them blink.
         cur = max(j for j in range(len(self.st)) if self.st[j][0] <= t or j == 0)
-        if i < 4 and (i == cur or cur == 4):
+        if i == cur and t < self.reveal_t():  # one ring for the whole dive, fading just before the reveal
             e = self.zoom_e(t)
             r = 60 + 70 * e
             x, y = ring
-            ra = 1.0 if i == cur else k
+            ra = 1.0 - R.ramp(t, self.reveal_t() - 0.25, 0.25)
             F.draw().ellipse((x - r, y - r, x + r, y + r), outline=R.AMBER + (int(230 * ra),), width=7)
         if i < 2 and (i == cur or cur == 2):
             ca = 1.0 if i == cur else k
@@ -182,7 +185,7 @@ class Film:
         F = R.Frame()
         im, ring = self.picture(i, t)
         F.im = im
-        cross = i == 4 and t < s0 + XF  # the dive is one continuous shot; only the reveal crossfades
+        cross = False  # the dive is one continuous shot; picture() crossfades into the reveal itself
         if cross:
             prev, pring = self.picture(i - 1, t)
             F.im = Image.blend(prev, F.im, R.sm((t - s0) / XF))
