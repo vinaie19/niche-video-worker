@@ -70,8 +70,10 @@ def main():
         st.append((t, t + d)); t += d + b["pause_ms"] / 1000.0
     total = t + 0.7
     caps = chunks(word_times())
-    # the countdown starts once "26,000 light-years" has been said, so two different numbers never share the screen
-    G.COUNTER_START = next(a for c, a, b in caps if c.startswith("THROUGH"))
+    # owner (4 Nov): the countdown is the hook, so it runs from frame 1. The caption chunks that say the distance
+    # are dropped while the counter is on screen, so two different numbers never share the screen.
+    G.COUNTER_START = 0.0
+    caps = [c for c in caps if c[0] not in ("26,000", "LIGHT-YEARS")]
     print("captions:", [(c, round(a, 2)) for c, a, _ in caps])
     G.TOP = [None] * len(G.BEATS)  # one text system: captions only (countdown + ring remain as graphics)
     film = G.Film(st, total)
