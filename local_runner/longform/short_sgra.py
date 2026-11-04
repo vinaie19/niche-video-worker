@@ -296,12 +296,18 @@ def align_srt(mp4, srt):
     def norm(w):
         return re.sub(r"[^a-z0-9]", "", w.lower())
     res = whisper.load_model("small").transcribe(mp4, word_timestamps=True, language="en")
-    heard = [(norm(w["word"]), w["start"], w["end"]) for sgm in res["segments"] for w in sgm["words"]]
+    heard = []
+    for sgm in res["segments"]:
+        for w in sgm["words"]:
+            if heard and re.fullmatch(r"\s*,\d+[.,]?\s*", w["word"]):  # Whisper splits "26,000" into "26" ",000"
+                heard[-1] = (heard[-1][0] + norm(w["word"]), heard[-1][1], w["end"])
+            else:
+                heard.append((norm(w["word"]), w["start"], w["end"]))
     phrases = [p for b in BEATS for p in b["phrases"]]
     starts, k = [], 0
     for ph in phrases:
         first = norm(ph.split()[0])
-        j = next((j for j in range(k, min(k + 8, len(heard))) if heard[j][0] == first), None)
+        j = next((j for j in range(k, min(k + 16, len(heard))) if heard[j][0] == first), None)
         starts.append(heard[j][1] if j is not None else None)
         if j is not None:
             k = j + 1
