@@ -49,7 +49,8 @@ VOICE = "en-US-AndrewMultilingualNeural"
 XF = 0.3
 LY = 26000
 COUNTER_START = 0.0
-REVEAL_S = 2.0  # owner: the real photo on screen for at most 2 s  # version B starts the countdown after the caption has said "26,000 light-years"
+REVEAL_S = 2.0  # owner: the real photo on screen for at most 2 s
+FLIGHT = os.environ.get("FLIGHT", "1") == "1"  # 3D star-field flight over the journey (owner approved, 4 Nov)  # version B starts the countdown after the caption has said "26,000 light-years"
 
 BEATS = [
     dict(text="This is a trip to the black hole at the center of our galaxy.",
@@ -130,6 +131,7 @@ class Film:
         self.first = None
         self.under = None
         self.bg = None
+        self.sf = None
         self.trail, self.trail_k = None, -1
         self.open_bg = None
 
@@ -140,8 +142,30 @@ class Film:
         a = self.reveal_t() + XF  # keeps moving under the crossfade into the reveal
         return min(1.0, max(0.0, t / a))
 
+    def flight(self, t, dive):
+        """Add the 3D star-field flight (parallax) on top of the real destination image; it slows and fades
+        out as we arrive, just before the reveal."""
+        if self.sf is None:
+            import starflight
+            self.sf = starflight.StarFlight()
+        # the journey is beats 1-2 ("...all the way to the center"): full speed, then braking to a stop on
+        # arrival, matching the countdown reaching 0; beats 3-4 are a calm push-in on the core
+        r0 = self.bounds[2]
+        u = min(1.0, t / r0)
+        sp0 = 0.6
+        dist = sp0 * FPS * r0 * (u - 0.5 * u ** 4)          # speed sp0 * (1 - 2u^3): fast, then brakes late
+        speed = max(0.0, sp0 * (1 - 2 * u ** 3))
+        a = 1.0 - R.ramp(t, r0 - 0.5, 0.8)                 # the streaks fade as we arrive
+        if a <= 0.01:
+            return dive
+        st = self.sf.layer(dist, speed, *dive[1]).astype(np.float32) * 0.9 * a
+        out = np.clip(np.asarray(dive[0]).astype(np.float32) * 0.85 + st, 0, 255).astype(np.uint8)
+        return Image.fromarray(out), dive[1]
+
     def picture(self, i, t):
         dive = still("vista", vista_k(self.zoom_e(t)), *VISTA_CORE)
+        if FLIGHT:
+            dive = self.flight(t, dive)
         r0 = self.reveal_t()
         if t < r0:
             return dive
