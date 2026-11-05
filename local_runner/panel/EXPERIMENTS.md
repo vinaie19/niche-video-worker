@@ -6,6 +6,7 @@ Fixed for all experiments: 7 PM IST post, 15-25 s, Andrew voice, one text layer,
 | # | Short | Hypothesis (before posting) | Predicted stayed % | Real 1 h | Real 14 h | Verdict |
 |---|---|---|---|---|---|---|
 | 1 | Flying to the Biggest Black Hole in Our Galaxy (sci_ep29_sgra, version B with word-synced captions, posted Wed 4 Nov 2026 7 PM IST) | Journey/zoom from frame 1 (market 2.6x) + extreme object (ours ~54%) + captions for muted viewers beats the recent solar-system Shorts (~37%). Decided by Claude (owner handed the call over) | >= 50% | 3-4 h: 216 views, 45.8% stayed, 87.7% viewed, 8 likes | ~12 h: 1,162 views, 55.0% stayed, 86.6% viewed, 27 likes | CONFIRMED (55% >= 50%): best stayed since ep14-era; views on track with our top Shorts. Opening line still descriptive (YouTube flagged it) |
+| 2 | Flying Into the Crab Nebula (sci_ep30_crab, Fri 6 Nov 2026 7 PM IST) | Flight style the owner rated "too good" (colour-rich real image + 3D star parallax) + extreme object (neutron star, ~60% on our channel) + hook text at 0.0 s ("IN THE YEAR 1054 / A STAR EXPLODED") beats experiment 1 (55%) | >= 55% | | | |
 
 ## Proven style to keep in the mix (owner, 5 Nov 2026)
 
