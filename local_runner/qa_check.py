@@ -46,6 +46,7 @@ SW, SH = 540, 960  # half resolution: sub-pixel stepping is still visible, memor
 
 
 def words(text):
+    text = re.sub(r"(?<=\d),(?=\d{3})", "", text)  # "6,500" and Whisper's "6500" are the same word
     return re.findall(r"[a-z0-9']+", text.lower().replace("’", "'"))
 
 

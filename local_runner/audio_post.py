@@ -437,7 +437,10 @@ def _concat_wavs(wav_paths: list[str], output_wav: str) -> str:
 
 
 def _trim_trailing_silence(wav_path: str, tail_duration_ms: float = 150) -> str:
-    """Trim trailing silence, keeping tail_duration_ms of silence as buffer. Returns trimmed path."""
+    """Trim trailing silence, keeping tail_duration_ms of silence as buffer. Returns trimmed path.
+
+    The threshold is -55 dB and 0.12 s of the detected tail is kept: at -40 dB the trim cut soft word endings
+    ("-ty" in "city", the "d" in "wide"), so the last word of a line was lost (ep29, ep30)."""
     tail_s = max(0.01, tail_duration_ms / 1000.0)
     trimmed = wav_path.replace('.wav', '_trimmed.wav')
     subprocess.run(
@@ -447,7 +450,8 @@ def _trim_trailing_silence(wav_path: str, tail_duration_ms: float = 150) -> str:
             "-i",
             wav_path,
             "-af",
-            f"areverse,silenceremove=start_periods=1:start_duration=0.1:start_threshold=-40dB,areverse,apad=pad_dur={tail_s}",
+            f"areverse,silenceremove=start_periods=1:start_duration=0.1:start_threshold=-55dB:start_silence=0.12,"
+            f"areverse,apad=pad_dur={tail_s}",
             trimmed,
         ],
         check=True,
