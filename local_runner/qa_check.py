@@ -35,6 +35,13 @@ FPS = 30
 WORDS = []   # (word, start, end) from Whisper, filled by check_voice
 AUDIO_DB = None  # level of every 0.1 s of audio, filled by check_audio
 TRANSITIONS = []  # times (s) of cuts and crossfades, filled by check_motion, for the transition sheets
+ACCEPT = []  # (from_s, to_s, check, reason) from --accept: documented exceptions, printed in every report
+
+
+def accepted(sec, check):
+    return any(lo <= sec <= hi and chk in check for lo, hi, chk, _ in ACCEPT)
+
+
 SW, SH = 540, 960  # half resolution: sub-pixel stepping is still visible, memory stays ~300 MB
 
 
@@ -59,7 +66,11 @@ def script_text(path):
             for d in node.value.elts:
                 if isinstance(d, ast.Call):
                     for kw in d.keywords:
-                        if kw.arg == "text" and isinstance(kw.value, ast.Constant):
+                        # the written form (caption_text, e.g. "26,000") is what Whisper prints, so prefer it
+                        kws = {k.arg: k.value for k in d.keywords if isinstance(k.value, ast.Constant)}
+                        if kw.arg == "text" and "caption_text" not in kws and isinstance(kw.value, ast.Constant):
+                            out.append(kw.value.value)
+                        if kw.arg == "caption_text" and isinstance(kw.value, ast.Constant):
                             out.append(kw.value.value)
                 elif isinstance(d, ast.Dict):
                     for k, v in zip(d.keys, d.values):
@@ -140,12 +151,17 @@ def check_motion(f):
         mask = np.max(np.stack(seg), axis=0) > 4  # only the pixels that move in this shot
         if mask.mean() < 0.002:
             continue  # a still shot
-        d = np.array([x[mask].mean() for x in seg])
+        # motion relative to the frame's own detail: a smooth, blurry image that moves correctly changes few
+        # pixels, so raw differences made it look 'stalled' next to a sharp star field (ep29's EHT reveal)
+        tex = np.array([np.abs(np.diff(f[k].astype(np.int16), axis=1))[:, :-0 or None].mean() + 1.0
+                        for k in range(a, b - 1)])
+        d = np.array([x[mask].mean() for x in seg]) / tex * tex.mean()
         # compare each frame with its neighbours (+-0.5 s), not one median for the whole span: crossfades
         # don't register as cuts, so a slow zoom next to busy footage used to read as "stalling"
         roll = np.array([np.median(d[max(0, k - FPS // 2):k + FPS // 2 + 1]) for k in range(len(d))])
         ref = np.maximum(roll, 0.3 * np.median(d))  # a long hold still fails: its neighbours are still too
-        stalled = (d < 0.35 * ref).mean()  # frames where the moving part barely moves
+        keep = np.array([not accepted(int((a + j) / FPS), "judder") for j in range(len(d))])  # documented holds
+        stalled = (d < 0.35 * ref)[keep].mean() if keep.any() else 0.0  # frames where the moving part barely moves
         if stalled > 0.12:
             fails.append(f"judder {a / FPS:.1f}-{b / FPS:.1f}s: {stalled:.0%} of frames stall inside a moving shot")
     # repeated shots: compare each shot's middle frame at low resolution
@@ -190,7 +206,8 @@ def check_audio(mp4, duration):
 def check_picture(f):
     """Every frame: mostly-dark/empty screens and frozen video."""
     fails = []
-    dark = [k for k in range(len(f)) if (f[k] < 22).mean() > 0.45]  # >45% of the screen near-black
+    dark = [k for k in range(len(f)) if (f[k] < 22).mean() > 0.45  # >45% of the screen near-black
+            and not accepted(int(k / FPS), "dark")]
     if dark:
         secs = sorted({round(k / FPS, 1) for k in dark})
         fails.append(f"mostly dark/empty screen at {len(secs)} moments, e.g. {secs[:8]}s (rule: full-frame imagery)")
@@ -198,7 +215,8 @@ def check_picture(f):
     for k in range(1, len(f)):
         same = same + 1 if np.array_equal(f[k], f[k - 1]) else 0
         if same == 6:  # 0.2 s of identical frames
-            fails.append(f"frozen video around {k / FPS:.1f}s")
+            if not accepted(int(k / FPS), "frozen"):
+                fails.append(f"frozen video around {k / FPS:.1f}s")
     return fails
 
 
@@ -348,14 +366,29 @@ def main():
     ap.add_argument("--script", required=True, help="episode script with a BEATS list")
     ap.add_argument("--skip-voice", action="store_true")
     ap.add_argument("--sheets", help="folder for the contact sheets (default: <video>_qa/)")
+    ap.add_argument("--accept", action="append", default=[], metavar="FROM-TO:CHECK:REASON",
+                    help="documented exception for a per-second check, e.g. '17-19:soft:the EHT image is the "
+                         "real data at its native resolution'. Printed in every report; never silent.")
     a = ap.parse_args()
+    for spec in a.accept:
+        rng, chk, why = spec.split(":", 2)
+        lo, hi = (int(x) for x in rng.split("-"))
+        ACCEPT.append((lo, hi, chk, why))
     dur = probe_duration(a.mp4)
     fails = [] if a.skip_voice else check_voice(a.mp4, script_text(a.script), dur)
     fails += check_audio(a.mp4, dur)
     fr = frames(a.mp4)
     fails += check_picture(fr)
     fails += check_motion(fr)
-    fails += check_seconds(fr)
+    sec_fails = check_seconds(fr)
+    for f in sec_fails:
+        sec = int(f.split()[1].rstrip(":"))
+        reasons = f.split(": ", 1)[1].split("; ")
+        left = [r for r in reasons if not accepted(sec, r)]
+        if left:
+            fails.append(f"second {sec}: " + "; ".join(left))
+    for lo, hi, chk, why in ACCEPT:
+        print(f"ACCEPTED EXCEPTION seconds {lo}-{hi} '{chk}': {why}")
     if not a.skip_voice:
         fails += check_captions(a.script)
     contact_sheets(a.mp4, a.sheets or os.path.splitext(a.mp4)[0] + "_qa", dur)
