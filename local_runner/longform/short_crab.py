@@ -139,9 +139,13 @@ class Film:
     def webb(self, t):
         # 2) deeper through the filaments: Webb from the inner nebula down to 1:1 pixels; streaks fade as we arrive
         u = min(1.0, max(0.0, (t - self.t_webb) / (self.t_heart - self.t_webb)))
-        kk = 0.30 * math.exp(math.log(1.1 / 0.30) * u)
-        a = max(0.0, 1 - u * 1.3)
-        img = still("webb", kk, *WEBB_C)
+        # starts at the same apparent scale as the mosaic's last frame (~16% of the nebula across the screen;
+        # owner: starting wider made the cut lurch backwards and read as too fast), then a gentle 1.7x push
+        kk = 0.64 * math.exp(math.log(1.1 / 0.64) * u)
+        a = max(0.0, 0.6 - u * 1.2)
+        # start on the colourful filaments and drift onto the heart as we push in
+        e = R.sm(u)
+        img = still("webb", kk, R.lerp(0.50, WEBB_C[0], e), R.lerp(0.47, WEBB_C[1], e))
         if a > 0.01:
             img = img + self.sf.layer(self.dist_webb(t), 0.3 * a).astype(np.float32) * 0.85 * a
         return img
