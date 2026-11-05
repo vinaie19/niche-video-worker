@@ -33,8 +33,14 @@ The owner called the Crab flight preview "too good": rich colours and nice movem
 - Static photos, flat zooms into one image, soft or upscaled shots, dim or low-contrast images (Io infrared, X-ray-only
   footage), shots carried by a caveat.
 
-**Flight-style topic queue** (extreme subject + stunning real imagery; each subject different; other formats are
-planned alongside as their own experiments)
+**Mix plan (owner, 5 Nov): not every Short is a flight.** Roughly alternate: a flight-style Short, then a new format
+tested as its own experiment. New formats to try, with the same quality bar (colourful, moving, real):
+- Real footage of an extreme event (e.g. NASA SDO's biggest solar flares, a rocket launch seen from orbit)
+- Size comparison stack (e.g. Earth to the biggest known star), built from real images
+- Timely event (a new Webb or Hubble release in the news that week)
+- Then and now (the same object photographed decades apart, e.g. Hubble 1995 vs Webb 2022 Pillars of Creation)
+
+**Flight-style topic queue** (extreme subject + stunning real imagery; each subject different)
 
 | Next | Subject | Hook idea | Real imagery |
 |---|---|---|---|
