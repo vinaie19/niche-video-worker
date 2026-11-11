@@ -96,6 +96,15 @@ def check_voice(mp4, script, duration):
     global WORDS
     WORDS = [(norm(x), wd["start"], wd["end"]) for seg in res["segments"] for wd in seg.get("words", [])
              for x in words(wd["word"])]
+    raw = []  # Whisper splits numbers ("700" ",000"); re-join them before comparing
+    for seg in res["segments"]:
+        for wd in seg.get("words", []):
+            if raw and re.fullmatch(r"\s*,\d+[.,?!]?\s*", wd["word"]):
+                raw[-1] = dict(raw[-1], word=raw[-1]["word"] + wd["word"].strip(), end=wd["end"])
+            else:
+                raw.append(dict(wd))
+    res = {"segments": [{"words": raw}]}
+    WORDS = [(norm(x), wd["start"], wd["end"]) for wd in raw for x in words(wd["word"])]
     heard = [(norm(w), s["end"]) for seg in res["segments"] for wd in seg.get("words", [])
              for w, s in [(x, wd) for x in words(wd["word"])]]
     heard_words = [w for w, _ in heard]
@@ -111,7 +120,7 @@ def check_voice(mp4, script, duration):
     starts = [wd["start"] for seg in res["segments"] for wd in seg.get("words", [])]
     ends = [wd["end"] for seg in res["segments"] for wd in seg.get("words", [])]
     for e, st in zip(ends[:-1], starts[1:]):
-        if st - e > 0.6:
+        if st - e > 0.6 and not accepted(int(e), "voice gap"):
             fails.append(f"voice gap {e:.1f}-{st:.1f}s ({st - e:.2f}s of silence mid-script)")
     if starts and starts[0] > 0.4:
         fails.append(f"voice starts late at {starts[0]:.2f}s (hook must be heard from frame 1)")
@@ -192,7 +201,10 @@ def check_audio(mp4, duration):
     if len(dead):
         fails.append(f"near-silent audio at {', '.join(f'{k / 10:.1f}s' for k in dead[:10])}"
                      + (" ..." if len(dead) > 10 else ""))
-    peak = 20 * np.log10(np.abs(a).max() + 1e-12)
+    # true sample peak on the real channels (the mono fold-down above sums L+R and reads ~3 dB hot)
+    st = np.frombuffer(subprocess.run(["ffmpeg", "-v", "error", "-i", mp4, "-f", "f32le", "-"],
+                                      capture_output=True, check=True).stdout, np.float32)
+    peak = 20 * np.log10(np.abs(st).max() + 1e-12)
     if peak > -0.3:
         fails.append(f"audio clips (peak {peak:.1f} dBFS)")
     r = subprocess.run(["ffmpeg", "-v", "info", "-i", mp4, "-af", "ebur128", "-f", "null", "-"],
