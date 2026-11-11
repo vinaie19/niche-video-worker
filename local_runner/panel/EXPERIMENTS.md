@@ -63,4 +63,7 @@ Facts and licences are checked per Short before the build.
 **One-second test (from these rejections):** in the first second, can a stranger see what it is and why it's crazy?
 A recognisable thing plus an impossible claim passes. Pretty but unexplained does not.
 
-Next candidate: a true-scale comparison on a real place ("This star fits inside Mumbai"): real ISS night photo, illustrated neutron star.
+**Originality check (before any preview is rendered):** search our own scripts and POSTING_SCHEDULE_B.md for the idea, and
+judge how common it is elsewhere. "This star fits inside Mumbai" (11 Nov) failed this: ep08N already said "This star is the
+size of a city, and it's heavier than the Sun", with a city, a star and a teaspoon, and "neutron star the size of a city" is a
+stock comparison. The market CSV can't settle how common an idea is: it holds only 8 neutron-star Shorts, matched on titles.
