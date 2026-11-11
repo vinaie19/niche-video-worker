@@ -51,3 +51,16 @@ tested as its own experiment. New formats to try, with the same quality bar (col
 | then | Tarantula Nebula and R136a1, the heaviest star known | "The heaviest star ever found weighs 200 Suns" | Webb/Hubble Tarantula |
 | then | Andromeda: the galaxy on a collision course with us | "This galaxy is coming straight at us" | Hubble PHAT mosaic |
 Facts and licences are checked per Short before the build.
+
+## Rejected at the shot gate (owner's phone check)
+
+| Date | Idea | Owner's verdict | Lesson |
+|---|---|---|---|
+| 7 Nov | Pillars of Creation: Hubble 1995 swept into Webb 2022 | "just stock photos" | A transition between two famous photos still looks like two photos |
+| 7 Nov | Pillars of Creation: flight into Webb's image | "repeating the same thing" | Three flights in a row is too many; vary the format |
+| 11 Nov | Aurora from the Space Station (real 4K footage) | "nothing is perceived from it" | Real footage alone isn't enough: a green glow has nothing to recognise |
+
+**One-second test (from these rejections):** in the first second, can a stranger see what it is and why it's crazy?
+A recognisable thing plus an impossible claim passes. Pretty but unexplained does not.
+
+Next candidate: a true-scale comparison on a real place ("This star fits inside Mumbai"): real ISS night photo, illustrated neutron star.
